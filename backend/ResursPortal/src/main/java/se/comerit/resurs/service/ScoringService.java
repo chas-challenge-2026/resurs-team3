@@ -21,299 +21,496 @@ public class ScoringService {
             double ranteKostnader,
             String bransch) {
 
-        StringBuilder scoringLog = new StringBuilder();
-        StringBuilder decisionReason = new StringBuilder();
+        ScoringContext context = new ScoringContext();
 
-        int flagCount = 0;
-        boolean hardReject = false;
-        int creditScore = 100;
+        // 1. Grundläggande finansiella nyckeltal
+        double soliditet =
+                evaluateSoliditetRule(
+                        egetKapital,
+                        totaltKapital,
+                        context
+                );
 
-        // SOLIDITET
-        double soliditet = calculateSoliditet(egetKapital, totaltKapital);
+        double likviditetsgrad =
+                evaluateLiquidityRule(
+                        omsattningstillgangar,
+                        kortfristigaSkulder,
+                        context
+                );
 
-        scoringLog.append("soliditet=")
+        double skuldsattningsgrad =
+                evaluateDebtRatioRule(
+                        totalaSkulder,
+                        egetKapital,
+                        context
+                );
+
+        double rorelsemarginal =
+                evaluateOperatingMarginRule(
+                        rorelseresultat,
+                        nettoomsattning,
+                        context
+                );
+
+        // 2. Övriga grundregler
+        evaluateGeneralRiskRules(
+                egetKapital,
+                rorelseresultat,
+                nettoomsattning,
+                requestedAmount,
+                soliditet,
+                likviditetsgrad,
+                totalaSkulder,
+                context
+        );
+
+        // 3. Branschbedömning
+        evaluateIndustryRule(
+                soliditet,
+                bransch,
+                context
+        );
+
+        // 4. Kassaflöde och räntetäckning
+        double kassaflodeKvot =
+                evaluateCashFlowRules(
+                        operativtKassaflode,
+                        investeringsKassaflode,
+                        totalaSkulder,
+                        nettoomsattning,
+                        context
+                );
+
+        evaluateInterestCoverageRule(
+                rorelseresultat,
+                ranteKostnader,
+                context
+        );
+
+        // 5. Kombinationsrisker
+        evaluateCombinationRisks(
+                soliditet,
+                likviditetsgrad,
+                skuldsattningsgrad,
+                rorelseresultat,
+                kassaflodeKvot,
+                egetKapital,
+                nettoomsattning,
+                requestedAmount,
+                context
+        );
+
+        // 6. Slutligt beslut
+        return buildFinalResult(context);
+    }
+
+
+    // =========================================================
+    // SOLIDITET
+    // =========================================================
+
+    private double evaluateSoliditetRule(
+            double egetKapital,
+            double totaltKapital,
+            ScoringContext context) {
+
+        double soliditet =
+                calculateSoliditet(egetKapital, totaltKapital);
+
+        context.scoringLog.append("soliditet=")
                 .append(String.format("%.2f", soliditet));
 
         if (soliditet < 0.20) {
-            hardReject = true;
-            creditScore -= 40;
 
-            decisionReason.append(
+            context.hardReject = true;
+            context.creditScore -= 40;
+
+            context.decisionReason.append(
                     String.format(
                             "AVSLAG: Soliditet %.2f. Miniminivå: 0.20. ",
                             soliditet
                     )
             );
 
-            scoringLog.append(" [REJECT]");
+            context.scoringLog.append(" [REJECT]");
 
         } else if (soliditet < 0.25) {
-            flagCount++;
-            creditScore -= 20;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 20;
+
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Soliditet %.2f. Rekommenderad nivå: minst 0.25. ",
                             soliditet
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else {
-            creditScore += 5;
 
-            decisionReason.append(
+            context.creditScore += 5;
+
+            context.decisionReason.append(
                     String.format(
                             "Soliditet %.2f uppfyller kravet. ",
                             soliditet
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
 
-        // LIKVIDITET
-        double likviditetsgrad =
-                calculateLiquidity(omsattningstillgangar, kortfristigaSkulder);
+        return soliditet;
+    }
 
-        scoringLog.append(", likviditetsgrad=")
+
+    // =========================================================
+    // LIKVIDITET
+    // =========================================================
+
+    private double evaluateLiquidityRule(
+            double omsattningstillgangar,
+            double kortfristigaSkulder,
+            ScoringContext context) {
+
+        double likviditetsgrad =
+                calculateLiquidity(
+                        omsattningstillgangar,
+                        kortfristigaSkulder
+                );
+
+        context.scoringLog.append(", likviditetsgrad=")
                 .append(String.format("%.2f", likviditetsgrad));
 
         if (likviditetsgrad < 1.0) {
-            flagCount++;
-            creditScore -= 15;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 15;
+
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Likviditetsgrad %.2f. Miniminivå: 1.0. ",
                             likviditetsgrad
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else if (likviditetsgrad >= 2.0) {
-            creditScore += 10;
 
-            decisionReason.append(
+            context.creditScore += 10;
+
+            context.decisionReason.append(
                     String.format(
                             "Likviditetsgrad %.2f är god. ",
                             likviditetsgrad
                     )
             );
 
-            scoringLog.append(" [GOOD]");
+            context.scoringLog.append(" [GOOD]");
 
         } else {
-            decisionReason.append(
+
+            context.decisionReason.append(
                     String.format(
                             "Likviditetsgrad %.2f är godkänd. ",
                             likviditetsgrad
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
 
-        // SKULDSÄTTNING
-        double skuldsattningsgrad =
-                calculateDebtRatio(totalaSkulder, egetKapital);
+        return likviditetsgrad;
+    }
 
-        scoringLog.append(", skuldsättningsgrad=")
+
+    // =========================================================
+    // SKULDSÄTTNING
+    // =========================================================
+
+    private double evaluateDebtRatioRule(
+            double totalaSkulder,
+            double egetKapital,
+            ScoringContext context) {
+
+        double skuldsattningsgrad =
+                calculateDebtRatio(
+                        totalaSkulder,
+                        egetKapital
+                );
+
+        context.scoringLog.append(", skuldsättningsgrad=")
                 .append(String.format("%.2f", skuldsattningsgrad));
 
         if (skuldsattningsgrad > 3.0) {
-            hardReject = true;
-            creditScore -= 35;
 
-            decisionReason.append(
+            context.hardReject = true;
+            context.creditScore -= 35;
+
+            context.decisionReason.append(
                     String.format(
                             "AVSLAG: Skuldsättningsgrad %.2f. Maxnivå: 3.0. ",
                             skuldsattningsgrad
                     )
             );
 
-            scoringLog.append(" [REJECT]");
+            context.scoringLog.append(" [REJECT]");
 
         } else if (skuldsattningsgrad > 2.0) {
-            flagCount++;
-            creditScore -= 15;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 15;
+
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Skuldsättningsgrad %.2f. Rekommenderad nivå: högst 2.0. ",
                             skuldsattningsgrad
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else {
-            creditScore += 5;
 
-            decisionReason.append(
+            context.creditScore += 5;
+
+            context.decisionReason.append(
                     String.format(
                             "Skuldsättningsgrad %.2f är godkänd. ",
                             skuldsattningsgrad
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
 
-        // RÖRELSEMARGINAL
-        double rorelsemarginal =
-                calculateOperatingMargin(rorelseresultat, nettoomsattning);
+        return skuldsattningsgrad;
+    }
 
-        scoringLog.append(", rörelsemarginal=")
+
+    // =========================================================
+    // RÖRELSEMARGINAL
+    // =========================================================
+
+    private double evaluateOperatingMarginRule(
+            double rorelseresultat,
+            double nettoomsattning,
+            ScoringContext context) {
+
+        double rorelsemarginal =
+                calculateOperatingMargin(
+                        rorelseresultat,
+                        nettoomsattning
+                );
+
+        context.scoringLog.append(", rörelsemarginal=")
                 .append(String.format("%.2f", rorelsemarginal));
 
         if (rorelsemarginal < 0.02) {
-            flagCount++;
-            creditScore -= 10;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 10;
+
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Rörelsemarginal %.2f%%. Rekommenderad nivå: minst 2%%. ",
                             rorelsemarginal * 100
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else if (rorelsemarginal >= 0.10) {
-            creditScore += 8;
 
-            decisionReason.append(
+            context.creditScore += 8;
+
+            context.decisionReason.append(
                     String.format(
                             "Rörelsemarginal %.2f%% är god. ",
                             rorelsemarginal * 100
                     )
             );
 
-            scoringLog.append(" [GOOD]");
+            context.scoringLog.append(" [GOOD]");
 
         } else {
-            decisionReason.append(
+
+            context.decisionReason.append(
                     String.format(
                             "Rörelsemarginal %.2f%% är godkänd. ",
                             rorelsemarginal * 100
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
 
-        // NEGATIVT EGET KAPITAL
+        return rorelsemarginal;
+    }
+
+
+    // =========================================================
+    // ÖVRIGA RISKRREGLER
+    // =========================================================
+
+    private void evaluateGeneralRiskRules(
+            double egetKapital,
+            double rorelseresultat,
+            double nettoomsattning,
+            BigDecimal requestedAmount,
+            double soliditet,
+            double likviditetsgrad,
+            double totalaSkulder,
+            ScoringContext context) {
+
+        // Negativt eget kapital
         if (egetKapital < 0) {
-            hardReject = true;
-            creditScore -= 50;
-            decisionReason.append("AVSLAG: Negativt eget kapital. ");
-            scoringLog.append(", negativt_eget_kapital [REJECT]");
+
+            context.hardReject = true;
+            context.creditScore -= 50;
+
+            context.decisionReason.append(
+                    "AVSLAG: Negativt eget kapital. "
+            );
+
+            context.scoringLog.append(
+                    ", negativt_eget_kapital [REJECT]"
+            );
         }
 
-        // STOR KREDIT
-        if (requestedAmount.compareTo(new BigDecimal("5000000")) > 0) {
-            flagCount++;
-            creditScore -= 10;
+        // Stor kredit
+        if (requestedAmount.compareTo(
+                new BigDecimal("5000000")) > 0) {
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 10;
+
+            context.decisionReason.append(
                     "VARNING: Kreditbelopp över 5 000 000 kr kräver manuell granskning. "
             );
 
-            scoringLog.append(", storkredit [FLAGGED]");
+            context.scoringLog.append(
+                    ", storkredit [FLAGGED]"
+            );
         }
 
-        // LÅG OMSÄTTNING
+        // Låg omsättning
         if (nettoomsattning < 500000) {
-            flagCount++;
-            creditScore -= 7;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 7;
+
+            context.decisionReason.append(
                     "VARNING: Nettoomsättning under 500 000 kr. "
             );
 
-            scoringLog.append(", låg_omsättning [FLAGGED]");
+            context.scoringLog.append(
+                    ", låg_omsättning [FLAGGED]"
+            );
         }
 
-        // NEGATIVT RÖRELSERESULTAT
+        // Negativt rörelseresultat
         if (rorelseresultat < 0) {
-            flagCount++;
-            creditScore -= 12;
 
-            decisionReason.append(
+            context.flagCount++;
+            context.creditScore -= 12;
+
+            context.decisionReason.append(
                     "VARNING: Negativt rörelseresultat. "
             );
 
-            scoringLog.append(", negativt_rörelseresultat [FLAGGED]");
+            context.scoringLog.append(
+                    ", negativt_rörelseresultat [FLAGGED]"
+            );
         }
-        // EXTRA SOLIDITET VID STOR KREDIT
+
+        // Stor kredit + låg soliditet
         if (soliditet < 0.30
-                && requestedAmount.compareTo(new BigDecimal("1000000")) > 0) {
+                && requestedAmount.compareTo(
+                new BigDecimal("1000000")) > 0) {
 
-            flagCount++;
-            creditScore -= 12;
+            context.flagCount++;
+            context.creditScore -= 12;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     "VARNING: Kreditbelopp över 1 000 000 kr med soliditet under 0.30. "
             );
 
-            scoringLog.append(", storkredit_soliditet [FLAGGED]");
+            context.scoringLog.append(
+                    ", storkredit_soliditet [FLAGGED]"
+            );
         }
 
+        // Likviditet nära gränsen
+        if (likviditetsgrad < 1.2
+                && likviditetsgrad >= 1.0) {
 
-// LIKVIDITET NÄRA MINIMIGRÄNS
-        if (likviditetsgrad < 1.2 && likviditetsgrad >= 1.0) {
+            context.flagCount++;
+            context.creditScore -= 8;
 
-            flagCount++;
-            creditScore -= 8;
-
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Likviditetsgrad %.2f är nära minimigränsen 1.2. ",
                             likviditetsgrad
                     )
             );
 
-            scoringLog.append(", likviditet_marginal [FLAGGED]");
+            context.scoringLog.append(
+                    ", likviditet_marginal [FLAGGED]"
+            );
         }
 
-
-// SKULDER MOT OMSÄTTNING
+        // Skulder mot omsättning
         if (totalaSkulder > nettoomsattning * 2) {
 
-            flagCount++;
-            creditScore -= 10;
+            context.flagCount++;
+            context.creditScore -= 10;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     "VARNING: Totala skulder överstiger dubbla nettoomsättningen. "
             );
 
-            scoringLog.append(", skulder_vs_omsattning [FLAGGED]");
+            context.scoringLog.append(
+                    ", skulder_vs_omsattning [FLAGGED]"
+            );
         }
+    }
 
 
-// BRANSCHFAKTOR
-        double branschFaktor = getBranschFaktor(bransch);
+    // =========================================================
+    // BRANSCH
+    // =========================================================
+
+    private void evaluateIndustryRule(
+            double soliditet,
+            String bransch,
+            ScoringContext context) {
+
+        double branschFaktor =
+                getBranschFaktor(bransch);
 
         double branschJusteradSoliditetGrans =
                 0.20 * branschFaktor;
 
-        scoringLog.append(", bransch=")
-                .append(bransch == null || bransch.isEmpty()
-                        ? "OKÄND"
-                        : bransch)
+        context.scoringLog.append(", bransch=")
+                .append(
+                        bransch == null || bransch.isEmpty()
+                                ? "OKÄND"
+                                : bransch
+                )
                 .append("(faktor=")
                 .append(String.format("%.2f", branschFaktor))
                 .append(")");
 
         if (soliditet < branschJusteradSoliditetGrans) {
 
-            flagCount++;
-            creditScore -= 8;
+            context.flagCount++;
+            context.creditScore -= 8;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Soliditet %.2f understiger branschjusterad gräns %.2f för %s. ",
                             soliditet,
@@ -322,281 +519,345 @@ public class ScoringService {
                     )
             );
 
-            scoringLog.append(", bransch_soliditet [FLAGGED]");
+            context.scoringLog.append(
+                    ", bransch_soliditet [FLAGGED]"
+            );
         }
+    }
 
 
-// KASSAFLÖDESKVOT
+    // =========================================================
+    // KASSAFLÖDE
+    // =========================================================
+
+    private double evaluateCashFlowRules(
+            double operativtKassaflode,
+            double investeringsKassaflode,
+            double totalaSkulder,
+            double nettoomsattning,
+            ScoringContext context) {
+
         double kassaflodeKvot =
                 calculateCashFlowRatio(
                         operativtKassaflode,
                         totalaSkulder
                 );
 
-        scoringLog.append(", kassaflödeskvot=")
+        context.scoringLog.append(", kassaflödeskvot=")
                 .append(String.format("%.3f", kassaflodeKvot));
 
         if (kassaflodeKvot < 0) {
 
-            hardReject = true;
-            creditScore -= 30;
+            context.hardReject = true;
+            context.creditScore -= 30;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "AVSLAG: Negativt operativt kassaflöde, kvot %.3f. ",
                             kassaflodeKvot
                     )
             );
 
-            scoringLog.append(" [REJECT]");
+            context.scoringLog.append(" [REJECT]");
 
         } else if (kassaflodeKvot < 0.05) {
 
-            flagCount++;
-            creditScore -= 12;
+            context.flagCount++;
+            context.creditScore -= 12;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Kassaflödeskvot %.3f understiger 0.05. ",
                             kassaflodeKvot
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else if (kassaflodeKvot < 0.08) {
 
-            flagCount++;
-            creditScore -= 6;
+            context.flagCount++;
+            context.creditScore -= 6;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Kassaflödeskvot %.3f understiger rekommenderad nivå 0.08. ",
                             kassaflodeKvot
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else {
 
-            creditScore += 5;
+            context.creditScore += 5;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "Kassaflödeskvot %.3f är godkänd. ",
                             kassaflodeKvot
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
 
+        // Investeringskassaflöde
+        if (investeringsKassaflode
+                < -nettoomsattning * 0.3) {
 
-// INVESTERINGSKASSAFLÖDE
-        if (investeringsKassaflode < -nettoomsattning * 0.3) {
+            context.flagCount++;
+            context.creditScore -= 4;
 
-            flagCount++;
-            creditScore -= 4;
-
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Högt negativt investeringskassaflöde %.0f kr. ",
                             investeringsKassaflode
                     )
             );
 
-            scoringLog.append(", inv_kassaflode [FLAGGED]");
+            context.scoringLog.append(
+                    ", inv_kassaflode [FLAGGED]"
+            );
         }
 
+        return kassaflodeKvot;
+    }
 
-// RÄNTETÄCKNING
+
+    // =========================================================
+    // RÄNTETÄCKNING
+    // =========================================================
+
+    private void evaluateInterestCoverageRule(
+            double rorelseresultat,
+            double ranteKostnader,
+            ScoringContext context) {
+
         double ranteTackningsgrad =
                 calculateInterestCoverage(
                         rorelseresultat,
                         ranteKostnader
                 );
 
-        scoringLog.append(", ränteTäckning=")
-                .append(String.format("%.2f", ranteTackningsgrad));
+        context.scoringLog.append(", ränteTäckning=")
+                .append(
+                        String.format(
+                                "%.2f",
+                                ranteTackningsgrad
+                        )
+                );
 
         if (ranteTackningsgrad < 1.5) {
 
-            hardReject = true;
-            creditScore -= 35;
+            context.hardReject = true;
+            context.creditScore -= 35;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "AVSLAG: Räntetäckningsgrad %.2f understiger 1.5. ",
                             ranteTackningsgrad
                     )
             );
 
-            scoringLog.append(" [REJECT]");
+            context.scoringLog.append(" [REJECT]");
 
         } else if (ranteTackningsgrad < 2.5) {
 
-            flagCount++;
-            creditScore -= 15;
+            context.flagCount++;
+            context.creditScore -= 15;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "VARNING: Räntetäckningsgrad %.2f understiger rekommenderad nivå 2.5. ",
                             ranteTackningsgrad
                     )
             );
 
-            scoringLog.append(" [FLAGGED]");
+            context.scoringLog.append(" [FLAGGED]");
 
         } else if (ranteTackningsgrad >= 999) {
 
-            decisionReason.append(
+            context.decisionReason.append(
                     "Räntetäckningsgrad ej tillämplig eftersom räntekostnad saknas. "
             );
 
-            scoringLog.append(" [N/A]");
+            context.scoringLog.append(" [N/A]");
 
         } else {
 
-            creditScore += 8;
+            context.creditScore += 8;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     String.format(
                             "Räntetäckningsgrad %.2f är godkänd. ",
                             ranteTackningsgrad
                     )
             );
 
-            scoringLog.append(" [OK]");
+            context.scoringLog.append(" [OK]");
         }
+    }
 
 
-// KOMBINATIONSRISK: SOLIDITET + SKULDSÄTTNING
-        if (soliditet < 0.25 && skuldsattningsgrad > 2.5) {
+    // =========================================================
+    // KOMBINATIONSRISKER
+    // =========================================================
 
-            flagCount++;
-            creditScore -= 18;
+    private void evaluateCombinationRisks(
+            double soliditet,
+            double likviditetsgrad,
+            double skuldsattningsgrad,
+            double rorelseresultat,
+            double kassaflodeKvot,
+            double egetKapital,
+            double nettoomsattning,
+            BigDecimal requestedAmount,
+            ScoringContext context) {
 
-            decisionReason.append(
+        // Soliditet + skuldsättning
+        if (soliditet < 0.25
+                && skuldsattningsgrad > 2.5) {
+
+            context.flagCount++;
+            context.creditScore -= 18;
+
+            context.decisionReason.append(
                     "VARNING: Kombination av låg soliditet och hög skuldsättning. "
             );
 
-            scoringLog.append(
+            context.scoringLog.append(
                     ", kombinationsrisk_soliditet_skuld [FLAGGED]"
             );
         }
 
+        // Likviditet + negativt resultat
+        if (likviditetsgrad < 1.0
+                && rorelseresultat < 0) {
 
-// KOMBINATIONSRISK: LIKVIDITET + NEGATIVT RESULTAT
-        if (likviditetsgrad < 1.0 && rorelseresultat < 0) {
+            context.hardReject = true;
+            context.creditScore -= 40;
 
-            hardReject = true;
-            creditScore -= 40;
-
-            decisionReason.append(
+            context.decisionReason.append(
                     "AVSLAG: Dålig likviditet kombinerat med negativt rörelseresultat. "
             );
 
-            scoringLog.append(
+            context.scoringLog.append(
                     ", kombinationsrisk_likviditet_resultat [REJECT]"
             );
         }
 
+        // Kreditbelopp mot omsättning
+        if (requestedAmount.doubleValue()
+                > nettoomsattning) {
 
-// KREDITBELOPP MOT OMSÄTTNING
-        if (requestedAmount.doubleValue() > nettoomsattning) {
+            context.flagCount++;
+            context.creditScore -= 8;
 
-            flagCount++;
-            creditScore -= 8;
-
-            decisionReason.append(
+            context.decisionReason.append(
                     "VARNING: Kreditbelopp överstiger årsomsättningen. "
             );
 
-            scoringLog.append(
+            context.scoringLog.append(
                     ", kredit_vs_omsattning [FLAGGED]"
             );
         }
 
-
-// EGET KAPITAL MOT KREDIT
+        // Eget kapital mot kredit
         if (requestedAmount.doubleValue() > 0
-                && egetKapital / requestedAmount.doubleValue() < 0.3) {
+                && egetKapital
+                / requestedAmount.doubleValue() < 0.3) {
 
-            flagCount++;
-            creditScore -= 10;
+            context.flagCount++;
+            context.creditScore -= 10;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     "VARNING: Eget kapital täcker mindre än 30% av kreditbeloppet. "
             );
 
-            scoringLog.append(
+            context.scoringLog.append(
                     ", eget_kapital_vs_kredit [FLAGGED]"
             );
         }
 
-
-// KASSAFLÖDE + SKULDSÄTTNING
+        // Kassaflöde + skuldsättning
         if (kassaflodeKvot < 0.05
                 && skuldsattningsgrad > 2.0) {
 
-            flagCount++;
-            creditScore -= 12;
+            context.flagCount++;
+            context.creditScore -= 12;
 
-            decisionReason.append(
+            context.decisionReason.append(
                     "VARNING: Kombinationsrisk kassaflöde och skuldsättning. "
             );
 
-            scoringLog.append(
+            context.scoringLog.append(
                     ", kassaflode_skuld_kombination [FLAGGED]"
             );
         }
+    }
 
-        // SLUTLIGT BESLUT
+
+    // =========================================================
+    // SLUTLIGT BESLUT
+    // =========================================================
+
+    private ScoringResult buildFinalResult(
+            ScoringContext context) {
+
         String decision;
         String status;
 
-        if (hardReject) {
+        if (context.hardReject) {
+
             decision = "REJECTED";
             status = "REJECTED";
 
-            decisionReason.insert(
+            context.decisionReason.insert(
                     0,
                     "=== ANSÖKAN AVSLAGEN === "
             );
 
-        } else if (flagCount > 0) {
+        } else if (context.flagCount > 0) {
+
             decision = "REVIEW";
             status = "UNDER_REVIEW";
 
-            decisionReason.insert(
+            context.decisionReason.insert(
                     0,
                     "=== MANUELL GRANSKNING === Antal varningsflaggor: "
-                            + flagCount + ". "
+                            + context.flagCount
+                            + ". "
             );
 
         } else {
+
             decision = "APPROVED";
             status = "APPROVED";
 
-            decisionReason.insert(
+            context.decisionReason.insert(
                     0,
                     "=== ANSÖKAN GODKÄND === "
             );
         }
 
-        scoringLog.append(", kreditPoäng=")
-                .append(creditScore);
+        context.scoringLog.append(", kreditPoäng=")
+                .append(context.creditScore);
 
         return new ScoringResult(
                 decision,
                 status,
-                decisionReason.toString(),
-                scoringLog.toString(),
-                flagCount,
-                creditScore
+                context.decisionReason.toString(),
+                context.scoringLog.toString(),
+                context.flagCount,
+                context.creditScore
         );
     }
+
+
+    // =========================================================
+    // BERÄKNINGSMETODER
+    // =========================================================
 
     private double calculateSoliditet(
             double egetKapital,
@@ -609,6 +870,7 @@ public class ScoringService {
         return egetKapital / totaltKapital;
     }
 
+
     private double calculateLiquidity(
             double omsattningstillgangar,
             double kortfristigaSkulder) {
@@ -617,8 +879,10 @@ public class ScoringService {
             return 0;
         }
 
-        return omsattningstillgangar / kortfristigaSkulder;
+        return omsattningstillgangar
+                / kortfristigaSkulder;
     }
+
 
     private double calculateDebtRatio(
             double totalaSkulder,
@@ -631,6 +895,7 @@ public class ScoringService {
         return totalaSkulder / egetKapital;
     }
 
+
     private double calculateOperatingMargin(
             double rorelseresultat,
             double nettoomsattning) {
@@ -639,8 +904,11 @@ public class ScoringService {
             return 0;
         }
 
-        return rorelseresultat / nettoomsattning;
+        return rorelseresultat
+                / nettoomsattning;
     }
+
+
     private double calculateCashFlowRatio(
             double operativtKassaflode,
             double totalaSkulder) {
@@ -649,8 +917,10 @@ public class ScoringService {
             return 0;
         }
 
-        return operativtKassaflode / totalaSkulder;
+        return operativtKassaflode
+                / totalaSkulder;
     }
+
 
     private double calculateInterestCoverage(
             double rorelseresultat,
@@ -660,38 +930,72 @@ public class ScoringService {
             return 999;
         }
 
-        return rorelseresultat / ranteKostnader;
+        return rorelseresultat
+                / ranteKostnader;
     }
 
-    private double getBranschFaktor(String bransch) {
+
+    private double getBranschFaktor(
+            String bransch) {
 
         if (bransch == null) {
             return 1.0;
         }
 
         switch (bransch) {
+
             case "BYGG":
                 return 0.85;
+
             case "HANDEL":
                 return 1.1;
+
             case "IT":
                 return 1.2;
+
             case "FASTIGHET":
                 return 0.9;
+
             case "TILLVERKNING":
                 return 0.95;
+
             case "TRANSPORT":
                 return 0.88;
+
             case "RESTAURANG":
                 return 0.80;
+
             case "FINANS":
                 return 1.15;
+
             case "VÅRD":
                 return 1.05;
+
             case "UTBILDNING":
                 return 1.0;
+
             default:
                 return 1.0;
         }
+    }
+
+
+    // =========================================================
+    // INTERN STATE FÖR EN SCORING
+    // =========================================================
+
+    private static class ScoringContext {
+
+        private final StringBuilder scoringLog =
+                new StringBuilder();
+
+        private final StringBuilder decisionReason =
+                new StringBuilder();
+
+        private int flagCount = 0;
+
+        private boolean hardReject = false;
+
+        private int creditScore = 100;
     }
 }
