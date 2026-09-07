@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-resurs-bg: #0a2422;
+  --color-resurs-panel: #0e332f;
+  --color-resurs-card: #123a35;
+  --color-resurs-sidebar: #082A2D;
+  --color-resurs-teal: #1f8f82;
+  --color-resurs-tealDark: #136a5f;
+  --color-resurs-tealLight: #2aa89a;
+  --color-resurs-yellow: #f0c93a;
+  --color-resurs-orange: #dd7e22;
+  --color-resurs-orangeDark: #c87f22;
+  --color-resurs-onOrange: #0a2422;
+  --color-resurs-input: #f0e6e0;
+  --color-resurs-cream: #f0e6e0;
+  --color-resurs-muted: #9fb8b3;
+
+  --font-sans: 'Montserrat', system-ui, sans-serif;
+
+  /* Unified 10px corner across rounded / rounded-md / rounded-lg, matching
+     the old tailwind.config.ts borderRadius override (rounded-full and
+     rounded-r-full stay untouched — deliberately fully round). v4's bare
+     `rounded` utility is driven by the single --radius variable, not a
+     --radius-sm slot, so that's the one to override here alongside
+     --radius-md / --radius-lg. */
+  --radius: 10px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-resurs-bg text-white antialiased;
+  font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7a78;
+}
