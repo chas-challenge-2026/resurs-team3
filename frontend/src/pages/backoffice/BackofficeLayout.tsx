@@ -8,22 +8,29 @@ type BackofficeView = 'dashboard' | 'cases' | 'aviseringar'
 
 // TODO: replace with the real DashboardView (stat tiles + queue) once built.
 function DashboardPlaceholder() {
-  return <p className="text-white">Dashboard</p>
+  return <h2 className="text-xl font-extrabold text-white">Dashboard</h2>
 }
 
 // TODO: replace with the real CasesView (searchable case list) once built.
 function CasesPlaceholder() {
-  return <p className="text-white">Cases</p>
+  return <h2 className="text-xl font-extrabold text-white">Ärenden</h2>
 }
 
 // TODO: replace with the real AviseringarView (notifications list) once built.
 function AviseringarPlaceholder() {
-  return <p className="text-white">Aviseringar</p>
+  return (
+    <div>
+      <h2 className="text-xl font-extrabold text-white">Aviseringar</h2>
+      <div className="mt-4 rounded-md bg-resurs-card p-5">
+        <p className="text-sm text-resurs-muted">Inga aviseringar ännu.</p>
+      </div>
+    </div>
+  )
 }
 
 const NAV_ITEMS: SidebarItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <Icon name="home" /> },
-  { key: 'cases', label: 'Cases', icon: <Icon name="folder" /> },
+  { key: 'cases', label: 'Ärenden', icon: <Icon name="folder" /> },
   { key: 'aviseringar', label: 'Aviseringar', icon: <Icon name="bell" /> },
 ]
 

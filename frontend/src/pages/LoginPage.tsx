@@ -14,7 +14,7 @@ export function LoginPage() {
   const [activeTab, setActiveTab] = useState<LoginMethod>('bankid')
   const [orgNumber, setOrgNumber] = useState('556000-1234')
   const [email, setEmail] = useState('karin@resurs.se')
-  const [password, setPassword] = useState('1234')
+  const [password, setPassword] = useState('password123')
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
