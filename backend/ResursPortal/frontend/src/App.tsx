@@ -2,19 +2,11 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './context/useAuth'
 import { LoginPage } from './pages/LoginPage'
+import { WizardPage } from './pages/WizardPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
 import { AppLayout } from './components/layout/AppLayout'
 import { BackofficeLayout } from './pages/backoffice/BackofficeLayout'
-
-function HomePlaceholder() {
-  const { state } = useAuth()
-
-  // TODO: swap this for WizardPage once ApplicationContext exists — for now
-  // this just confirms the applicant login flow reaches an authenticated,
-  // laid-out route.
-  return <p className="text-white">Inloggad som {state.companyDisplayName || state.loginMethod}</p>
-}
 
 // Case workers get the backoffice shell instead of the applicant layout.
 // BackofficeLayout manages its own internal sections rather than nested
@@ -47,7 +39,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<HomePlaceholder />} />
+        <Route path="/" element={<WizardPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
