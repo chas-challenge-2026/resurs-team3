@@ -21,15 +21,7 @@ export type IconName =
 
 /**
  * A single, uniform icon set for the app — every icon shares the same 24x24
- * grid, 2px stroke, and rounded caps/joins, so nothing reads bigger, bolder,
- * or differently-aligned than anything else regardless of where it's used
- * (nav rail, buttons, inputs, inline links). Replaces the mix of emoji
- * (🔒 🔍 🔔 🏠 📁) and plain text glyphs (← → ➤ ✓ ✎ ▦ ⚙) that previously
- * stood in for icons — those render at whatever size/style the visitor's OS
- * or browser happens to pick for that character, which is what made icons
- * look inconsistent across the app in the first place. Size and color are
- * controlled entirely with Tailwind utilities on `className` (stroke uses
- * currentColor), same as every other element in the app.
+ * grid, 2px stroke, and rounded caps/joins.
  */
 export function Icon({ name, className = 'h-4 w-4' }: IconProps) {
   return (
