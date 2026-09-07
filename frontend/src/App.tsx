@@ -4,14 +4,23 @@ import { LoginPage } from './pages/LoginPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
 import { AppLayout } from './components/layout/AppLayout'
+import { BackofficeLayout } from './pages/backoffice/BackofficeLayout'
 
 function HomePlaceholder() {
   const { state } = useAuth()
 
-  // TODO: swap this for WizardPage / BackofficePage once ApplicationContext
-  // and CasesContext exist — for now this just confirms the login flow
-  // reaches an authenticated, laid-out route.
+  // TODO: swap this for WizardPage once ApplicationContext exists — for now
+  // this just confirms the applicant login flow reaches an authenticated,
+  // laid-out route.
   return <p className="text-white">Inloggad som {state.companyDisplayName || state.loginMethod}</p>
+}
+
+// Case workers get the backoffice shell instead of the applicant layout.
+// BackofficeLayout manages its own internal sections rather than nested
+// routes, so it ignores the nested "/" route below when it renders.
+function AuthedRoot() {
+  const { state } = useAuth()
+  return state.loginMethod === 'handlaggare' ? <BackofficeLayout /> : <AppLayout />
 }
 
 function AppRoutes() {
@@ -27,11 +36,13 @@ function AppRoutes() {
       />
 
       {/* Pathless layout route: everything nested inside renders through
-          AppLayout's <Outlet />, behind the same auth guard. */}
+          AuthedRoot — AppLayout's <Outlet /> for companies, or the
+          self-contained BackofficeLayout for case workers — behind the
+          same auth guard. */}
       <Route
         element={
           <ProtectedRoute>
-            <AppLayout />
+            <AuthedRoot />
           </ProtectedRoute>
         }
       >
