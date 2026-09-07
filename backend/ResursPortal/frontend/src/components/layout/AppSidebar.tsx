@@ -2,6 +2,18 @@ import type { ReactNode } from 'react'
 import { Logo } from '../Logo'
 import { Symbol } from '../Symbol'
 import { BrandBlob } from '../BrandBlob'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/Sidebar'
+import { useSidebar } from '@/components/ui/sidebar-context'
 
 export interface SidebarItem {
   key: string
@@ -11,74 +23,65 @@ export interface SidebarItem {
   badge?: number
 }
 
-interface NavButtonProps {
-  label: string
-  icon: ReactNode
-  active: boolean
-  badge?: number
-  onClick?: () => void
-}
-
-function NavButton({ label, icon, active, badge, onClick }: NavButtonProps) {
-  return (
-    <button
-      type="button"
-      title={label}
-      aria-current={active ? 'page' : undefined}
-      onClick={onClick}
-      className={`flex min-h-[44px] w-full items-center justify-center gap-3 rounded-md px-2 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-resurs-orange focus:ring-offset-2 focus:ring-offset-resurs-sidebar lg:justify-start lg:px-3 ${
-        active ? 'bg-resurs-card text-white font-semibold' : 'text-white/80 hover:bg-white/5'
-      }`}
-    >
-      <span className="relative shrink-0 text-base" aria-hidden="true">
-        {icon}
-        {badge ? (
-          <span className="absolute -right-2 -top-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-resurs-orange px-1 text-[10px] font-bold leading-none text-resurs-onOrange">
-            {badge > 9 ? '9+' : badge}
-          </span>
-        ) : null}
-      </span>
-      <span className="hidden lg:inline">{label}</span>
-      {badge ? (
-        <span className="ml-auto hidden rounded-full bg-resurs-orange px-1.5 py-0.5 text-[10px] font-bold text-resurs-onOrange lg:inline">
-          {badge > 9 ? '9+' : badge}
-        </span>
-      ) : null}
-    </button>
-  )
-}
-
 interface AppSidebarProps {
   items: SidebarItem[]
   activeKey: string
   onSelect?: (key: string) => void
 }
 
-/** Shared sidebar shell used by both the applicant wizard and the caseworker backoffice. */
+/**
+ * Shared sidebar shell used by both the applicant wizard and the caseworker
+ * backoffice — built on shadcn's Sidebar primitive (SidebarProvider wraps it
+ * one level up, in AppLayout/BackofficeLayout) so it gets real collapse-to-
+ * icons on desktop and an off-canvas drawer on mobile, instead of the old
+ * fixed icon-strip/full-panel breakpoint.
+ */
 export function AppSidebar({ items, activeKey, onSelect }: AppSidebarProps) {
+  const { state } = useSidebar()
+  const collapsed = state === 'collapsed'
+
   return (
-    <aside className="relative w-16 shrink-0 overflow-hidden bg-resurs-sidebar transition-[width] lg:w-[450px]">
+    <Sidebar collapsible="icon" className="border-none">
       <BrandBlob width={300} color="rgba(255,255,255,0.05)" />
-      <div className="relative z-10 p-3 lg:p-6">
-        <div className="hidden w-full lg:block" style={{ maxWidth: 332, aspectRatio: '332 / 177' }}>
-          <Logo width="100%" height="100%" />
-        </div>
-        <div className="flex justify-center lg:hidden">
-          <Symbol size={28} />
-        </div>
-        <nav className="mt-10 flex flex-col gap-1" aria-label="Huvudmeny">
-          {items.map((item) => (
-            <NavButton
-              key={item.key}
-              label={item.label}
-              icon={item.icon}
-              active={item.key === activeKey}
-              badge={item.badge}
-              onClick={onSelect ? () => onSelect(item.key) : undefined}
-            />
-          ))}
-        </nav>
-      </div>
-    </aside>
+      <SidebarHeader className="relative z-10 p-3 lg:p-6">
+        {collapsed ? (
+          <div className="flex justify-center">
+            <Symbol size={28} />
+          </div>
+        ) : (
+          <div className="w-full" style={{ maxWidth: 332, aspectRatio: '332 / 177' }}>
+            <Logo width="100%" height="100%" />
+          </div>
+        )}
+      </SidebarHeader>
+      <SidebarContent className="relative z-10 px-3 pb-3 lg:px-6">
+        <SidebarGroup className="p-0">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {items.map((item) => (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    isActive={item.key === activeKey}
+                    tooltip={item.label}
+                    onClick={onSelect ? () => onSelect(item.key) : undefined}
+                    className="min-h-[44px] justify-center gap-3 px-2 text-white/80 hover:bg-white/5 hover:text-white data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-white lg:justify-start lg:px-3"
+                  >
+                    <span className="shrink-0 text-base" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                    {item.badge ? (
+                      <SidebarMenuBadge className="static ml-auto rounded-full bg-resurs-orange px-1.5 py-0.5 text-[10px] font-bold text-resurs-onOrange group-data-[collapsible=icon]:hidden">
+                        {item.badge > 9 ? '9+' : item.badge}
+                      </SidebarMenuBadge>
+                    ) : null}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   )
 }

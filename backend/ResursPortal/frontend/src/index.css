@@ -16,6 +16,45 @@
   --color-resurs-cream: #f0e6e0;
   --color-resurs-muted: #9fb8b3;
 
+  /* shadcn/ui semantic tokens, mapped onto the resurs palette above so the
+     remaining ported shadcn components (Dialog, Select, Table, Sidebar,
+     Sheet, Tooltip, ...) pick up the brand look for free via bg-card /
+     text-muted-foreground / etc. This app is single-theme (dark teal only)
+     so these are plain aliases, not a light/dark pair. Button/Input/
+     TextField/Card were reverted to plain hand-rolled components and don't
+     use these — only tokens an actual component still references are kept
+     here. */
+  --color-background: var(--color-resurs-bg);
+  --color-foreground: #ffffff;
+
+  --color-card: var(--color-resurs-card);
+  --color-card-foreground: #ffffff;
+  --color-popover: var(--color-resurs-card);
+  --color-popover-foreground: #ffffff;
+
+  --color-secondary: var(--color-resurs-panel);
+  --color-secondary-foreground: #ffffff;
+
+  --color-muted: var(--color-resurs-panel);
+  --color-muted-foreground: var(--color-resurs-muted);
+
+  --color-accent: var(--color-resurs-card);
+  --color-accent-foreground: #ffffff;
+
+  --color-border: #1c4a44;
+  --color-input: var(--color-resurs-input);
+  --color-ring: var(--color-resurs-tealLight);
+
+  /* shadcn Sidebar tokens — the sidebar sits on its own darker panel
+     (resurs-sidebar) rather than the page background, so it gets its own
+     small token set instead of reusing background/accent above. */
+  --color-sidebar: var(--color-resurs-sidebar);
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-accent: var(--color-resurs-card);
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #103330;
+  --color-sidebar-ring: var(--color-resurs-tealLight);
+
   --font-sans: 'Montserrat', system-ui, sans-serif;
 
   /* Unified 10px corner across rounded / rounded-md / rounded-lg, matching
