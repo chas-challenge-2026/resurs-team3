@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '../components/ui/Button'
 import { CompanyDetailsStep } from '../features/credit-application/steps/CompanyDetailsStep'
 import { FinancialMetricsStep } from '../features/credit-application/steps/FinancialMetricsStep'
+import { CreditDetailsStep } from '../features/credit-application/steps/CreditDetailsStep'
 import type { CreditApplicationData } from '../features/credit-application/creditApplication.types'
 
 const initialApplicationData: CreditApplicationData = {
@@ -32,17 +33,17 @@ export function WizardPage() {
   }
 
   function goToNextStep() {
-    setCurrentStep(2)
+    setCurrentStep((step) => Math.min(step + 1, 3))
   }
 
   function goToPreviousStep() {
-    setCurrentStep(1)
+    setCurrentStep((step) => Math.max(step - 1, 1))
   }
 
   return (
     <div className="w-full max-w-2xl">
       <p className="mb-4 text-sm font-medium text-resurs-muted">
-        Steg {currentStep} av 4
+        Steg {currentStep} av 3
       </p>
 
       {currentStep === 1 ? (
@@ -50,15 +51,24 @@ export function WizardPage() {
           data={applicationData}
           onChange={handleChange}
         />
-      ) : (
+      ) : null}
+
+      {currentStep === 2 ? (
         <FinancialMetricsStep
           data={applicationData}
           onChange={handleChange}
         />
-      )}
+      ) : null}
+
+      {currentStep === 3 ? (
+        <CreditDetailsStep
+          data={applicationData}
+          onChange={handleChange}
+        />
+      ) : null}
 
       <div className="mt-8 flex justify-between gap-4">
-        {currentStep === 2 ? (
+        {currentStep > 1 ? (
           <Button
             type="button"
             variant="secondary"
@@ -70,7 +80,7 @@ export function WizardPage() {
           <div />
         )}
 
-        {currentStep === 1 ? (
+        {currentStep < 3 ? (
           <Button type="button" onClick={goToNextStep}>
             Nästa
           </Button>
