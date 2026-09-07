@@ -5,7 +5,7 @@ import { BrandBlob } from '../components/BrandBlob'
 import { BankIdMark } from '../components/BankIdMark'
 import { Button } from '../components/ui/Button'
 import { TextField } from '../components/ui/TextField'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import type { LoginMethod } from '../types/auth'
 import { Icon } from '../components/Icon'
 

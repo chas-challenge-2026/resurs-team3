@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 // Inverse of ProtectedRoute — for routes like /login that only make sense
 // when signed out. An already-authenticated visitor is bounced to "/"

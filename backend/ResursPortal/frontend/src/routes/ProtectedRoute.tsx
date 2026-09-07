@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 // Guards a route behind AuthContext's isAuthenticated flag. As soon as a
 // case-worker-only or company-only view exists, this is also the place to
