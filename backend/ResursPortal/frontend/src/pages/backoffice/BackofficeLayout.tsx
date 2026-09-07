@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { AppSidebar } from '../../components/layout/AppSidebar'
 import type { SidebarItem } from '../../components/layout/AppSidebar'
 import { Icon } from '../../components/Icon'
 import { BackofficeTopBar } from './BackofficeTopBar'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
 
 type BackofficeView = 'dashboard' | 'cases' | 'aviseringar'
 
@@ -34,6 +36,11 @@ const NAV_ITEMS: SidebarItem[] = [
   { key: 'aviseringar', label: 'Aviseringar', icon: <Icon name="bell" /> },
 ]
 
+const SIDEBAR_SIZE = {
+  '--sidebar-width': '450px',
+  '--sidebar-width-icon': '4rem',
+} as CSSProperties
+
 /**
  * Case-worker backoffice shell: sidebar nav + top bar + whichever section is
  * active. Mirrors AppLayout's shell but manages its own view state instead
@@ -52,11 +59,16 @@ export function BackofficeLayout() {
   }
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-resurs-bg">
+    <SidebarProvider style={SIDEBAR_SIZE} className="overflow-x-hidden bg-resurs-bg">
       <AppSidebar items={NAV_ITEMS} activeKey={view} onSelect={handleSelectNav} />
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-        <BackofficeTopBar search={search} onSearchChange={setSearch} />
-        <div className="mt-6">
+      <SidebarInset className="min-w-0 bg-resurs-bg">
+        <div className="flex min-w-0 items-center gap-2 p-4 pb-0 sm:p-6 sm:pb-0 lg:p-8 lg:pb-0">
+          <SidebarTrigger className="shrink-0 text-white/70 hover:bg-white/10 hover:text-white" />
+          <div className="min-w-0 flex-1">
+            <BackofficeTopBar search={search} onSearchChange={setSearch} />
+          </div>
+        </div>
+        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {view === 'dashboard' ? (
             <DashboardPlaceholder />
           ) : view === 'cases' ? (
@@ -65,7 +77,7 @@ export function BackofficeLayout() {
             <AviseringarPlaceholder />
           )}
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

@@ -18,6 +18,9 @@ export type IconName =
   | 'arrow-left'
   | 'arrow-right'
   | 'check'
+  | 'x'
+  | 'chevron-down'
+  | 'panel-left'
 
 /**
  * A single, uniform icon set for the app — every icon shares the same 24x24
@@ -94,4 +97,17 @@ const PATHS: Record<IconName, ReactElement> = {
     </>
   ),
   check: <polyline points="20 6 9 17 4 12" />,
+  x: (
+    <>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </>
+  ),
+  'chevron-down': <polyline points="6 9 12 15 18 9" />,
+  'panel-left': (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+    </>
+  ),
 }
