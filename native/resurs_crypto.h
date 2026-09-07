@@ -5,10 +5,10 @@
 
 /* Error codes */
 #define RESURS_OK                   0
-#define RESURS_ERR_NULL_ARG         1
-#define RESURS_ERR_BUFFER_TOO_SMALL 2
-#define RESURS_ERR_CRYPTO           3
-#define RESURS_ERR_AUTH_FAILED      4
+#define RESURS_ERR_NULL_ARG        -1
+#define RESURS_ERR_BUFFER_TOO_SMALL -1
+#define RESURS_ERR_CRYPTO          -2
+#define RESURS_ERR_AUTH_FAILED     -3
 
 /* Constants */
 #define RESURS_CRYPTO_KEY_LEN   32  /* AES-256 key in bytes */
