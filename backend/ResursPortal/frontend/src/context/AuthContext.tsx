@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useMemo, useReducer } from 'react'
+import { useMemo, useReducer } from 'react'
+import type { ReactNode } from 'react'
 import type { AuthState, LoginMethod } from '../types/auth'
+import { AuthContext } from './auth-context'
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -26,33 +28,18 @@ function reducer(state: AuthState, action: Action): AuthState {
   }
 }
 
-interface AuthContextValue {
-  state: AuthState
-  login: (method: LoginMethod, companyDisplayName: string) => void
-  logout: () => void
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const value = useMemo<AuthContextValue>(
+  const value = useMemo(
     () => ({
       state,
-      login: (method, companyDisplayName) => dispatch({ type: 'LOGIN', method, companyDisplayName }),
+      login: (method: LoginMethod, companyDisplayName: string) =>
+        dispatch({ type: 'LOGIN', method, companyDisplayName }),
       logout: () => dispatch({ type: 'LOGOUT' }),
     }),
     [state],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return ctx
 }
