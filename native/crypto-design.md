@@ -80,9 +80,10 @@ Dekryptering:
 ## Return codes
 
     0  = Success
-    -1 = Invalid input
+    -1 = Null argument
     -2 = Encryption/decryption error
     -3 = Authentication failed
+    -4 = Buffer too small
 
 ## Plaintext
 
