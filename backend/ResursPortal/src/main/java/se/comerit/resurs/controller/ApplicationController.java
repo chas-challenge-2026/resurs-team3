@@ -1,6 +1,5 @@
 package se.comerit.resurs.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import se.comerit.resurs.service.CompanyValidationService;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -39,8 +39,14 @@ import java.util.Map;
 @Controller
 public class ApplicationController {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
+    private final CompanyValidationService companyValidationService;
+
+    public ApplicationController(JdbcTemplate jdbcTemplate, CompanyValidationService companyValidationService){
+        this.jdbcTemplate = jdbcTemplate;
+        this.companyValidationService = companyValidationService;
+    }
 
     // ============================================================
     // GET /apply — visa ansökningsformulär
@@ -82,7 +88,15 @@ public class ApplicationController {
 
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
+        if (!"company".equals(session.getAttribute("role"))) {return "redirect:/login";}
+        CompanyValidationService.CompanyValidationResult validationResult =
+                companyValidationService.validate(orgNumber);
+        if (!validationResult.valid()) {
+            model.addAttribute("error", validationResult.message());
+            model.addAttribute("companyName", companyName);
+            model.addAttribute("orgNumber", orgNumber);
+            return "apply";
+        }
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
