@@ -5,7 +5,12 @@ import type { SidebarItem } from './AppSidebar'
 import { Icon } from '../Icon'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
 
-const NAV_ITEMS: SidebarItem[] = [{ key: 'home', label: 'Översikt', icon: <Icon name="home" /> }]
+const NAV_ITEMS: SidebarItem[] = [
+  { key: 'kreditansokan', label: 'Kreditansökan', icon: <Icon name="edit" /> },
+  { key: 'portal', label: 'Portal', icon: <Icon name="grid" /> },
+  { key: 'aviseringar', label: 'Aviseringar', icon: <Icon name="bell" /> },
+  { key: 'installningar', label: 'Inställningar', icon: <Icon name="settings" /> },
+]
 
 const SIDEBAR_SIZE = {
   '--sidebar-width': '450px',
@@ -16,7 +21,7 @@ const SIDEBAR_SIZE = {
 export function AppLayout() {
   return (
     <SidebarProvider style={SIDEBAR_SIZE} className="bg-resurs-bg">
-      <AppSidebar items={NAV_ITEMS} activeKey="home" />
+      <AppSidebar items={NAV_ITEMS} activeKey="kreditansokan" />
       <SidebarInset className="bg-resurs-bg">
         <div className="flex items-center border-b border-white/5 px-4 py-2">
           <SidebarTrigger className="text-white/70 hover:bg-white/10 hover:text-white" />

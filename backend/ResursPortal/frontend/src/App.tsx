@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { CasesProvider } from './context/CasesContext'
 import { useAuth } from './context/useAuth'
 import { LoginPage } from './pages/LoginPage'
-import { WizardPage } from './pages/WizardPage'
+import { WizardPage } from './pages/wizard/WizardPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
 import { AppLayout } from './components/layout/AppLayout'
@@ -50,7 +51,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <CasesProvider>
+        <AppRoutes />
+      </CasesProvider>
     </AuthProvider>
   )
 }

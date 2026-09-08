@@ -4,14 +4,10 @@ import { AppSidebar } from '../../components/layout/AppSidebar'
 import type { SidebarItem } from '../../components/layout/AppSidebar'
 import { Icon } from '../../components/Icon'
 import { BackofficeTopBar } from './BackofficeTopBar'
+import { DashboardView } from './DashboardView'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
 
 type BackofficeView = 'dashboard' | 'cases' | 'aviseringar'
-
-// TODO: replace with the real DashboardView (stat tiles + queue) once built.
-function DashboardPlaceholder() {
-  return <h2 className="text-xl font-extrabold text-white">Dashboard</h2>
-}
 
 // TODO: replace with the real CasesView (searchable case list) once built.
 function CasesPlaceholder() {
@@ -70,7 +66,7 @@ export function BackofficeLayout() {
         </div>
         <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {view === 'dashboard' ? (
-            <DashboardPlaceholder />
+            <DashboardView />
           ) : view === 'cases' ? (
             <CasesPlaceholder />
           ) : (
