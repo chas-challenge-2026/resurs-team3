@@ -1,24 +1,28 @@
 package se.comerit.resurs.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
+import se.comerit.resurs.model.CaseWorker;
+import se.comerit.resurs.repository.CaseWorkerRepository;
+import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import se.comerit.resurs.model.Company;
+import se.comerit.resurs.repository.CompanyRepository;
 import javax.servlet.http.HttpSession;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
+
 
 @Controller
 public class AuthController {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private CaseWorkerRepository caseWorkerRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @GetMapping("/")
     public String root() { return "redirect:/login"; }
@@ -44,48 +48,40 @@ public class AuthController {
                                Model model) {
         // TODO: replace with real BankID integration
         if (orgNumber.equals("556000-1234") || orgNumber.equals("556000-5678")) {
-            // BankID authentication successful (mock)
-            // Look up company in DB
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT * FROM companies WHERE org_number = '" + orgNumber + "'"
-            );
-            if (rows.isEmpty()) {
+            Optional<Company> companyOpt = companyRepository.findByOrgNumber(orgNumber);
+            if (companyOpt.isEmpty()) {
                 model.addAttribute("error", "Företaget hittades inte i systemet.");
                 model.addAttribute("activeTab", "company");
                 return "login";
             }
-            Map<String, Object> company = rows.get(0);
-            session.setAttribute("userId", company.get("id"));
+            Company company = companyOpt.get();
+            session.setAttribute("userId", company.getId());
             session.setAttribute("role", "company");
             session.setAttribute("orgNumber", orgNumber);
-            session.setAttribute("companyName", company.get("company_name"));
-            session.setAttribute("companyId", company.get("id"));
+            session.setAttribute("companyName", company.getCompanyName());
+            session.setAttribute("companyId", company.getId());
             return "redirect:/apply";
         } else {
-            // Not in whitelist — BankID mock rejects
             model.addAttribute("error", "BankID-autentisering misslyckades. Org.nummer ej godkänt.");
             model.addAttribute("activeTab", "company");
             return "login";
         }
     }
 
-    // Case worker login with MD5 password — SQL built with string concat (injection surface)
-    // TODO: parameterize this query and use bcrypt
     @PostMapping("/login/caseWorker")
     public String loginCaseWorker(@RequestParam("email") String email,
                                   @RequestParam("password") String password,
                                   HttpSession session,
                                   Model model) {
         String md5 = md5Hash(password);
-        // SQL injection surface: email is directly concatenated
-        String sql = "SELECT * FROM case_workers WHERE email = '" + email + "' AND password_md5 = '" + md5 + "'";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-        if (!rows.isEmpty()) {
-            Map<String, Object> worker = rows.get(0);
-            session.setAttribute("userId", worker.get("id"));
+        Optional<CaseWorker> workerOpt = caseWorkerRepository.findByEmail(email);
+
+        if (workerOpt.isPresent() && workerOpt.get().getPasswordMd5().equals(md5)) {
+            CaseWorker worker = workerOpt.get();
+            session.setAttribute("userId", worker.getId());
             session.setAttribute("role", "caseWorker");
-            session.setAttribute("workerName", worker.get("name"));
-            session.setAttribute("workerEmail", worker.get("email"));
+            session.setAttribute("workerName", worker.getName());
+            session.setAttribute("workerEmail", worker.getEmail());
             return "redirect:/backoffice";
         } else {
             model.addAttribute("error", "Felaktigt användarnamn eller lösenord.");
