@@ -29,6 +29,17 @@ public class Application {
     @Column(name = "scoring_result")
     private String scoringResult;
 
+    @Column(name = "audit_log")
+    private String auditLog;
+
+    public String getAuditLog() {
+        return auditLog;
+    }
+
+    public void setAuditLog(String auditLog) {
+        this.auditLog = auditLog;
+    }
+
     public Long getId() {
         return id;
     }

@@ -1,7 +1,6 @@
 package se.comerit.resurs.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +11,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import se.comerit.resurs.model.Application;
+import se.comerit.resurs.model.Company;
+import se.comerit.resurs.model.Document;
+import se.comerit.resurs.repository.ApplicationRepository;
+import se.comerit.resurs.repository.CompanyRepository;
+import se.comerit.resurs.repository.DocumentRepository;
+import java.util.Optional;
 
 /**
  * StatusController – Visar ansökningsstatus med hårdkodade ETAer.
@@ -26,7 +32,11 @@ import java.util.Map;
 public class StatusController {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private ApplicationRepository applicationRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
+    @Autowired
+    private DocumentRepository documentRepository;
 
     @GetMapping("/status/{applicationId}")
     public String showStatus(@PathVariable("applicationId") Long applicationId,
@@ -35,19 +45,17 @@ public class StatusController {
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return "redirect:/login";
 
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.*, c.company_name, c.org_number " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id " +
-            "WHERE a.id = ?",
-            applicationId
-        );
+        Optional<Application> appOpt = applicationRepository.findById(applicationId);
 
-        if (apps.isEmpty()) {
+        if (appOpt.isEmpty()) {
             return "redirect:/applications";
         }
 
-        Map<String, Object> app = apps.get(0);
-        String currentStatus = (String) app.get("status");
+        Application app = appOpt.get();
+        String currentStatus = app.getStatus();
+
+        Optional<Company> companyOpt = companyRepository.findById(app.getCompanyId());
+        Company company = companyOpt.orElse(null);
 
         // Hårdkodade ETA-steg — oavsett vilket steg ansökan faktiskt är på
         // TODO: beräkna dynamiskt baserat på skapelsedatum och SLA
@@ -99,19 +107,15 @@ public class StatusController {
         steps.add(step4);
 
         model.addAttribute("application", app);
+        model.addAttribute("company", company);
         model.addAttribute("steps", steps);
         model.addAttribute("currentStatus", currentStatus);
 
-        // Fetch documents
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ? ORDER BY uploaded_at DESC",
-            applicationId
-        );
+        List<Document> docs = documentRepository.findByApplicationIdOrderByUploadedAtDesc(applicationId);
         model.addAttribute("documents", docs);
 
         // Pass audit log raw — template renders it with manual string parsing
-        model.addAttribute("auditLogRaw", app.get("audit_log"));
-
+        model.addAttribute("auditLogRaw", app.getAuditLog());
         return "status";
     }
 
