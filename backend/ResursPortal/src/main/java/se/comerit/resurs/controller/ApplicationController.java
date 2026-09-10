@@ -20,6 +20,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import se.comerit.resurs.model.Application;
+import se.comerit.resurs.model.Company;
+import se.comerit.resurs.repository.ApplicationRepository;
+import se.comerit.resurs.repository.CompanyRepository;
+import java.util.Optional;
 
 /**
  * ApplicationController – Hanterar kreditansökningar.
@@ -41,6 +46,11 @@ public class ApplicationController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     // ============================================================
     // GET /apply — visa ansökningsformulär
@@ -786,29 +796,21 @@ public class ApplicationController {
     // ============================================================
     @GetMapping("/applications")
     public String listApplications(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return "redirect:/login";
         if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        // Get companyId via orgNumber — no caching, hits DB every time
-        List<Map<String, Object>> companyRows = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
-        );
+        Optional<Company> companyOpt = companyRepository.findByOrgNumber(orgNumber);
 
-        if (companyRows.isEmpty()) {
+        if (companyOpt.isEmpty()) {
             model.addAttribute("applications", java.util.Collections.emptyList());
             return "applications";
         }
 
-        long companyId = ((Number) companyRows.get(0).get("id")).longValue();
+        Long companyId = companyOpt.get().getId();
 
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at, a.updated_at " +
-            "FROM applications a WHERE a.company_id = ? ORDER BY a.created_at DESC",
-            companyId
-        );
+        List<Application> apps = applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyId);
 
         model.addAttribute("applications", apps);
         model.addAttribute("companyName", session.getAttribute("companyName"));
@@ -820,35 +822,28 @@ public class ApplicationController {
     // ============================================================
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return "redirect:/login";
         if (!"company".equals(session.getAttribute("role"))) return "redirect:/backoffice";
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        List<Map<String, Object>> companyRows = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
-        );
+        Optional<Company> companyOpt = companyRepository.findByOrgNumber(orgNumber);
 
-        if (companyRows.isEmpty()) {
+        if (companyOpt.isEmpty()) {
             model.addAttribute("applications", java.util.Collections.emptyList());
             model.addAttribute("companyName", session.getAttribute("companyName"));
             return "dashboard";
         }
 
-        long companyId = ((Number) companyRows.get(0).get("id")).longValue();
+        Long companyId = companyOpt.get().getId();
 
-        // Count applications by status
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at " +
-            "FROM applications a WHERE a.company_id = ? ORDER BY a.created_at DESC LIMIT 5",
-            companyId
-        );
+        List<Application> apps = applicationRepository.findTop5ByCompanyIdOrderByCreatedAtDesc(companyId);
 
         model.addAttribute("applications", apps);
         model.addAttribute("companyName", session.getAttribute("companyName"));
         return "dashboard";
     }
+
 
     // ============================================================
     // Helper: formatera status som svensk text
