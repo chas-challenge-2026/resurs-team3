@@ -167,28 +167,18 @@ public class ApplicationController {
         // No transaction — three separate INSERTs follow
         // TODO: wrap in @Transactional
         // ===========================================================
-        List<Map<String, Object>> existingCompany = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
-        );
+        Optional<Company> existingCompanyOpt = companyRepository.findByOrgNumber(orgNumber);
 
-        long companyId;
-        if (existingCompany.isEmpty()) {
-            // INSERT company — PII in plaintext, no encryption
-            // TODO: encrypt PII before go-live
-            KeyHolder companyKeyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(con -> {
-                PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES (?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS
-                );
-                ps.setString(1, orgNumber);
-                ps.setString(2, companyName);
-                ps.setString(3, authorizedSignatory);
-                return ps;
-            }, companyKeyHolder);
-            companyId = companyKeyHolder.getKey().longValue();
+        Long companyId;
+        if (existingCompanyOpt.isEmpty()) {
+            Company newCompany = new Company();
+            newCompany.setOrgNumber(orgNumber);
+            newCompany.setCompanyName(companyName);
+            newCompany.setAuthorizedSignatory(authorizedSignatory);
+            Company savedCompany = companyRepository.save(newCompany);
+            companyId = savedCompany.getId();
         } else {
-            companyId = ((Number) existingCompany.get(0).get("id")).longValue();
+            companyId = existingCompanyOpt.get().getId();
         }
 
         session.setAttribute("companyId", companyId);
@@ -220,14 +210,14 @@ public class ApplicationController {
             // Hard reject threshold — magic number
             hardReject = true;
             decisionReason.append("AVSLAG: Soliditet för låg (").append(String.format("%.2f", soliditet))
-                          .append(" < 0.20 gräns). ");
+                    .append(" < 0.20 gräns). ");
             scoringLog.append(" [REJECT]");
             kreditPoang -= 40;
         } else if (soliditet < 0.25) {
             // Flag threshold — different magic number from above
             flagCount++;
             decisionReason.append("VARNING: Soliditet låg (").append(String.format("%.2f", soliditet))
-                          .append(", rekommenderad miniminivå 0.25). ");
+                    .append(", rekommenderad miniminivå 0.25). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 20;
         } else {
@@ -248,7 +238,7 @@ public class ApplicationController {
         if (likviditetsgrad < 1.0) {
             flagCount++;
             decisionReason.append("VARNING: Likviditetsgrad under 1.0 (").append(String.format("%.2f", likviditetsgrad))
-                          .append("). Kortfristiga skulder överstiger omsättningstillgångar. ");
+                    .append("). Kortfristiga skulder överstiger omsättningstillgångar. ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 15;
         } else if (likviditetsgrad >= 2.0) {
@@ -273,14 +263,14 @@ public class ApplicationController {
             // Hard reject — magic number 3.0
             hardReject = true;
             decisionReason.append("AVSLAG: Skuldsättningsgrad för hög (").append(String.format("%.2f", skuldsattningsgrad))
-                          .append(" > 3.0). ");
+                    .append(" > 3.0). ");
             scoringLog.append(" [REJECT]");
             kreditPoang -= 35;
         } else if (skuldsattningsgrad > 2.0) {
             // Flag — different magic number than reject threshold
             flagCount++;
             decisionReason.append("VARNING: Skuldsättningsgrad hög (").append(String.format("%.2f", skuldsattningsgrad))
-                          .append(", rekommenderas under 2.0). ");
+                    .append(", rekommenderas under 2.0). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 15;
         } else {
@@ -302,17 +292,17 @@ public class ApplicationController {
             // Flag — magic number 0.02 (2%)
             flagCount++;
             decisionReason.append("VARNING: Rörelseresultatmarginal låg (")
-                          .append(String.format("%.2f", rorelsemarginal * 100)).append("%, rekommenderas över 2%). ");
+                    .append(String.format("%.2f", rorelsemarginal * 100)).append("%, rekommenderas över 2%). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 10;
         } else if (rorelsemarginal >= 0.10) {
             decisionReason.append("Rörelseresultatmarginal god (")
-                          .append(String.format("%.2f", rorelsemarginal * 100)).append("%). ");
+                    .append(String.format("%.2f", rorelsemarginal * 100)).append("%). ");
             scoringLog.append(" [GOOD]");
             kreditPoang += 8;
         } else {
             decisionReason.append("Rörelseresultatmarginal godkänd (")
-                          .append(String.format("%.2f", rorelsemarginal * 100)).append("%). ");
+                    .append(String.format("%.2f", rorelsemarginal * 100)).append("%). ");
             scoringLog.append(" [OK]");
         }
 
@@ -329,7 +319,7 @@ public class ApplicationController {
         if (likviditetsgrad < 1.2 && likviditetsgrad >= 1.0) {
             flagCount++;
             decisionReason.append("VARNING: Likviditetsgrad nära minimigräns (")
-                          .append(String.format("%.2f", likviditetsgrad)).append(" < 1.2). ");
+                    .append(String.format("%.2f", likviditetsgrad)).append(" < 1.2). ");
             scoringLog.append(", likviditet_marginal [FLAGGED]");
             kreditPoang -= 8;
         }
@@ -411,7 +401,7 @@ public class ApplicationController {
             branschFaktor = 1.0; // default fallback
         }
         scoringLog.append(", bransch=").append(bransch.isEmpty() ? "OKÄND" : bransch)
-                  .append("(faktor=").append(String.format("%.2f", branschFaktor)).append(")");
+                .append("(faktor=").append(String.format("%.2f", branschFaktor)).append(")");
 
         // Branschjusterad soliditetskontroll — BARA detta check använder branschFaktor
         // Inkonsekvent: soliditet-check ovan använder fast 0.20/0.25, inte branschjusterad
@@ -419,8 +409,8 @@ public class ApplicationController {
         if (soliditet < branschJusteradSoliditetGrans) {
             flagCount++;
             decisionReason.append("VARNING: Soliditet understiger branschjusterad gräns (")
-                          .append(String.format("%.2f", branschJusteradSoliditetGrans))
-                          .append(" för bransch ").append(bransch).append("). ");
+                    .append(String.format("%.2f", branschJusteradSoliditetGrans))
+                    .append(" för bransch ").append(bransch).append("). ");
             scoringLog.append(", bransch_soliditet [FLAGGED]");
             kreditPoang -= 8;
         }
@@ -473,8 +463,8 @@ public class ApplicationController {
             if (soliditet < snittSoliditet * 0.75) { // magic number 0.75 — "75% av branschsnitt"
                 flagCount++;
                 decisionReason.append("VARNING: Soliditet betydligt under branschsnitt för ")
-                              .append(bransch).append(" (snitt=").append(String.format("%.2f", snittSoliditet))
-                              .append("). ");
+                        .append(bransch).append(" (snitt=").append(String.format("%.2f", snittSoliditet))
+                        .append("). ");
                 scoringLog.append(", under_branschsnitt_soliditet [FLAGGED]");
                 kreditPoang -= 6;
             }
@@ -485,7 +475,7 @@ public class ApplicationController {
             if (rorelsemarginal < snittMarginal * 0.5) { // magic number 0.5 — inkonsekvent med 0.75 ovan
                 flagCount++;
                 decisionReason.append("VARNING: Rörelsemarginal under 50% av branschsnitt för ")
-                              .append(bransch).append(". ");
+                        .append(bransch).append(". ");
                 scoringLog.append(", under_branschsnitt_marginal [FLAGGED]");
                 kreditPoang -= 5;
             }
@@ -506,21 +496,21 @@ public class ApplicationController {
             // Negativt operativt kassaflöde — hård avvisning
             hardReject = true;
             decisionReason.append("AVSLAG: Negativt operativt kassaflöde (kassaflödeskvot=")
-                          .append(String.format("%.3f", kassaflodeKvot)).append("). ");
+                    .append(String.format("%.3f", kassaflodeKvot)).append("). ");
             scoringLog.append(" [REJECT]");
             kreditPoang -= 30;
         } else if (kassaflodeKvot < 0.05) {
             // magic number 0.05 — men 0.08 används i check nedanför
             flagCount++;
             decisionReason.append("VARNING: Kassaflödeskvot låg (").append(String.format("%.3f", kassaflodeKvot))
-                          .append(" < 0.05). ");
+                    .append(" < 0.05). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 12;
         } else if (kassaflodeKvot < 0.08) {
             // inkonsekvent med 0.05 ovan — borde vara samma gräns
             flagCount++;
             decisionReason.append("VARNING: Kassaflödeskvot under rekommenderad nivå (")
-                          .append(String.format("%.3f", kassaflodeKvot)).append(" < 0.08, inkonsekvent med gräns 0.05 ovan). ");
+                    .append(String.format("%.3f", kassaflodeKvot)).append(" < 0.08, inkonsekvent med gräns 0.05 ovan). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 6;
         } else {
@@ -533,7 +523,7 @@ public class ApplicationController {
         if (investeringsKassaflode < -nettoomsattning * 0.3) { // magic number 0.3
             flagCount++;
             decisionReason.append("VARNING: Högt negativt investeringskassaflöde (")
-                          .append(String.format("%.0f", investeringsKassaflode)).append(" kr). ");
+                    .append(String.format("%.0f", investeringsKassaflode)).append(" kr). ");
             scoringLog.append(", inv_kassaflode [FLAGGED]");
             kreditPoang -= 4;
         }
@@ -556,14 +546,14 @@ public class ApplicationController {
             // Hard reject — magic number 1.5
             hardReject = true;
             decisionReason.append("AVSLAG: Räntetäckningsgrad under 1.5 (")
-                          .append(String.format("%.2f", ranteTackningsgrad)).append("). Rörelseresultat täcker ej räntekostnader. ");
+                    .append(String.format("%.2f", ranteTackningsgrad)).append("). Rörelseresultat täcker ej räntekostnader. ");
             scoringLog.append(" [REJECT]");
             kreditPoang -= 35;
         } else if (ranteTackningsgrad < 2.5) {
             // Flag — magic number 2.5, inkonsekvent med hardReject-gränsen 1.5
             flagCount++;
             decisionReason.append("VARNING: Räntetäckningsgrad låg (").append(String.format("%.2f", ranteTackningsgrad))
-                          .append(" < 2.5, rekommenderas minst 2.5). ");
+                    .append(" < 2.5, rekommenderas minst 2.5). ");
             scoringLog.append(" [FLAGGED]");
             kreditPoang -= 15;
         } else if (ranteTackningsgrad >= 999) {
@@ -586,8 +576,8 @@ public class ApplicationController {
             // dubbel riskindikator — magic numbers inkonsekvent med individuella checks ovan
             flagCount++;
             decisionReason.append("VARNING: Dubbel riskindikator — låg soliditet (")
-                          .append(String.format("%.2f", soliditet)).append(") kombinerat med hög skuldsättning (")
-                          .append(String.format("%.2f", skuldsattningsgrad)).append("). ");
+                    .append(String.format("%.2f", soliditet)).append(") kombinerat med hög skuldsättning (")
+                    .append(String.format("%.2f", skuldsattningsgrad)).append("). ");
             scoringLog.append(", kombinationsrisk_soliditet_skuld [FLAGGED]");
             kreditPoang -= 18;
         }
@@ -604,8 +594,8 @@ public class ApplicationController {
         if (requestedAmount.doubleValue() > nettoomsattning) {
             flagCount++;
             decisionReason.append("VARNING: Kreditbelopp överstiger årsoms. (")
-                          .append(String.format("%.0f", requestedAmount.doubleValue()))
-                          .append(" kr > ").append(String.format("%.0f", nettoomsattning)).append(" kr). ");
+                    .append(String.format("%.0f", requestedAmount.doubleValue()))
+                    .append(" kr > ").append(String.format("%.0f", nettoomsattning)).append(" kr). ");
             scoringLog.append(", kredit_vs_omsattning [FLAGGED]");
             kreditPoang -= 8;
         }
@@ -671,35 +661,20 @@ public class ApplicationController {
         // TODO: wrap in @Transactional
         // ===========================================================
         String initialAuditLog = "[{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + orgNumber + "\"}]";
+                + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + orgNumber + "\"}]";
 
-        KeyHolder appKeyHolder = new GeneratedKeyHolder();
-        final long finalCompanyId = companyId;
-        final String finalScoringLog = scoringLog.toString();
-        final String finalDecision = decision;
-        final String finalStatus = status;
-        final String finalDecisionReason = decisionReason.toString();
-        final String finalAuditLog = initialAuditLog;
-        final BigDecimal finalAmount = requestedAmount;
+        Application newApplication = new Application();
+        newApplication.setCompanyId(companyId);
+        newApplication.setRequestedAmount(requestedAmount);
+        newApplication.setPurpose(purpose);
+        newApplication.setStatus(status);
+        newApplication.setDecision(decision.equals("REVIEW") ? null : decision);
+        newApplication.setDecisionReason(decisionReason.toString());
+        newApplication.setScoringResult(scoringLog.toString());
+        newApplication.setAuditLog(initialAuditLog);
 
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO applications (company_id, requested_amount, purpose, status, decision, decision_reason, scoring_result, audit_log) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
-            ps.setLong(1, finalCompanyId);
-            ps.setBigDecimal(2, finalAmount);
-            ps.setString(3, purpose);
-            ps.setString(4, finalStatus);
-            ps.setString(5, finalDecision.equals("REVIEW") ? null : finalDecision);
-            ps.setString(6, finalDecisionReason);
-            ps.setString(7, finalScoringLog);
-            ps.setString(8, finalAuditLog);
-            return ps;
-        }, appKeyHolder);
-
-        long applicationId = appKeyHolder.getKey().longValue();
+        Application savedApplication = applicationRepository.save(newApplication);
+        Long applicationId = savedApplication.getId();
 
         // ===========================================================
         // INSERT 3: Uppdatera audit log med scoring-resultat
@@ -708,35 +683,24 @@ public class ApplicationController {
         // TODO: skapa separat audit_log-tabell med index
         // ===========================================================
         String scoringAuditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"SCORING_RUN\",\"result\":\"" + decision + "\",\"flags\":" + flagCount + "}";
+                + "\",\"action\":\"SCORING_RUN\",\"result\":\"" + decision + "\",\"flags\":" + flagCount + "}";
 
-        // Fetch current audit log blob
-        String currentAuditLog = jdbcTemplate.queryForObject(
-            "SELECT audit_log FROM applications WHERE id = ?",
-            String.class,
-            applicationId
-        );
-
-        // Append new entry — string manipulation on JSON blob, no proper JSON library
+        String currentAuditLog = savedApplication.getAuditLog();
         String updatedAuditLog;
         if (currentAuditLog == null || currentAuditLog.equals("[]")) {
             updatedAuditLog = "[" + scoringAuditEntry + "]";
         } else {
-            // Strip trailing ] and append
             updatedAuditLog = currentAuditLog.substring(0, currentAuditLog.lastIndexOf("]"))
-                + "," + scoringAuditEntry + "]";
+                    + "," + scoringAuditEntry + "]";
         }
 
-        jdbcTemplate.update(
-            "UPDATE applications SET audit_log = ?, updated_at = NOW() WHERE id = ?",
-            updatedAuditLog,
-            applicationId
-        );
+        savedApplication.setAuditLog(updatedAuditLog);
+        applicationRepository.save(savedApplication);
         // End of INSERT 3 — still no transaction around all three operations
 
         return "redirect:/application/" + applicationId;
-    }
 
+    }
     // ============================================================
     // GET /application/{id} — visa enskild ansökan
     // ============================================================
