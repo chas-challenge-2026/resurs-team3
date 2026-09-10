@@ -26,6 +26,9 @@ import se.comerit.resurs.repository.ApplicationRepository;
 import se.comerit.resurs.repository.CompanyRepository;
 import java.util.Optional;
 
+import se.comerit.resurs.model.Document;
+import se.comerit.resurs.repository.DocumentRepository;
+
 /**
  * ApplicationController – Hanterar kreditansökningar.
  *
@@ -49,8 +52,12 @@ public class ApplicationController {
 
     @Autowired
     private CompanyRepository companyRepository;
+
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private DocumentRepository documentRepository;
 
     // ============================================================
     // GET /apply — visa ansökningsformulär
@@ -737,55 +744,39 @@ public class ApplicationController {
     public String viewApplication(@PathVariable("id") Long id,
                                   HttpSession session,
                                   Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return "redirect:/login";
 
         String role = (String) session.getAttribute("role");
 
-        List<Map<String, Object>> apps;
+        Optional<Application> appOpt;
         if ("caseWorker".equals(role)) {
-            apps = jdbcTemplate.queryForList(
-                "SELECT a.*, c.org_number, c.company_name, c.authorized_signatory " +
-                "FROM applications a JOIN companies c ON a.company_id = c.id " +
-                "WHERE a.id = ?", id
-            );
+            appOpt = applicationRepository.findById(id);
         } else {
-            // Company can only see their own applications
             Long companyId = (Long) session.getAttribute("companyId");
             if (companyId == null) {
-                // Try to find companyId from orgNumber
                 String orgNumber = (String) session.getAttribute("orgNumber");
-                List<Map<String, Object>> cRows = jdbcTemplate.queryForList(
-                    "SELECT id FROM companies WHERE org_number = ?", orgNumber
-                );
-                if (cRows.isEmpty()) return "redirect:/apply";
-                companyId = ((Number) cRows.get(0).get("id")).longValue();
+                Optional<Company> companyLookup = companyRepository.findByOrgNumber(orgNumber);
+                if (companyLookup.isEmpty()) return "redirect:/apply";
+                companyId = companyLookup.get().getId();
                 session.setAttribute("companyId", companyId);
             }
-            apps = jdbcTemplate.queryForList(
-                "SELECT a.*, c.org_number, c.company_name, c.authorized_signatory " +
-                "FROM applications a JOIN companies c ON a.company_id = c.id " +
-                "WHERE a.id = ? AND a.company_id = ?", id, companyId
-            );
+            appOpt = applicationRepository.findByIdAndCompanyId(id, companyId);
         }
 
-        if (apps.isEmpty()) {
+        if (appOpt.isEmpty()) {
             model.addAttribute("error", "Ansökan hittades inte.");
             return "redirect:/applications";
         }
 
-        Map<String, Object> app = apps.get(0);
+        Application app = appOpt.get();
+        Company company = companyRepository.findById(app.getCompanyId()).orElse(null);
+
         model.addAttribute("application", app);
+        model.addAttribute("company", company);
         model.addAttribute("role", role);
+        model.addAttribute("auditLogRaw", app.getAuditLog());
 
-        // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("audit_log");
-        model.addAttribute("auditLogRaw", auditLogBlob);
-
-        // Fetch documents for this application
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ?", id
-        );
+        List<Document> docs = documentRepository.findByApplicationIdOrderByUploadedAtDesc(id);
         model.addAttribute("documents", docs);
 
         return "status";
