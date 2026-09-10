@@ -1,0 +1,4 @@
+*.o
+*.so
+*.a
+tests/test_resurs_crypto
