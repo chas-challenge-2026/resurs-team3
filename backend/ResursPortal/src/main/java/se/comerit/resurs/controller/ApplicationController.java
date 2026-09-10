@@ -1,71 +1,54 @@
 package se.comerit.resurs.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import se.comerit.resurs.service.ApplicationService;
+import se.comerit.resurs.service.ScoringResult;
 import se.comerit.resurs.service.ScoringService;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import se.comerit.resurs.service.ScoringResult;
 
-/**
- * ApplicationController – Hanterar kreditansökningar.
- *
- * VARNING: Denna klass innehåller avsiktliga anti-patterns för pedagogiskt syfte.
- * Se docs/known-bugs.md för fullständig lista.
- *
- * Anti-patterns inkluderar:
- *  - JdbcTemplate direkt i kontrollern (ingen service/repository-lager)
- *  - Inline scoring-logik (800+ rader i en metod)
- *  - Audit log som JSON-blob i en kolumn
- *  - Ingen transaktion vid ansökningsskapande
- *  - PII i klartext
- *  - Session-check copy-pasteat i varje metod
- *  - Magic numbers spridda i scoring-logiken
- */
 @Controller
 public class ApplicationController {
-    private final ScoringService scoringService;
 
-    public ApplicationController(ScoringService scoringService) {
+    private final ScoringService scoringService;
+    private final ApplicationService applicationService;
+
+    public ApplicationController(
+            ScoringService scoringService,
+            ApplicationService applicationService
+    ) {
         this.scoringService = scoringService;
+        this.applicationService = applicationService;
     }
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    // ============================================================
-    // GET /apply — visa ansökningsformulär
-    // ============================================================
     @GetMapping("/apply")
     public String showApplyForm(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
+
+        if (session.getAttribute("userId") == null) {
+            return "redirect:/login";
+        }
+
+        if (!"company".equals(session.getAttribute("role"))) {
+            return "redirect:/login";
+        }
 
         model.addAttribute("companyName", session.getAttribute("companyName"));
         model.addAttribute("orgNumber", session.getAttribute("orgNumber"));
+
         return "apply";
     }
 
-    // ============================================================
-    // POST /apply — skapa ansökan + kör scoring inline
-    // ============================================================
     @PostMapping("/apply")
     public String submitApplication(
             @RequestParam("orgNumber") String orgNumber,
@@ -80,81 +63,70 @@ public class ApplicationController {
             @RequestParam("nettoomsattning") String nettoomsattningStr,
             @RequestParam("requestedAmount") String requestedAmountStr,
             @RequestParam("purpose") String purpose,
-            @RequestParam(value = "operativtKassaflode", defaultValue = "") String operativtKassaflodeStr,
-            @RequestParam(value = "investeringsKassaflode", defaultValue = "") String investeringsKassaflodeStr,
-            @RequestParam(value = "ranteKostnader", defaultValue = "") String ranteKostnaderStr,
-            @RequestParam(value = "bransch", defaultValue = "") String bransch,
+            @RequestParam(value = "operativtKassaflode", defaultValue = "")
+            String operativtKassaflodeStr,
+            @RequestParam(value = "investeringsKassaflode", defaultValue = "")
+            String investeringsKassaflodeStr,
+            @RequestParam(value = "ranteKostnader", defaultValue = "")
+            String ranteKostnaderStr,
+            @RequestParam(value = "bransch", defaultValue = "")
+            String bransch,
             HttpSession session,
-            Model model) {
-        System.out.println(">>> submitApplication reached");
+            Model model
+    ) {
 
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
+        if (session.getAttribute("userId") == null) {
+            return "redirect:/login";
+        }
 
-        // TODO: encrypt PII before go-live
-        // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
-        // No validation or sanitization of inputs
+        if (!"company".equals(session.getAttribute("role"))) {
+            return "redirect:/login";
+        }
 
-        // ---- Parse financial inputs (no proper error handling) ----
-        double egetKapital = 0;
-        double totaltKapital = 0;
-        double omsattningstillgangar = 0;
-        double kortfristigaSkulder = 0;
-        double totalaSkulder = 0;
-        double rorelseresultat = 0;
-        double nettoomsattning = 0;
-        BigDecimal requestedAmount = BigDecimal.ZERO;
+        double egetKapital;
+        double totaltKapital;
+        double omsattningstillgangar;
+        double kortfristigaSkulder;
+        double totalaSkulder;
+        double rorelseresultat;
+        double nettoomsattning;
+        BigDecimal requestedAmount;
 
         try {
-            egetKapital = Double.parseDouble(egetKapitalStr.replace(",", ".").trim());
-            totaltKapital = Double.parseDouble(totaltKapitalStr.replace(",", ".").trim());
-            omsattningstillgangar = Double.parseDouble(omsattningstillgangarStr.replace(",", ".").trim());
-            kortfristigaSkulder = Double.parseDouble(kortfristigaSkulderStr.replace(",", ".").trim());
-            totalaSkulder = Double.parseDouble(totalaSkulderStr.replace(",", ".").trim());
-            rorelseresultat = Double.parseDouble(rorelseresultatStr.replace(",", ".").trim());
-            nettoomsattning = Double.parseDouble(nettoomsattningStr.replace(",", ".").trim());
-            requestedAmount = new BigDecimal(requestedAmountStr.replace(",", ".").trim());
+            egetKapital = parseDouble(egetKapitalStr);
+            totaltKapital = parseDouble(totaltKapitalStr);
+            omsattningstillgangar = parseDouble(omsattningstillgangarStr);
+            kortfristigaSkulder = parseDouble(kortfristigaSkulderStr);
+            totalaSkulder = parseDouble(totalaSkulderStr);
+            rorelseresultat = parseDouble(rorelseresultatStr);
+            nettoomsattning = parseDouble(nettoomsattningStr);
+
+            requestedAmount = new BigDecimal(
+                    requestedAmountStr.replace(",", ".").trim()
+            );
+
         } catch (NumberFormatException e) {
-            model.addAttribute("error", "Ogiltiga numeriska värden. Kontrollera dina inmatningar.");
+
+            model.addAttribute(
+                    "error",
+                    "Ogiltiga numeriska värden. Kontrollera dina inmatningar."
+            );
+
             model.addAttribute("companyName", companyName);
             model.addAttribute("orgNumber", orgNumber);
+
             return "apply";
         }
 
-        // Parse new optional params — om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-        double operativtKassaflode = 0.0;
-        try {
-            if (!operativtKassaflodeStr.isEmpty()) {
-                operativtKassaflode = Double.parseDouble(operativtKassaflodeStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            operativtKassaflode = 0.0;
-        }
+        double operativtKassaflode =
+                parseOptionalDouble(operativtKassaflodeStr);
 
-        double investeringsKassaflode = 0.0;
-        try {
-            if (!investeringsKassaflodeStr.isEmpty()) {
-                investeringsKassaflode = Double.parseDouble(investeringsKassaflodeStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            investeringsKassaflode = 0.0;
-        }
+        double investeringsKassaflode =
+                parseOptionalDouble(investeringsKassaflodeStr);
 
-        double ranteKostnader = 0.0;
-        try {
-            if (!ranteKostnaderStr.isEmpty()) {
-                ranteKostnader = Double.parseDouble(ranteKostnaderStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            ranteKostnader = 0.0;
-        }
-        // ===========================================================
-        // INSERT 1: Upsert company
-        // ===========================================================
+        double ranteKostnader =
+                parseOptionalDouble(ranteKostnaderStr);
+
         ScoringResult scoringResult = scoringService.evaluate(
                 egetKapital,
                 totaltKapital,
@@ -169,319 +141,258 @@ public class ApplicationController {
                 ranteKostnader,
                 bransch
         );
-        // ===========================================================
-        // INSERT 1: Upsert company
-        // ===========================================================
 
-
-        // ===========================================================
-        // INSERT 1: Upsert company (no ON CONFLICT — just check first)
-        // No transaction — three separate INSERTs follow
-        // TODO: wrap in @Transactional
-        // ===========================================================
-        List<Map<String, Object>> existingCompany = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
+        long companyId = applicationService.findOrCreateCompany(
+                orgNumber,
+                companyName,
+                authorizedSignatory
         );
-
-        long companyId;
-        if (existingCompany.isEmpty()) {
-            // INSERT company — PII in plaintext, no encryption
-            // TODO: encrypt PII before go-live
-            KeyHolder companyKeyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(con -> {
-                PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES (?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS
-                );
-                ps.setString(1, orgNumber);
-                ps.setString(2, companyName);
-                ps.setString(3, authorizedSignatory);
-                return ps;
-            }, companyKeyHolder);
-            companyId = companyKeyHolder.getKey().longValue();
-        } else {
-            companyId = ((Number) existingCompany.get(0).get("id")).longValue();
-        }
 
         session.setAttribute("companyId", companyId);
 
-        // ===========================================================
-        // SCORING ENGINE — giant if-else chain, all inline, no service
-        // Magic numbers scattered inconsistently throughout
-        // See docs/known-bugs.md for the full list of issues
-        // ===========================================================
         String decision = scoringResult.getDecision();
         String status = scoringResult.getStatus();
         String decisionReason = scoringResult.getDecisionReason();
         String scoringLog = scoringResult.getScoringLog();
         int flagCount = scoringResult.getFlagCount();
 
-        // ===========================================================
-        // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
-        // TODO: wrap in @Transactional
-        // ===========================================================
-        String initialAuditLog = "[{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + orgNumber + "\"}]";
+        String initialAuditLog =
+                "[{\"ts\":\"" +
+                        LocalDateTime.now()
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) +
+                        "\",\"action\":\"APPLICATION_CREATED\"," +
+                        "\"orgNumber\":\"" + orgNumber + "\"}]";
 
-        KeyHolder appKeyHolder = new GeneratedKeyHolder();
-        final long finalCompanyId = companyId;
-        final String finalScoringLog = scoringLog;
-        final String finalDecisionReason = decisionReason;
-        final String finalDecision = decision;
-        final String finalStatus = status;
-        final String finalAuditLog = initialAuditLog;
-        final BigDecimal finalAmount = requestedAmount;
-
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO applications (company_id, requested_amount, purpose, status, decision, decision_reason, scoring_result, audit_log) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
-            ps.setLong(1, finalCompanyId);
-            ps.setBigDecimal(2, finalAmount);
-            ps.setString(3, purpose);
-            ps.setString(4, finalStatus);
-            ps.setString(5, finalDecision.equals("REVIEW") ? null : finalDecision);
-            ps.setString(6, finalDecisionReason);
-            ps.setString(7, finalScoringLog);
-            ps.setString(8, finalAuditLog);
-            return ps;
-        }, appKeyHolder);
-
-        long applicationId = appKeyHolder.getKey().longValue();
-
-        // ===========================================================
-        // INSERT 3: Uppdatera audit log med scoring-resultat
-        // Hämtar blob, deserialiserar, lägger till, re-serialiserar
-        // Ingen index, ingen separat tabell — allt i en JSON-blob
-        // TODO: skapa separat audit_log-tabell med index
-        // ===========================================================
-        String scoringAuditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"SCORING_RUN\",\"result\":\"" + decision + "\",\"flags\":" + flagCount + "}";
-
-        // Fetch current audit log blob
-        String currentAuditLog = jdbcTemplate.queryForObject(
-            "SELECT audit_log FROM applications WHERE id = ?",
-            String.class,
-            applicationId
+        long applicationId = applicationService.createApplication(
+                companyId,
+                requestedAmount,
+                purpose,
+                status,
+                decision,
+                decisionReason,
+                scoringLog,
+                initialAuditLog
         );
 
-        // Append new entry — string manipulation on JSON blob, no proper JSON library
+        String scoringAuditEntry =
+                "{\"ts\":\"" +
+                        LocalDateTime.now()
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) +
+                        "\",\"action\":\"SCORING_RUN\"," +
+                        "\"result\":\"" + decision + "\"," +
+                        "\"flags\":" + flagCount + "}";
+
+        String currentAuditLog =
+                applicationService.getAuditLog(applicationId);
+
         String updatedAuditLog;
+
         if (currentAuditLog == null || currentAuditLog.equals("[]")) {
-            updatedAuditLog = "[" + scoringAuditEntry + "]";
+
+            updatedAuditLog =
+                    "[" + scoringAuditEntry + "]";
+
         } else {
-            // Strip trailing ] and append
-            updatedAuditLog = currentAuditLog.substring(0, currentAuditLog.lastIndexOf("]"))
-                + "," + scoringAuditEntry + "]";
+
+            updatedAuditLog =
+                    currentAuditLog.substring(
+                            0,
+                            currentAuditLog.lastIndexOf("]")
+                    )
+                            + ","
+                            + scoringAuditEntry
+                            + "]";
         }
 
-        jdbcTemplate.update(
-            "UPDATE applications SET audit_log = ?, updated_at = NOW() WHERE id = ?",
-            updatedAuditLog,
-            applicationId
+        applicationService.updateAuditLog(
+                applicationId,
+                updatedAuditLog
         );
-        // End of INSERT 3 — still no transaction around all three operations
 
         return "redirect:/application/" + applicationId;
     }
 
-    // ============================================================
-    // GET /application/{id} — visa enskild ansökan
-    // ============================================================
     @GetMapping("/application/{id}")
-    public String viewApplication(@PathVariable("id") Long id,
-                                  HttpSession session,
-                                  Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
+    public String viewApplication(
+            @PathVariable("id") Long id,
+            HttpSession session,
+            Model model
+    ) {
+
+        if (session.getAttribute("userId") == null) {
+            return "redirect:/login";
+        }
 
         String role = (String) session.getAttribute("role");
 
-        List<Map<String, Object>> apps;
+        List<Map<String, Object>> applications;
+
         if ("caseWorker".equals(role)) {
-            apps = jdbcTemplate.queryForList(
-                "SELECT a.*, c.org_number, c.company_name, c.authorized_signatory " +
-                "FROM applications a JOIN companies c ON a.company_id = c.id " +
-                "WHERE a.id = ?", id
-            );
+
+            applications =
+                    applicationService.getApplicationForCaseWorker(id);
+
         } else {
-            // Company can only see their own applications
-            Long companyId = (Long) session.getAttribute("companyId");
+
+            Long companyId =
+                    (Long) session.getAttribute("companyId");
+
             if (companyId == null) {
-                // Try to find companyId from orgNumber
-                String orgNumber = (String) session.getAttribute("orgNumber");
-                List<Map<String, Object>> cRows = jdbcTemplate.queryForList(
-                    "SELECT id FROM companies WHERE org_number = ?", orgNumber
-                );
-                if (cRows.isEmpty()) return "redirect:/apply";
-                companyId = ((Number) cRows.get(0).get("id")).longValue();
+
+                String orgNumber =
+                        (String) session.getAttribute("orgNumber");
+
+                companyId =
+                        applicationService.findCompanyIdByOrgNumber(orgNumber);
+
+                if (companyId == null) {
+                    return "redirect:/apply";
+                }
+
                 session.setAttribute("companyId", companyId);
             }
-            apps = jdbcTemplate.queryForList(
-                "SELECT a.*, c.org_number, c.company_name, c.authorized_signatory " +
-                "FROM applications a JOIN companies c ON a.company_id = c.id " +
-                "WHERE a.id = ? AND a.company_id = ?", id, companyId
-            );
+
+            applications =
+                    applicationService.getApplicationForCompany(
+                            id,
+                            companyId
+                    );
         }
 
-        if (apps.isEmpty()) {
-            model.addAttribute("error", "Ansökan hittades inte.");
+        if (applications.isEmpty()) {
             return "redirect:/applications";
         }
 
-        Map<String, Object> app = apps.get(0);
-        model.addAttribute("application", app);
-        model.addAttribute("role", role);
+        Map<String, Object> application =
+                applications.get(0);
 
-        // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("audit_log");
-        model.addAttribute("auditLogRaw", auditLogBlob);
-
-        // Fetch documents for this application
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ?", id
+        model.addAttribute(
+                "application",
+                application
         );
-        model.addAttribute("documents", docs);
+
+        model.addAttribute(
+                "role",
+                role
+        );
+
+        model.addAttribute(
+                "auditLogRaw",
+                application.get("audit_log")
+        );
+
+        model.addAttribute(
+                "documents",
+                applicationService.getDocuments(id)
+        );
 
         return "status";
     }
 
-    // ============================================================
-    // GET /applications — lista alla ansökningar för företaget
-    // ============================================================
     @GetMapping("/applications")
-    public String listApplications(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
+    public String listApplications(
+            HttpSession session,
+            Model model
+    ) {
 
-        String orgNumber = (String) session.getAttribute("orgNumber");
+        if (session.getAttribute("userId") == null) {
+            return "redirect:/login";
+        }
 
-        // Get companyId via orgNumber — no caching, hits DB every time
-        List<Map<String, Object>> companyRows = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
-        );
+        if (!"company".equals(session.getAttribute("role"))) {
+            return "redirect:/login";
+        }
 
-        if (companyRows.isEmpty()) {
-            model.addAttribute("applications", java.util.Collections.emptyList());
+        String orgNumber =
+                (String) session.getAttribute("orgNumber");
+
+        Long companyId =
+                applicationService.findCompanyIdByOrgNumber(orgNumber);
+
+        if (companyId == null) {
+
+            model.addAttribute(
+                    "applications",
+                    Collections.emptyList()
+            );
+
             return "applications";
         }
 
-        long companyId = ((Number) companyRows.get(0).get("id")).longValue();
-
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at, a.updated_at " +
-            "FROM applications a WHERE a.company_id = ? ORDER BY a.created_at DESC",
-            companyId
+        model.addAttribute(
+                "applications",
+                applicationService.getApplicationsForCompany(companyId)
         );
 
-        model.addAttribute("applications", apps);
-        model.addAttribute("companyName", session.getAttribute("companyName"));
+        model.addAttribute(
+                "companyName",
+                session.getAttribute("companyName")
+        );
+
         return "applications";
     }
 
-    // ============================================================
-    // GET /dashboard — startsida för inloggad företagsanvändare
-    // ============================================================
     @GetMapping("/dashboard")
-    public String dashboard(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/backoffice";
+    public String dashboard(
+            HttpSession session,
+            Model model
+    ) {
 
-        String orgNumber = (String) session.getAttribute("orgNumber");
-
-        List<Map<String, Object>> companyRows = jdbcTemplate.queryForList(
-            "SELECT id FROM companies WHERE org_number = '" + orgNumber + "'"
-        );
-
-        if (companyRows.isEmpty()) {
-            model.addAttribute("applications", java.util.Collections.emptyList());
-            model.addAttribute("companyName", session.getAttribute("companyName"));
-            return "dashboard";
+        if (session.getAttribute("userId") == null) {
+            return "redirect:/login";
         }
 
-        long companyId = ((Number) companyRows.get(0).get("id")).longValue();
+        if (!"company".equals(session.getAttribute("role"))) {
+            return "redirect:/backoffice";
+        }
 
-        // Count applications by status
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at " +
-            "FROM applications a WHERE a.company_id = ? ORDER BY a.created_at DESC LIMIT 5",
-            companyId
+        String orgNumber =
+                (String) session.getAttribute("orgNumber");
+
+        Long companyId =
+                applicationService.findCompanyIdByOrgNumber(orgNumber);
+
+        if (companyId == null) {
+
+            model.addAttribute(
+                    "applications",
+                    Collections.emptyList()
+            );
+
+        } else {
+
+            model.addAttribute(
+                    "applications",
+                    applicationService
+                            .getRecentApplicationsForCompany(companyId)
+            );
+        }
+
+        model.addAttribute(
+                "companyName",
+                session.getAttribute("companyName")
         );
 
-        model.addAttribute("applications", apps);
-        model.addAttribute("companyName", session.getAttribute("companyName"));
         return "dashboard";
     }
 
-    // ============================================================
-    // Helper: formatera status som svensk text
-    // Duplicerad logik — finns också i Thymeleaf-template
-    // TODO: använd en enumklass
-    // ============================================================
-    private String statusToSwedish(String status) {
-        if (status == null) return "Okänd";
-        switch (status) {
-            case "PENDING_DOCS": return "Väntar på dokument";
-            case "UNDER_REVIEW": return "Under granskning";
-            case "APPROVED": return "Godkänd";
-            case "REJECTED": return "Avslagen";
-            default: return status;
+    private double parseDouble(String value) {
+        return Double.parseDouble(
+                value.replace(",", ".").trim()
+        );
+    }
+
+    private double parseOptionalDouble(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+            return 0.0;
         }
-    }
 
-    // ============================================================
-    // Helper: bygg scoring-sammanfattning (inline, ingen service)
-    // Duplicerar logik från POST /apply — TODO: extrahera till service
-    // ============================================================
-    private String buildScoringExplanation(String scoringResult) {
-        if (scoringResult == null || scoringResult.isEmpty()) {
-            return "Ingen scoring tillgänglig.";
+        try {
+            return parseDouble(value);
+
+        } catch (NumberFormatException e) {
+            return 0.0;
         }
-        // Just return the raw string — no structured parsing
-        // TODO: parse properly and present user-friendly explanation
-        return scoringResult;
-    }
-
-    // ============================================================
-    // Unused leftover from early development — never removed
-    // TODO: ta bort eller flytta till en util-klass
-    // ============================================================
-    @Deprecated
-    private double calculateDebtRatio(double totalSkulder, double egetKapital) {
-        if (egetKapital == 0) return Double.MAX_VALUE;
-        return totalSkulder / egetKapital;
-    }
-
-    @Deprecated
-    private double calculateLiquidity(double omsattningstillgangar, double kortfristigaSkulder) {
-        if (kortfristigaSkulder == 0) return Double.MAX_VALUE;
-        return omsattningstillgangar / kortfristigaSkulder;
-    }
-
-    // More unused helpers from v0.1 — kept "just in case"
-    // TODO: delete before v2
-    private String formatAmount(BigDecimal amount) {
-        if (amount == null) return "0 kr";
-        return String.format("%,.0f kr", amount.doubleValue());
-    }
-
-    private boolean isHighRiskAmount(BigDecimal amount) {
-        // Magic number 2000000
-        return amount != null && amount.compareTo(new BigDecimal("2000000")) > 0;
-    }
-
-    // Another soliditet check — uses 0.15 this time (third different threshold!)
-    // This one is never actually called, but it's here
-    // TODO: unify all soliditet thresholds
-    private String soliditetCategory(double soliditet) {
-        if (soliditet < 0.15) return "KRITISK";
-        if (soliditet < 0.20) return "MYCKET_LAG";
-        if (soliditet < 0.25) return "LAG";
-        if (soliditet < 0.40) return "NORMAL";
-        return "GOD";
     }
 }
