@@ -1,5 +1,6 @@
 import { TextArea, TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
+import styles from './CreditDetailsStep.module.css'
 
 type CreditField = 'requestedAmount' | 'purpose'
 
@@ -14,13 +15,13 @@ export function CreditDetailsStep({
 }: CreditDetailsStepProps) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white">Kreditansökan</h2>
+      <h2 className={styles.heading}>Kreditansökan</h2>
 
-      <p className="mt-1 text-sm text-resurs-muted">
+      <p className={styles.description}>
         Ange önskat kreditbelopp och vad krediten ska användas till.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className={styles.fields}>
         <TextField
           label="Önskat kreditbelopp"
           type="number"

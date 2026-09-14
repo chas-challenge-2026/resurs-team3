@@ -1,5 +1,6 @@
 import { TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
+import styles from './CompanyDetailsStep.module.css'
 
 type CompanyField = 'orgNumber' | 'companyName' | 'authorizedSignatory'
 
@@ -14,12 +15,12 @@ export function CompanyDetailsStep({
 }: CompanyDetailsStepProps) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white">Företagsuppgifter</h2>
-      <p className="mt-1 text-sm text-resurs-muted">
+      <h2 className={styles.heading}>Företagsuppgifter</h2>
+      <p className={styles.description}>
         Ange uppgifter om företaget och behörig firmatecknare.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className={styles.fields}>
         <TextField
           label="Organisationsnummer"
           required

@@ -1,5 +1,6 @@
 import { useAuth } from '../../context/useAuth'
 import { Button } from '../../components/ui/Button'
+import styles from './WizardTopBar.module.css'
 
 interface WizardTopBarProps {
   title: string
@@ -12,18 +13,14 @@ export function WizardTopBar({ title }: WizardTopBarProps) {
   const initial = state.companyDisplayName.trim().charAt(0).toUpperCase() || '?'
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-xl font-extrabold text-white sm:text-2xl">{title}</h1>
-      <div className="flex items-center gap-3">
-        <div
-          role="img"
-          aria-label={state.companyDisplayName}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-resurs-orange text-sm font-bold text-resurs-onOrange"
-        >
+    <div className={styles.topBar}>
+      <h1 className={styles.title}>{title}</h1>
+      <div className={styles.identity}>
+        <div role="img" aria-label={state.companyDisplayName} className={styles.avatar}>
           {initial}
         </div>
-        <span className="hidden text-sm text-white/90 sm:inline">{state.companyDisplayName}</span>
-        <Button variant="primary" onClick={logout} className="px-3 py-1.5 text-xs">
+        <span className={styles.companyName}>{state.companyDisplayName}</span>
+        <Button variant="primary" onClick={logout} className={styles.logoutButton}>
           Logga ut
         </Button>
       </div>

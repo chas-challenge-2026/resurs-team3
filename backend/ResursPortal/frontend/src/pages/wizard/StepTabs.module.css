@@ -1,0 +1,73 @@
+.tabList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-resurs-panel);
+  padding: 0.25rem;
+}
+
+.tab {
+  min-height: 44px;
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  background-color: transparent;
+  border: none;
+}
+
+@media (min-width: 640px) {
+  .tab {
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Exactly one of these four applies at a time — active/completed/reachable/
+   locked are mutually exclusive states of one "tab status" axis, picked in
+   JS (see StepTabs.tsx) rather than layered as independent booleans. */
+.tabActive {
+  background-color: var(--color-resurs-orange);
+  color: var(--color-resurs-on-orange);
+  cursor: pointer;
+}
+
+.tabCompleted {
+  color: var(--color-resurs-orange);
+  cursor: pointer;
+}
+
+.tabCompleted:hover {
+  color: var(--color-resurs-yellow);
+}
+
+.tabReachable {
+  color: rgb(255 255 255 / 0.8);
+  cursor: pointer;
+}
+
+.tabReachable:hover {
+  color: #ffffff;
+}
+
+.tabLocked {
+  cursor: not-allowed;
+  color: rgb(255 255 255 / 0.3);
+}
+
+.checkIcon {
+  margin-right: 0.25rem;
+  display: inline;
+  height: 0.875rem;
+  width: 0.875rem;
+  vertical-align: -2px;
+}
