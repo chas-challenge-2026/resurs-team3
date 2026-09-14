@@ -7,8 +7,19 @@ import { CompanyDetailsStep } from '../../features/credit-application/steps/Comp
 import { FinancialMetricsStep } from '../../features/credit-application/steps/FinancialMetricsStep'
 import { CreditDetailsStep } from '../../features/credit-application/steps/CreditDetailsStep'
 import type { CreditApplicationData } from '../../features/credit-application/creditApplication.types'
+import { toCaseSubmission } from '../../features/credit-application/creditApplication.mapper'
 import { WizardTopBar } from './WizardTopBar'
 import { StepTabs } from './StepTabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/Dialog'
+import { joinClassNames } from '../../lib/joinClassNames'
+import styles from './WizardPage.module.css'
 
 const TOTAL_STEPS = 3
 
@@ -51,10 +62,10 @@ const OUTCOME_COPY: Record<ApplicationStatus, { heading: string; body: string }>
 }
 
 const STATUS_BADGE_CLASS: Record<ApplicationStatus, string> = {
-  APPROVED: 'bg-resurs-tealDark text-white',
-  REJECTED: 'bg-red-700 text-white',
-  UNDER_REVIEW: 'bg-resurs-orange text-resurs-onOrange',
-  PENDING_DOCS: 'bg-white/10 text-white',
+  APPROVED: styles.statusApproved,
+  REJECTED: styles.statusRejected,
+  UNDER_REVIEW: styles.statusUnderReview,
+  PENDING_DOCS: styles.statusPendingDocs,
 }
 
 /**
@@ -73,6 +84,7 @@ export function WizardPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [applicationData, setApplicationData] = useState<CreditApplicationData>(initialApplicationData)
   const [submittedCase, setSubmittedCase] = useState<CreditCase | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   function handleChange(field: keyof CreditApplicationData, value: string) {
     setApplicationData((currentData) => ({
@@ -94,36 +106,14 @@ export function WizardPage() {
   }
 
   function handleSubmit() {
-    const createdCase = addCase(
-      {
-        orgNumber: applicationData.orgNumber,
-        companyName: applicationData.companyName,
-        signatory: applicationData.authorizedSignatory,
-        // No terms checkbox in this flow yet (unlike the other project's
-        // Step1) — submitting the form is the only consent step there is.
-        acceptedTerms: true,
-      },
-      {
-        equity: applicationData.equity,
-        totalCapital: applicationData.totalCapital,
-        currentAssets: applicationData.currentAssets,
-        currentLiabilities: applicationData.shortTermLiabilities,
-        totalLiabilities: applicationData.totalDebt,
-        operatingProfit: applicationData.operatingProfit,
-        netRevenue: applicationData.netSales,
-        // Not collected in this flow's step 2 (the other project's optional
-        // "Kassaflöde och räntor" fields) — empty means "not provided" to
-        // the scoring engine, same as it does for the seeded mock cases.
-        operatingCashFlow: '',
-        investingCashFlow: '',
-        interestExpenses: '',
-      },
-      {
-        amount: applicationData.requestedAmount,
-        purpose: applicationData.purpose,
-      },
-    )
+    const { companyInfo, financials, creditRequest } = toCaseSubmission(applicationData)
+    const createdCase = addCase(companyInfo, financials, creditRequest)
     setSubmittedCase(createdCase)
+  }
+
+  function handleConfirmSubmit() {
+    handleSubmit()
+    setConfirmOpen(false)
   }
 
   function handleRestart() {
@@ -136,43 +126,41 @@ export function WizardPage() {
     <div>
       <WizardTopBar title="Ny kreditansökan" />
 
-      <div className="mt-6">
+      <div className={styles.stepTabsWrap}>
         <StepTabs currentStep={currentStep} onSelectStep={goToStep} />
       </div>
 
-      <div className="mt-6 rounded-lg bg-resurs-panel p-4 sm:p-6">
+      <div className={styles.panel}>
         {submittedCase ? (
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-lg font-extrabold text-white">{OUTCOME_COPY[submittedCase.status].heading}</h2>
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE_CLASS[submittedCase.status]}`}
-              >
+            <div className={styles.outcomeHeadingRow}>
+              <h2 className={styles.outcomeHeading}>{OUTCOME_COPY[submittedCase.status].heading}</h2>
+              <span className={joinClassNames(styles.statusBadge, STATUS_BADGE_CLASS[submittedCase.status])}>
                 {submittedCase.status}
               </span>
             </div>
-            <p className="mt-2 max-w-xl text-sm text-resurs-muted">
+            <p className={styles.outcomeBody}>
               Tack, {applicationData.companyName || 'kund'}. {OUTCOME_COPY[submittedCase.status].body}
             </p>
 
-            <div className="mt-4 max-w-xl rounded-md bg-resurs-card p-4 text-sm text-white/80">
-              <p className="font-semibold text-white">Motivering från kreditbedömningen</p>
-              <p className="mt-1.5 leading-relaxed">{submittedCase.scoringResult.decisionReason}</p>
+            <div className={styles.reasonPanel}>
+              <p className={styles.reasonLabel}>Motivering från kreditbedömningen</p>
+              <p className={styles.reasonText}>{submittedCase.scoringResult.decisionReason}</p>
             </div>
 
-            <div className="mt-6">
+            <div className={styles.restartWrap}>
               <Button type="button" variant="secondary" onClick={handleRestart}>
                 Starta ny ansökan
               </Button>
             </div>
           </div>
         ) : (
-          <div className="max-w-2xl">
+          <div className={styles.formWrap}>
             {currentStep === 1 ? <CompanyDetailsStep data={applicationData} onChange={handleChange} /> : null}
             {currentStep === 2 ? <FinancialMetricsStep data={applicationData} onChange={handleChange} /> : null}
             {currentStep === 3 ? <CreditDetailsStep data={applicationData} onChange={handleChange} /> : null}
 
-            <div className="mt-8 flex gap-3">
+            <div className={styles.actionsRow}>
               {currentStep > 1 ? (
                 <Button type="button" variant="secondary" onClick={goToPreviousStep} icon={<Icon name="arrow-left" />}>
                   Tillbaka
@@ -184,7 +172,7 @@ export function WizardPage() {
                   Nästa
                 </Button>
               ) : (
-                <Button type="button" onClick={handleSubmit} icon={<Icon name="arrow-right" />}>
+                <Button type="button" onClick={() => setConfirmOpen(true)} icon={<Icon name="arrow-right" />}>
                   Skicka in ansökan
                 </Button>
               )}
@@ -192,6 +180,42 @@ export function WizardPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bekräfta ansökan</DialogTitle>
+            <DialogDescription>
+              Kontrollera uppgifterna innan ansökan skickas in. Ansökan bedöms automatiskt baserat på de finansiella
+              uppgifterna.
+            </DialogDescription>
+          </DialogHeader>
+
+          <dl className={styles.confirmSummary}>
+            <div className={styles.confirmRow}>
+              <dt>Företag</dt>
+              <dd>{applicationData.companyName || '\u2014'}</dd>
+            </div>
+            <div className={styles.confirmRow}>
+              <dt>Organisationsnummer</dt>
+              <dd>{applicationData.orgNumber || '\u2014'}</dd>
+            </div>
+            <div className={styles.confirmRow}>
+              <dt>Begärt belopp</dt>
+              <dd>{applicationData.requestedAmount ? `${applicationData.requestedAmount} SEK` : '\u2014'}</dd>
+            </div>
+          </dl>
+
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setConfirmOpen(false)}>
+              Avbryt
+            </Button>
+            <Button type="button" onClick={handleConfirmSubmit}>
+              Skicka in ansökan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
