@@ -4,6 +4,7 @@ import { AppSidebar } from './AppSidebar'
 import type { SidebarItem } from './AppSidebar'
 import { Icon } from '../Icon'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
+import styles from './AppLayout.module.css'
 
 const NAV_ITEMS: SidebarItem[] = [
   { key: 'kreditansokan', label: 'Kreditansökan', icon: <Icon name="edit" /> },
@@ -20,13 +21,13 @@ const SIDEBAR_SIZE = {
 /** Shared authenticated-area chrome: the sidebar nav + whatever the current route renders. */
 export function AppLayout() {
   return (
-    <SidebarProvider style={SIDEBAR_SIZE} className="bg-resurs-bg">
+    <SidebarProvider style={SIDEBAR_SIZE} className={styles.providerRoot}>
       <AppSidebar items={NAV_ITEMS} activeKey="kreditansokan" />
-      <SidebarInset className="bg-resurs-bg">
-        <div className="flex items-center border-b border-white/5 px-4 py-2">
-          <SidebarTrigger className="text-white/70 hover:bg-white/10 hover:text-white" />
+      <SidebarInset className={styles.inset}>
+        <div className={styles.topBar}>
+          <SidebarTrigger className={styles.trigger} />
         </div>
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <main className={styles.main}>
           <Outlet />
         </main>
       </SidebarInset>
