@@ -1,4 +1,6 @@
 import { Icon } from '../../components/Icon'
+import { joinClassNames } from '../../lib/joinClassNames'
+import styles from './StepTabs.module.css'
 
 interface StepTab {
   step: number
@@ -21,11 +23,19 @@ interface StepTabsProps {
  * use, just exposed as a clickable overview instead of only Back/Next. */
 export function StepTabs({ currentStep, onSelectStep }: StepTabsProps) {
   return (
-    <div className="grid grid-cols-3 gap-1 rounded-md bg-resurs-panel p-1" role="tablist" aria-label="Ansökningssteg">
+    <div className={styles.tabList} role="tablist" aria-label="Ansökningssteg">
       {STEPS.map(({ step, label }) => {
         const active = step === currentStep
         const completed = step < currentStep
         const reachable = step <= currentStep
+
+        const stateClass = active
+          ? styles.tabActive
+          : completed
+            ? styles.tabCompleted
+            : reachable
+              ? styles.tabReachable
+              : styles.tabLocked
 
         return (
           <button
@@ -35,17 +45,9 @@ export function StepTabs({ currentStep, onSelectStep }: StepTabsProps) {
             aria-selected={active}
             disabled={!reachable}
             onClick={() => onSelectStep(step)}
-            className={`min-h-[44px] min-w-0 flex-1 truncate rounded-md px-2 py-2 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
-              active
-                ? 'bg-resurs-orange text-resurs-onOrange'
-                : completed
-                  ? 'text-resurs-orange hover:text-resurs-yellow'
-                  : reachable
-                    ? 'text-white/80 hover:text-white'
-                    : 'cursor-not-allowed text-white/30'
-            }`}
+            className={joinClassNames(styles.tab, stateClass)}
           >
-            {completed ? <Icon name="check" className="mr-1 inline h-3.5 w-3.5 align-[-2px]" /> : null}
+            {completed ? <Icon name="check" className={styles.checkIcon} /> : null}
             {label}
           </button>
         )

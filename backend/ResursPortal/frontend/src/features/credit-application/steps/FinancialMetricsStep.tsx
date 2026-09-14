@@ -1,5 +1,6 @@
 import { TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
+import styles from './FinancialMetricsStep.module.css'
 
 type FinancialField =
   | 'equity'
@@ -21,12 +22,12 @@ export function FinancialMetricsStep({
 }: FinancialMetricsStepProps) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white">Ekonomiska uppgifter</h2>
-      <p className="mt-1 text-sm text-resurs-muted">
+      <h2 className={styles.heading}>Ekonomiska uppgifter</h2>
+      <p className={styles.description}>
         Ange företagets senaste ekonomiska uppgifter i SEK.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className={styles.fields}>
         <TextField
           label="Eget kapital"
           type="number"
