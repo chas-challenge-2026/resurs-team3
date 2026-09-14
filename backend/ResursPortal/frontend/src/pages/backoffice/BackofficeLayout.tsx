@@ -6,21 +6,22 @@ import { Icon } from '../../components/Icon'
 import { BackofficeTopBar } from './BackofficeTopBar'
 import { DashboardView } from './DashboardView'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
+import styles from './BackofficeLayout.module.css'
 
 type BackofficeView = 'dashboard' | 'cases' | 'aviseringar'
 
 // TODO: replace with the real CasesView (searchable case list) once built.
 function CasesPlaceholder() {
-  return <h2 className="text-xl font-extrabold text-white">Ärenden</h2>
+  return <h2 className={styles.placeholderHeading}>Ärenden</h2>
 }
 
 // TODO: replace with the real AviseringarView (notifications list) once built.
 function AviseringarPlaceholder() {
   return (
     <div>
-      <h2 className="text-xl font-extrabold text-white">Aviseringar</h2>
-      <div className="mt-4 rounded-md bg-resurs-card p-5">
-        <p className="text-sm text-resurs-muted">Inga aviseringar ännu.</p>
+      <h2 className={styles.placeholderHeading}>Aviseringar</h2>
+      <div className={styles.placeholderCard}>
+        <p className={styles.placeholderCardText}>Inga aviseringar ännu.</p>
       </div>
     </div>
   )
@@ -55,16 +56,16 @@ export function BackofficeLayout() {
   }
 
   return (
-    <SidebarProvider style={SIDEBAR_SIZE} className="overflow-x-hidden bg-resurs-bg">
+    <SidebarProvider style={SIDEBAR_SIZE} className={styles.providerRoot}>
       <AppSidebar items={NAV_ITEMS} activeKey={view} onSelect={handleSelectNav} />
-      <SidebarInset className="min-w-0 bg-resurs-bg">
-        <div className="flex min-w-0 items-center gap-2 p-4 pb-0 sm:p-6 sm:pb-0 lg:p-8 lg:pb-0">
-          <SidebarTrigger className="shrink-0 text-white/70 hover:bg-white/10 hover:text-white" />
-          <div className="min-w-0 flex-1">
+      <SidebarInset className={styles.inset}>
+        <div className={styles.topBarRow}>
+          <SidebarTrigger className={styles.trigger} />
+          <div className={styles.topBarContent}>
             <BackofficeTopBar search={search} onSearchChange={setSearch} />
           </div>
         </div>
-        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <div className={styles.content}>
           {view === 'dashboard' ? (
             <DashboardView />
           ) : view === 'cases' ? (

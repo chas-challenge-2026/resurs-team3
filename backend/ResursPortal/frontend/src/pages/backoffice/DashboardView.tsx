@@ -4,6 +4,7 @@ import { formatSEK } from '../../utils/format'
 import { Sparkline } from '../../components/Sparkline'
 import { QueueTable } from './QueueTable'
 import { DecisionLog } from './DecisionLog'
+import styles from './DashboardView.module.css'
 
 /**
  * Cumulative trend for a tile's metric, ordered by each case's submittedAt —
@@ -54,19 +55,19 @@ export function DashboardView() {
 
   return (
     <div>
-      <h2 className="text-lg font-extrabold text-white">Översikt</h2>
+      <h2 className={styles.heading}>Översikt</h2>
 
-      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className={styles.grid}>
         {tiles.map((tile) => (
-          <div key={tile.label} className="rounded-lg bg-resurs-panel p-4">
-            <p className="break-words text-xl font-extrabold text-white sm:text-2xl">{tile.value}</p>
-            <p className="mt-1 text-xs text-resurs-muted">{tile.label}</p>
-            <Sparkline values={tile.trend} className="mt-3 h-6 w-full text-resurs-tealLight" />
+          <div key={tile.label} className={styles.tile}>
+            <p className={styles.tileValue}>{tile.value}</p>
+            <p className={styles.tileLabel}>{tile.label}</p>
+            <Sparkline values={tile.trend} className={styles.sparkline} />
           </div>
         ))}
       </div>
 
-      <div className="mt-6">
+      <div className={styles.queueWrap}>
         <QueueTable />
       </div>
 

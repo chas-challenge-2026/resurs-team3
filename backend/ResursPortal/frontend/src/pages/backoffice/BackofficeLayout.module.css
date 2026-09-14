@@ -1,0 +1,85 @@
+.providerRoot {
+  overflow-x: hidden;
+  background-color: var(--color-resurs-bg);
+}
+
+.inset {
+  min-width: 0;
+  background-color: var(--color-resurs-bg);
+}
+
+.topBarRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  padding-bottom: 0;
+}
+
+@media (min-width: 640px) {
+  .topBarRow {
+    padding: 1.5rem;
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .topBarRow {
+    padding: 2rem;
+    padding-bottom: 0;
+  }
+}
+
+.trigger {
+  flex-shrink: 0;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.trigger:hover {
+  background-color: rgb(255 255 255 / 0.1);
+  color: #ffffff;
+}
+
+.topBarContent {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.content {
+  min-width: 0;
+  flex: 1 1 0%;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding: 2rem;
+  }
+}
+
+.placeholderHeading {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.placeholderCard {
+  margin-top: 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-resurs-card);
+  padding: 1.25rem;
+}
+
+.placeholderCardText {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-resurs-muted);
+}
