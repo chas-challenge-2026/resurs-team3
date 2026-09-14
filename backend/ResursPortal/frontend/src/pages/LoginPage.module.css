@@ -1,0 +1,128 @@
+.page {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-resurs-bg);
+}
+
+.logoWrap {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+.contentWrap {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: 1 1 0%;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1rem;
+  padding-bottom: 2rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-resurs-panel);
+  padding: 1.25rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 2rem;
+  }
+}
+
+.title {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-resurs-muted);
+}
+
+.tabRow {
+  margin-top: 1.5rem;
+  display: flex;
+  border-radius: var(--radius-md);
+  background-color: rgb(0 0 0 / 0.2);
+  padding: 0.25rem;
+}
+
+.tab {
+  min-height: 44px;
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.8);
+  transition: color 0.15s ease, background-color 0.15s ease;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.tab:hover:not(.tabActive) {
+  color: #ffffff;
+}
+
+.tabActive {
+  background-color: var(--color-resurs-orange);
+  color: var(--color-resurs-on-orange);
+}
+
+@media (min-width: 640px) {
+  .tab {
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+.bankIdRow {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bankIdCaption {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+}
+
+.form {
+  margin-top: 1.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-resurs-card);
+  padding: 1.25rem;
+}
+
+.submitButton {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.passwordField {
+  margin-top: 1rem;
+}
