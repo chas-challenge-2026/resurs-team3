@@ -8,6 +8,8 @@ import { TextField } from '../components/ui/TextField'
 import { useAuth } from '../context/useAuth'
 import type { LoginMethod } from '../types/auth'
 import { Icon } from '../components/Icon'
+import { joinClassNames } from '../lib/joinClassNames'
+import styles from './LoginPage.module.css'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -22,45 +24,41 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-resurs-bg">
+    <div className={styles.page}>
       <BrandBlob width={560} />
 
-      <div className="relative z-10 w-full" style={{ maxWidth: 450, aspectRatio: '450 / 240' }}>
+      <div className={styles.logoWrap} style={{ maxWidth: 450, aspectRatio: '450 / 240' }}>
         <Logo width="100%" height="100%" />
       </div>
 
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-8">
-        <div className="w-full max-w-md rounded-lg bg-resurs-panel p-5 shadow-xl sm:p-8">
-          <h1 className="text-xl font-extrabold text-white">Resurs kreditansökan</h1>
-          <p className="mt-1 text-sm text-resurs-muted">Logga in för att fortsätta.</p>
+      <div className={styles.contentWrap}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Resurs kreditansökan</h1>
+          <p className={styles.subtitle}>Logga in för att fortsätta.</p>
 
-          <div className="mt-6 flex rounded-md bg-black/20 p-1">
+          <div className={styles.tabRow}>
             <button
               type="button"
               onClick={() => setActiveTab('bankid')}
-              className={`min-h-[44px] min-w-0 flex-1 truncate rounded-md px-2 py-2 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
-                activeTab === 'bankid' ? 'bg-resurs-orange text-resurs-onOrange' : 'text-white/80 hover:text-white'
-              }`}
+              className={joinClassNames(styles.tab, activeTab === 'bankid' && styles.tabActive)}
             >
               Företagsinloggning
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('handlaggare')}
-              className={`min-h-[44px] min-w-0 flex-1 truncate rounded-md px-2 py-2 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
-                activeTab === 'handlaggare' ? 'bg-resurs-orange text-resurs-onOrange' : 'text-white/80 hover:text-white'
-              }`}
+              className={joinClassNames(styles.tab, activeTab === 'handlaggare' && styles.tabActive)}
             >
               Handläggare
             </button>
           </div>
 
-          <div className="mt-6 flex flex-col items-center">
+          <div className={styles.bankIdRow}>
             <BankIdMark />
-            <p className="mt-2 text-xs text-resurs-muted">Autentisering via BankID</p>
+            <p className={styles.bankIdCaption}>Autentisering via BankID</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 rounded-md bg-resurs-card p-5">
+          <form onSubmit={handleSubmit} className={styles.form}>
             {activeTab === 'bankid' ? (
               <>
                 <TextField
@@ -70,7 +68,7 @@ export function LoginPage() {
                   onChange={(e) => setOrgNumber(e.target.value)}
                   helperText="Ange organisationsnummer för BankID-autentisering"
                 />
-                <Button type="submit" className="mt-4 w-full" icon={<Icon name="lock" />}>
+                <Button type="submit" className={styles.submitButton} icon={<Icon name="lock" />}>
                   Logga in med BankID
                 </Button>
               </>
@@ -85,11 +83,11 @@ export function LoginPage() {
                 <TextField
                   label="Lösenord"
                   type="password"
-                  className="mt-4"
+                  className={styles.passwordField}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <Button type="submit" className="mt-4 w-full" icon={<Icon name="lock" />}>
+                <Button type="submit" className={styles.submitButton} icon={<Icon name="lock" />}>
                   Logga in
                 </Button>
               </>

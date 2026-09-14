@@ -1,0 +1,33 @@
+/**
+ * Shared design tokens for color, radius, and typography.
+ *
+ * Define tokens once and reference them throughout CSS Modules with
+ * var(--token-name).
+ *
+ * Naming: kebab-case, e.g. --color-resurs-teal-dark.
+ */
+
+:root {
+  /* Resurs brand palette */
+  --color-resurs-bg: #0a2422;
+  --color-resurs-panel: #0e332f;
+  --color-resurs-card: #123a35;
+  --color-resurs-sidebar: #082a2d;
+  --color-resurs-teal: #1f8f82;
+  --color-resurs-teal-dark: #136a5f;
+  --color-resurs-teal-light: #2aa89a;
+  --color-resurs-yellow: #f0c93a;
+  --color-resurs-orange: #dd7e22;
+  --color-resurs-orange-dark: #c87f22;
+  --color-resurs-on-orange: #0a2422;
+  --color-resurs-input: #f0e6e0;
+  --color-resurs-cream: #f0e6e0;
+  --color-resurs-muted: #9fb8b3;
+
+  /* Corner radius — one unified 10px radius across rounded/rounded-md/rounded-lg */
+  --radius-md: 10px;
+  --radius-lg: 10px;
+
+  /* Type */
+  --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
