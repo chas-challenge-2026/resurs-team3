@@ -32,6 +32,12 @@ public class Application {
     @Column(name = "audit_log")
     private String auditLog;
 
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
     public String getAuditLog() {
         return auditLog;
     }
