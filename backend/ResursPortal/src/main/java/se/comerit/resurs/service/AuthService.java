@@ -13,14 +13,18 @@ import java.util.Map;
 public class AuthService {
 
     private final AuthRepository authRepository;
+    private final BankIdService bankIdService;
 
-    public AuthService(AuthRepository authRepository) {
+    public AuthService(
+            AuthRepository authRepository,
+            BankIdService bankIdService
+    ) {
         this.authRepository = authRepository;
+        this.bankIdService = bankIdService;
     }
 
-    public boolean isAllowedCompanyOrgNumber(String orgNumber) {
-        return "556000-1234".equals(orgNumber)
-                || "556000-5678".equals(orgNumber);
+    public boolean authenticateCompanyWithBankId(String orgNumber) {
+        return bankIdService.authenticateCompany(orgNumber);
     }
 
     public Map<String, Object> findCompany(String orgNumber) {

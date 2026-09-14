@@ -49,7 +49,7 @@ public class AuthController {
             HttpSession session,
             Model model
     ) {
-        if (!authService.isAllowedCompanyOrgNumber(orgNumber)) {
+        if (!authService.authenticateCompanyWithBankId(orgNumber)) {
             model.addAttribute(
                     "error",
                     "BankID-autentisering misslyckades. Org.nummer ej godkänt."
