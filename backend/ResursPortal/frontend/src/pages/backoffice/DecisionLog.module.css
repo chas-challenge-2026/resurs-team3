@@ -1,0 +1,83 @@
+.wrap {
+  margin-top: 1.5rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-resurs-panel);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .wrap {
+    padding: 1.5rem;
+  }
+}
+
+.heading {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.emptyState {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-resurs-muted);
+}
+
+.list {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.list > li + li {
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.itemMain {
+  min-width: 0;
+}
+
+.company {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.action {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+}
+
+.actionApproved {
+  color: var(--color-resurs-teal-light);
+}
+
+.actionRejected {
+  color: #f87171;
+}
+
+.comment {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+}
+
+.meta {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+}

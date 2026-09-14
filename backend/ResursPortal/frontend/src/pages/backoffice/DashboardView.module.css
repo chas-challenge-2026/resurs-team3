@@ -1,0 +1,58 @@
+.heading {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  border-radius: var(--radius-lg);
+  background-color: var(--color-resurs-panel);
+  padding: 1rem;
+}
+
+.tileValue {
+  overflow-wrap: break-word;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+@media (min-width: 640px) {
+  .tileValue {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+.tileLabel {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+}
+
+.sparkline {
+  margin-top: 0.75rem;
+  height: 1.5rem;
+  width: 100%;
+  color: var(--color-resurs-teal-light);
+}
+
+.queueWrap {
+  margin-top: 1.5rem;
+}
