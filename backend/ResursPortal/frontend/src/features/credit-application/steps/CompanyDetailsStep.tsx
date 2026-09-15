@@ -1,16 +1,19 @@
-import { TextField } from '../../../components/ui/TextField'
-import type { CreditApplicationData } from '../creditApplication.types'
-import styles from './CompanyDetailsStep.module.css'
+import { TextField } from "../../../components/ui/TextField";
+import type { CreditApplicationData } from "../creditApplication.types";
+import styles from "./CompanyDetailsStep.module.css";
+import type { CompanyDetailsErrors } from "../companyDetails.validation";
 
-type CompanyField = 'orgNumber' | 'companyName' | 'authorizedSignatory'
+type CompanyField = "orgNumber" | "companyName" | "authorizedSignatory";
 
 interface CompanyDetailsStepProps {
-  data: CreditApplicationData
-  onChange: (field: CompanyField, value: string) => void
+  data: CreditApplicationData;
+  errors: CompanyDetailsErrors;
+  onChange: (field: CompanyField, value: string) => void;
 }
 
 export function CompanyDetailsStep({
   data,
+  errors,
   onChange,
 }: CompanyDetailsStepProps) {
   return (
@@ -25,15 +28,17 @@ export function CompanyDetailsStep({
           label="Organisationsnummer"
           required
           value={data.orgNumber}
-          onChange={(event) => onChange('orgNumber', event.target.value)}
+          onChange={(event) => onChange("orgNumber", event.target.value)}
           placeholder="556000-1234"
+          error={errors.orgNumber}
         />
 
         <TextField
           label="Företagsnamn"
           required
           value={data.companyName}
-          onChange={(event) => onChange('companyName', event.target.value)}
+          onChange={(event) => onChange("companyName", event.target.value)}
+          error={errors.companyName}
         />
 
         <TextField
@@ -41,10 +46,11 @@ export function CompanyDetailsStep({
           required
           value={data.authorizedSignatory}
           onChange={(event) =>
-            onChange('authorizedSignatory', event.target.value)
+            onChange("authorizedSignatory", event.target.value)
           }
+          error={errors.authorizedSignatory}
         />
       </div>
     </section>
-  )
+  );
 }
