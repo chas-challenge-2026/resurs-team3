@@ -7,6 +7,10 @@ import { CompanyDetailsStep } from '../../features/credit-application/steps/Comp
 import { FinancialMetricsStep } from '../../features/credit-application/steps/FinancialMetricsStep'
 import { CreditDetailsStep } from '../../features/credit-application/steps/CreditDetailsStep'
 import type { CreditApplicationData } from '../../features/credit-application/creditApplication.types'
+import {
+  validateCompanyDetails,
+  type CompanyDetailsErrors,
+} from '../../features/credit-application/companyDetails.validation'
 import { toCaseSubmission } from '../../features/credit-application/creditApplication.mapper'
 import { WizardTopBar } from './WizardTopBar'
 import { StepTabs } from './StepTabs'
@@ -83,23 +87,44 @@ export function WizardPage() {
   const { addCase } = useCases()
   const [currentStep, setCurrentStep] = useState(1)
   const [applicationData, setApplicationData] = useState<CreditApplicationData>(initialApplicationData)
+  const [companyDetailsErrors, setCompanyDetailsErrors] =
+  useState<CompanyDetailsErrors>({})
+  const [companyValidationActive, setCompanyValidationActive] =
+  useState(false)
   const [submittedCase, setSubmittedCase] = useState<CreditCase | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  function handleChange(field: keyof CreditApplicationData, value: string) {
-    setApplicationData((currentData) => ({
-      ...currentData,
-      [field]: value,
-    }))
+function handleChange(field: keyof CreditApplicationData, value: string) {
+  const updatedData = {
+    ...applicationData,
+    [field]: value,
   }
+
+  setApplicationData(updatedData)
+
+  if (companyValidationActive && currentStep === 1) {
+    setCompanyDetailsErrors(validateCompanyDetails(updatedData))
+  }
+}
 
   function goToStep(step: number) {
     if (step <= currentStep) setCurrentStep(step)
   }
 
-  function goToNextStep() {
-    setCurrentStep((step) => Math.min(step + 1, TOTAL_STEPS))
+function goToNextStep() {
+  if (currentStep === 1) {
+    const errors = validateCompanyDetails(applicationData)
+
+    setCompanyValidationActive(true)
+    setCompanyDetailsErrors(errors)
+
+    if (Object.keys(errors).length > 0) {
+      return
+    }
   }
+
+  setCurrentStep((step) => Math.min(step + 1, TOTAL_STEPS))
+}
 
   function goToPreviousStep() {
     setCurrentStep((step) => Math.max(step - 1, 1))
@@ -120,6 +145,8 @@ export function WizardPage() {
     setApplicationData(initialApplicationData)
     setCurrentStep(1)
     setSubmittedCase(null)
+    setCompanyDetailsErrors({})
+    setCompanyValidationActive(false)
   }
 
   return (
@@ -156,7 +183,13 @@ export function WizardPage() {
           </div>
         ) : (
           <div className={styles.formWrap}>
-            {currentStep === 1 ? <CompanyDetailsStep data={applicationData} onChange={handleChange} /> : null}
+            {currentStep === 1 ? (
+              <CompanyDetailsStep
+                data={applicationData}
+                errors={companyDetailsErrors}
+                onChange={handleChange}
+              />
+            ) : null}
             {currentStep === 2 ? <FinancialMetricsStep data={applicationData} onChange={handleChange} /> : null}
             {currentStep === 3 ? <CreditDetailsStep data={applicationData} onChange={handleChange} /> : null}
 
