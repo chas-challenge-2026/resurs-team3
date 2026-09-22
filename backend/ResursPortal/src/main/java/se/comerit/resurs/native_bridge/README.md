@@ -39,10 +39,19 @@ String decrypted = cryptoService.decrypt(encrypted, key, nonce);
 - Nonce måste vara **unik** för varje krypteringsoperation med samma nyckel
 - Kräver att `resurs_crypto`-biblioteket är kompilerat (`.dll`/`.so`) och tillgängligt i systemets bibliotekssökväg — se `native/Makefile`
 
-## Ej klart än (väntar på C-teamet)
+## Ej klart än (Java-sidan)
 
-- Audit signing API — ingen C-funktion för detta finns ännu i `native/`
-- Audit verification API — samma
+C-sidans audit-signering/verifiering är nu klar (`native/resurs_audit.c`,
+`native/resurs_audit.h`, dokumenterad i `native/audit-design.md`), men har
+ännu ingen motsvarighet i den här bryggan:
 
-Dessa läggs till i denna brygga när motsvarande C-funktioner finns tillgängliga
-(troligen kopplat till en separat Issue för audit-signering).
+- `ResursAudit.java` — lågnivå-interface (JNA) mot `resurs_audit_chain_entry`
+  och `resurs_audit_verify_chain`
+- `ResursAuditService.java` — användbar klass för resten av backend
+
+Notera att C-funktionerna skiljer sig något från den ursprungliga specen i
+`native/README.md`: `resurs_audit_chain_entry` tar emot en `private_key`, och
+`resurs_audit_verify_chain` tar emot hela kedjans `entries_json`/`entry_lens`
+(inte bara färdiga hashar) för att kunna upptäcka omkastade poster, inte bara
+förfalskade signaturer. Se `native/audit-design.md` för fullständig
+motivering och exakta signaturer innan JNA-interfacet skrivs.
