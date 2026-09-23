@@ -1,0 +1,777 @@
+/* ---- SidebarProvider ---- */
+
+.wrapper {
+  display: flex;
+  min-height: 100svh;
+  width: 100%;
+}
+
+.wrapper:has([data-variant='inset']) {
+  background-color: var(--color-sidebar);
+}
+
+/* ---- Sidebar ---- */
+
+.noneRoot {
+  display: flex;
+  height: 100%;
+  width: var(--sidebar-width);
+  flex-direction: column;
+  background-color: var(--color-sidebar);
+  color: var(--color-sidebar-foreground);
+}
+
+.mobileContent {
+  width: var(--sidebar-width);
+  background-color: var(--color-sidebar);
+  padding: 0;
+  color: var(--color-sidebar-foreground);
+}
+
+.mobileHeaderSrOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mobileInner {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+}
+
+.desktopRoot {
+  display: none;
+  color: var(--color-sidebar-foreground);
+}
+
+@media (min-width: 768px) {
+  .desktopRoot {
+    display: block;
+  }
+}
+
+.gap {
+  position: relative;
+  width: var(--sidebar-width);
+  background-color: transparent;
+  transition: width 200ms linear;
+}
+
+.desktopRoot[data-collapsible='offcanvas'] > .gap {
+  width: 0;
+}
+
+.desktopRoot[data-side='right'] > .gap {
+  transform: rotate(180deg);
+}
+
+.desktopRoot[data-collapsible='icon']:not([data-variant='floating']):not([data-variant='inset']) > .gap {
+  width: var(--sidebar-width-icon);
+}
+
+.desktopRoot[data-collapsible='icon'][data-variant='floating'] > .gap,
+.desktopRoot[data-collapsible='icon'][data-variant='inset'] > .gap {
+  width: calc(var(--sidebar-width-icon) + 1rem);
+}
+
+.container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  display: none;
+  height: 100svh;
+  width: var(--sidebar-width);
+  transition: left 200ms linear, right 200ms linear, width 200ms linear;
+}
+
+@media (min-width: 768px) {
+  .container {
+    display: flex;
+  }
+}
+
+.desktopRoot[data-side='left'] > .container {
+  left: 0;
+}
+
+.desktopRoot[data-side='right'] > .container {
+  right: 0;
+}
+
+.desktopRoot[data-side='left'][data-collapsible='offcanvas'] > .container {
+  left: calc(var(--sidebar-width) * -1);
+}
+
+.desktopRoot[data-side='right'][data-collapsible='offcanvas'] > .container {
+  right: calc(var(--sidebar-width) * -1);
+}
+
+.desktopRoot[data-collapsible='icon']:not([data-variant='floating']):not([data-variant='inset']) > .container {
+  width: var(--sidebar-width-icon);
+}
+
+.desktopRoot[data-side='left']:not([data-variant='floating']):not([data-variant='inset']) > .container {
+  border-right: 1px solid var(--color-sidebar-border);
+}
+
+.desktopRoot[data-side='right']:not([data-variant='floating']):not([data-variant='inset']) > .container {
+  border-left: 1px solid var(--color-sidebar-border);
+}
+
+.desktopRoot[data-variant='floating'] > .container,
+.desktopRoot[data-variant='inset'] > .container {
+  padding: 0.5rem;
+}
+
+.desktopRoot[data-collapsible='icon'][data-variant='floating'] > .container,
+.desktopRoot[data-collapsible='icon'][data-variant='inset'] > .container {
+  width: calc(var(--sidebar-width-icon) + 1rem + 2px);
+}
+
+.inner {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  background-color: var(--color-sidebar);
+}
+
+.desktopRoot[data-variant='floating'] > .container > .inner {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-sidebar-border);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* ---- SidebarTrigger ---- */
+
+.trigger {
+  display: inline-flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-sidebar-foreground);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.trigger:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+.trigger:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.triggerIcon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- SidebarRail (not currently rendered anywhere in the app) ---- */
+
+.rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+  display: none;
+  width: 1rem;
+  transform: translateX(-50%);
+  transition: all 150ms linear;
+}
+
+@media (min-width: 640px) {
+  .rail {
+    display: flex;
+  }
+}
+
+.rail::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  content: '';
+}
+
+.rail:hover::after {
+  background-color: var(--color-sidebar-border);
+}
+
+.desktopRoot[data-side='left'] .rail {
+  right: -1rem;
+  cursor: w-resize;
+}
+
+.desktopRoot[data-side='right'] .rail {
+  left: 0;
+  cursor: e-resize;
+}
+
+.desktopRoot[data-side='left'][data-state='collapsed'] .rail {
+  cursor: e-resize;
+}
+
+.desktopRoot[data-side='right'][data-state='collapsed'] .rail {
+  cursor: w-resize;
+}
+
+.desktopRoot[data-collapsible='offcanvas'] .rail {
+  transform: translateX(0);
+}
+
+.desktopRoot[data-collapsible='offcanvas'] .rail::after {
+  left: 100%;
+}
+
+.desktopRoot[data-collapsible='offcanvas'] .rail:hover {
+  background-color: var(--color-sidebar);
+}
+
+.desktopRoot[data-side='left'][data-collapsible='offcanvas'] .rail {
+  right: -0.5rem;
+}
+
+.desktopRoot[data-side='right'][data-collapsible='offcanvas'] .rail {
+  left: -0.5rem;
+}
+
+/* ---- SidebarInset ---- */
+
+.inset {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex: 1 1 0%;
+  flex-direction: column;
+  background-color: var(--color-resurs-bg);
+}
+
+@media (min-width: 768px) {
+  .desktopRoot[data-variant='inset'] ~ .inset {
+    margin: 0.5rem;
+    margin-left: 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .desktopRoot[data-variant='inset'][data-state='collapsed'] ~ .inset {
+    margin-left: 0.5rem;
+  }
+}
+
+/* ---- SidebarInput (not currently rendered anywhere in the app) ---- */
+
+.input {
+  height: 2rem;
+  width: 100%;
+  border-radius: var(--radius-md);
+  background-color: var(--color-resurs-input);
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #1f2937;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #6b7280;
+}
+
+.input:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+/* ---- SidebarHeader / SidebarFooter ---- */
+
+.header,
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* ---- SidebarSeparator (Separator override) ---- */
+
+.separatorOverride {
+  margin: 0 0.5rem;
+  width: auto;
+  background-color: var(--color-sidebar-border);
+}
+
+/* ---- SidebarContent ---- */
+
+.content {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0%;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+.desktopRoot[data-collapsible='icon'] .content {
+  overflow: hidden;
+}
+
+/* ---- SidebarGroup ---- */
+
+.group {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0.5rem;
+}
+
+/* ---- SidebarGroupLabel (not currently rendered anywhere in the app) ---- */
+
+.groupLabel {
+  display: flex;
+  height: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: var(--radius-md);
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.7);
+  outline: none;
+  transition: margin 200ms linear, opacity 200ms linear;
+}
+
+.groupLabel:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+.groupLabel svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.desktopRoot[data-collapsible='icon'] .groupLabel {
+  margin-top: -2rem;
+  opacity: 0;
+}
+
+/* ---- SidebarGroupAction (not currently rendered anywhere in the app) ---- */
+
+.groupAction {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.75rem;
+  display: flex;
+  aspect-ratio: 1 / 1;
+  width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 0;
+  color: var(--color-sidebar-foreground);
+  outline: none;
+  transition: transform 150ms ease;
+}
+
+.groupAction:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.groupAction:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+.groupAction svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.desktopRoot[data-collapsible='icon'] .groupAction {
+  display: none;
+}
+
+/* ---- SidebarGroupContent ---- */
+
+.groupContent {
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* ---- SidebarMenu ---- */
+
+.menu {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* ---- SidebarMenuItem ---- */
+
+.menuItem {
+  position: relative;
+}
+
+.menuItem:has([data-sidebar='menu-action']) .menuButton {
+  padding-right: 2rem;
+}
+
+/* ---- SidebarMenuButton ---- */
+
+.menuButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  outline: none;
+  background-color: transparent;
+  color: inherit;
+}
+
+.menuButton:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuButton:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+.menuButton:active {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuButton:disabled,
+.menuButton[aria-disabled='true'] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.menuButton[data-active='true'] {
+  background-color: var(--color-sidebar-accent);
+  font-weight: 500;
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuButton > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuButton svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuButton {
+  height: 2rem !important;
+  width: 2rem !important;
+  padding: 0.5rem !important;
+}
+
+.menuButtonOutline {
+  background-color: var(--color-resurs-bg);
+  box-shadow: 0 0 0 1px var(--sidebar-border);
+}
+
+.menuButtonOutline:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+  box-shadow: 0 0 0 1px var(--color-sidebar-accent);
+}
+
+.menuButtonSm {
+  height: 1.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.menuButtonDefault {
+  height: 2rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.menuButtonLg {
+  height: 3rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuButtonLg {
+  padding: 0 !important;
+}
+
+/* ---- SidebarMenuAction (not currently rendered anywhere in the app) ---- */
+
+.menuAction {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.25rem;
+  display: flex;
+  aspect-ratio: 1 / 1;
+  width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 0;
+  color: var(--color-sidebar-foreground);
+  outline: none;
+  transition: transform 150ms ease;
+}
+
+.menuButton:hover ~ .menuAction {
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuAction:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuAction:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sidebar-ring);
+}
+
+.menuAction svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.menuButton[data-size='sm'] ~ .menuAction {
+  top: 0.25rem;
+}
+
+.menuButton[data-size='default'] ~ .menuAction {
+  top: 0.375rem;
+}
+
+.menuButton[data-size='lg'] ~ .menuAction {
+  top: 0.625rem;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuAction {
+  display: none;
+}
+
+.menuActionShowOnHover {
+  opacity: 0;
+}
+
+.menuButton[data-active='true'] ~ .menuActionShowOnHover {
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuActionShowOnHover[data-state='open'] {
+  opacity: 1;
+}
+
+.menuItem:hover .menuActionShowOnHover,
+.menuItem:focus-within .menuActionShowOnHover {
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .menuActionShowOnHover {
+    opacity: 0;
+  }
+}
+
+/* ---- SidebarMenuBadge ---- */
+
+.menuBadge {
+  pointer-events: none;
+  position: absolute;
+  right: 0.25rem;
+  display: flex;
+  height: 1.25rem;
+  min-width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--color-sidebar-foreground);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.menuButton:hover ~ .menuBadge,
+.menuButton[data-active='true'] ~ .menuBadge {
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuButton[data-size='sm'] ~ .menuBadge {
+  top: 0.25rem;
+}
+
+.menuButton[data-size='default'] ~ .menuBadge {
+  top: 0.375rem;
+}
+
+.menuButton[data-size='lg'] ~ .menuBadge {
+  top: 0.625rem;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuBadge {
+  display: none;
+}
+
+/* ---- SidebarMenuSkeleton ---- */
+
+.menuSkeleton {
+  display: flex;
+  height: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  padding: 0 0.5rem;
+}
+
+.menuSkeletonIcon {
+  height: 1rem;
+  width: 1rem;
+  border-radius: var(--radius-md);
+}
+
+.menuSkeletonText {
+  height: 1rem;
+  max-width: 70%;
+  flex: 1 1 0%;
+}
+
+/* ---- SidebarMenuSub (not currently rendered anywhere in the app) ---- */
+
+.menuSub {
+  margin-left: 0.875rem;
+  display: flex;
+  min-width: 0;
+  transform: translateX(1px);
+  flex-direction: column;
+  gap: 0.25rem;
+  border-left: 1px solid var(--color-sidebar-border);
+  padding: 0.125rem 0.625rem;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuSub {
+  display: none;
+}
+
+/* ---- SidebarMenuSubItem (not currently rendered anywhere in the app) ---- */
+
+.menuSubItem {
+  position: relative;
+}
+
+/* ---- SidebarMenuSubButton (not currently rendered anywhere in the app) ---- */
+
+.menuSubButton {
+  display: flex;
+  height: 1.75rem;
+  min-width: 0;
+  transform: translateX(-1px);
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  padding: 0 0.5rem;
+  color: var(--color-sidebar-foreground);
+  outline: none;
+}
+
+.menuSubButton:hover {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuSubButton:active {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuSubButton:disabled,
+.menuSubButton[aria-disabled='true'] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.menuSubButton[data-active='true'] {
+  background-color: var(--color-sidebar-accent);
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuSubButton > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuSubButton svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  color: var(--color-sidebar-accent-foreground);
+}
+
+.menuSubButtonSm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.menuSubButtonMd {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.desktopRoot[data-collapsible='icon'] .menuSubButton {
+  display: none;
+}

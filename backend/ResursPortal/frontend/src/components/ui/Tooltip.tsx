@@ -1,8 +1,8 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/lib/utils"
 import { useFloatingPosition, type Side } from "@/hooks/use-floating-position"
+import styles from "./Tooltip.module.css"
 
 interface TooltipProps {
   content: React.ReactNode
@@ -68,9 +68,7 @@ function TooltipBubble({ rect, side, children }: { rect: DOMRect; side: Side; ch
       role="tooltip"
       data-slot="tooltip-content"
       style={{ ...style, opacity: ready ? 1 : 0 }}
-      className={cn(
-        "pointer-events-none z-50 w-fit rounded-md bg-foreground px-3 py-1.5 text-xs text-background text-balance shadow-md"
-      )}
+      className={styles.bubble}
     >
       {children}
     </div>

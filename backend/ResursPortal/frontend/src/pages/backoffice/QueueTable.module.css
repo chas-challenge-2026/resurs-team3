@@ -1,6 +1,10 @@
 .flagCount {
   font-weight: 600;
-  color: var(--color-resurs-orange);
+  /* Lighter than --color-resurs-orange specifically for this use — orange
+     text directly on the panel background only cleared WCAG AA (4.5:1) by
+     ~0.1, so this variant trades a touch of brand-orange saturation for
+     real contrast headroom (~5.8:1). */
+  color: #e4984f;
 }
 
 .flaggedList {
@@ -88,6 +92,24 @@
   color: rgb(255 255 255 / 0.8);
 }
 
+.cellAmount {
+  padding: 0.75rem;
+  color: rgb(255 255 255 / 0.8);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.amountUnit {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 0.8em;
+}
+
+.thAmount {
+  padding: 0.5rem 0.75rem;
+  text-align: right;
+}
+
 .cellScoring {
   padding: 0.75rem;
   font-size: 0.75rem;
@@ -153,6 +175,8 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
   color: rgb(255 255 255 / 0.8);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .cardMeta {
