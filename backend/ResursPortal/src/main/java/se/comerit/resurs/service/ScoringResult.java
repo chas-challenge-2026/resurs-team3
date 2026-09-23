@@ -9,14 +9,8 @@ public class ScoringResult {
     private final int flagCount;
     private final int creditScore;
 
-    public ScoringResult(
-            String decision,
-            String status,
-            String decisionReason,
-            String scoringLog,
-            int flagCount,
-            int creditScore) {
-
+    public ScoringResult(String decision, String status, String decisionReason,
+                         String scoringLog, int flagCount, int creditScore) {
         this.decision = decision;
         this.status = status;
         this.decisionReason = decisionReason;
@@ -25,27 +19,10 @@ public class ScoringResult {
         this.creditScore = creditScore;
     }
 
-    public String getDecision() {
-        return decision;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getDecisionReason() {
-        return decisionReason;
-    }
-
-    public String getScoringLog() {
-        return scoringLog;
-    }
-
-    public int getFlagCount() {
-        return flagCount;
-    }
-
-    public int getCreditScore() {
-        return creditScore;
-    }
+    public String getDecision() { return decision; }
+    public String getStatus() { return status; }
+    public String getDecisionReason() { return decisionReason; }
+    public String getScoringLog() { return scoringLog; }
+    public int getFlagCount() { return flagCount; }
+    public int getCreditScore() { return creditScore; }
 }

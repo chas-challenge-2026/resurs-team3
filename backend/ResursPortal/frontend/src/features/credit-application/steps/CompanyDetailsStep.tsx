@@ -1,16 +1,19 @@
 import { TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
 import styles from './CompanyDetailsStep.module.css'
+import type { CompanyDetailsErrors } from '../companyDetails.validation'
 
 type CompanyField = 'orgNumber' | 'companyName' | 'authorizedSignatory'
 
 interface CompanyDetailsStepProps {
   data: CreditApplicationData
+  errors: CompanyDetailsErrors
   onChange: (field: CompanyField, value: string) => void
 }
 
 export function CompanyDetailsStep({
   data,
+  errors,
   onChange,
 }: CompanyDetailsStepProps) {
   return (
@@ -25,6 +28,7 @@ export function CompanyDetailsStep({
           label="Organisationsnummer"
           required
           value={data.orgNumber}
+          error={errors.orgNumber}
           onChange={(event) => onChange('orgNumber', event.target.value)}
           placeholder="556000-1234"
         />
@@ -33,6 +37,7 @@ export function CompanyDetailsStep({
           label="Företagsnamn"
           required
           value={data.companyName}
+          error={errors.companyName}
           onChange={(event) => onChange('companyName', event.target.value)}
         />
 
@@ -40,6 +45,7 @@ export function CompanyDetailsStep({
           label="Firmatecknare"
           required
           value={data.authorizedSignatory}
+          error={errors.authorizedSignatory}
           onChange={(event) =>
             onChange('authorizedSignatory', event.target.value)
           }
