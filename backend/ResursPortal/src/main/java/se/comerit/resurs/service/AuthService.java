@@ -1,79 +1,55 @@
 package se.comerit.resurs.service;
 
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.repository.AuthRepository;
+import se.comerit.resurs.model.CaseWorker;
+import se.comerit.resurs.model.Company;
+import se.comerit.resurs.repository.CaseWorkerRepository;
+import se.comerit.resurs.repository.CompanyRepository;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class AuthService {
 
-    private final AuthRepository authRepository;
+    private final CompanyRepository companyRepository;
+    private final CaseWorkerRepository caseWorkerRepository;
 
-    public AuthService(AuthRepository authRepository) {
-        this.authRepository = authRepository;
+    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository) {
+        this.companyRepository = companyRepository;
+        this.caseWorkerRepository = caseWorkerRepository;
     }
 
     public boolean isAllowedCompanyOrgNumber(String orgNumber) {
-        return "556000-1234".equals(orgNumber)
-                || "556000-5678".equals(orgNumber);
+        return "556000-1234".equals(orgNumber) || "556000-5678".equals(orgNumber);
     }
 
-    public Map<String, Object> findCompany(String orgNumber) {
-        List<Map<String, Object>> rows =
-                authRepository.findCompanyByOrgNumber(orgNumber);
-
-        if (rows.isEmpty()) {
-            return null;
-        }
-
-        return rows.get(0);
+    public Optional<Company> findCompany(String orgNumber) {
+        return companyRepository.findByOrgNumber(orgNumber);
     }
 
-    public Map<String, Object> authenticateCaseWorker(
-            String email,
-            String password
-    ) {
+    public Optional<CaseWorker> authenticateCaseWorker(String email, String password) {
         String passwordHash = md5Hash(password);
+        Optional<CaseWorker> workerOpt = caseWorkerRepository.findByEmail(email);
 
-        List<Map<String, Object>> rows =
-                authRepository.findCaseWorkerByEmailAndPasswordHash(
-                        email,
-                        passwordHash
-                );
-
-        if (rows.isEmpty()) {
-            return null;
+        if (workerOpt.isPresent() && workerOpt.get().getPasswordMd5().equals(passwordHash)) {
+            return workerOpt;
         }
-
-        return rows.get(0);
+        return Optional.empty();
     }
 
     private String md5Hash(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] hash = md.digest(
-                    input.getBytes(StandardCharsets.UTF_8)
-            );
-
+            byte[] hash = md.digest(input.getBytes());
             StringBuilder sb = new StringBuilder();
-
             for (byte b : hash) {
                 sb.append(String.format("%02x", b));
             }
-
             return sb.toString();
-
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(
-                    "MD5 algorithm is not available",
-                    e
-            );
+            throw new RuntimeException("MD5 not available", e);
         }
     }
 }

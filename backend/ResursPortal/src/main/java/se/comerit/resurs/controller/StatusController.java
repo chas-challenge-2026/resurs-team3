@@ -1,67 +1,48 @@
 package se.comerit.resurs.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import se.comerit.resurs.model.Application;
+import se.comerit.resurs.model.Document;
 import se.comerit.resurs.service.StatusService;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class StatusController {
 
-    private final StatusService statusService;
-
-    public StatusController(StatusService statusService) {
-        this.statusService = statusService;
-    }
+    @Autowired
+    private StatusService statusService;
 
     @GetMapping("/status/{applicationId}")
-    public String showStatus(
-            @PathVariable("applicationId") Long applicationId,
-            HttpSession session,
-            Model model
-    ) {
-        if (session.getAttribute("userId") == null) {
-            return "redirect:/login";
-        }
+    public String showStatus(@PathVariable("applicationId") Long applicationId,
+                             HttpSession session,
+                             Model model) {
+        if (session.getAttribute("userId") == null) return "redirect:/login";
 
-        Map<String, Object> application =
-                statusService.getApplication(applicationId);
+        Optional<Application> appOpt = statusService.getApplication(applicationId);
 
-        if (application == null) {
+        if (appOpt.isEmpty()) {
             return "redirect:/applications";
         }
 
-        String currentStatus =
-                (String) application.get("status");
+        Application app = appOpt.get();
+        String currentStatus = app.getStatus();
 
-        model.addAttribute(
-                "application",
-                application
-        );
+        model.addAttribute("application", app);
+        model.addAttribute("steps", statusService.buildStatusSteps(currentStatus));
+        model.addAttribute("currentStatus", currentStatus);
 
-        model.addAttribute(
-                "steps",
-                statusService.buildStatusSteps(currentStatus)
-        );
+        List<Document> docs = statusService.getDocuments(applicationId);
+        model.addAttribute("documents", docs);
 
-        model.addAttribute(
-                "currentStatus",
-                currentStatus
-        );
-
-        model.addAttribute(
-                "documents",
-                statusService.getDocuments(applicationId)
-        );
-
-        model.addAttribute(
-                "auditLogRaw",
-                application.get("audit_log")
-        );
+        model.addAttribute("auditLogRaw", app.getAuditLog());
 
         return "status";
     }

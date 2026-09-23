@@ -12,13 +12,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import se.comerit.resurs.model.Application;
+import se.comerit.resurs.model.Document;
 import se.comerit.resurs.service.DocumentService;
 
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.Optional;
 
+/**
+ * DocumentController – Hanterar dokumentuppladdning.
+ *
+ * VARNING: PDF sparas men parsas INTE.
+ * TODO: implement PDF parsing in v2 (see native/README.md)
+ * TODO: använd ett persistent filsystem eller S3 i v2 (filer sparas i /tmp/uploads, rensas vid omstart)
+ * TODO: validate that uploaded file is actually a PDF (ingen validering av filtyp just nu)
+ */
 @Controller
 public class DocumentController {
 
@@ -31,43 +41,31 @@ public class DocumentController {
     }
 
     @GetMapping("/documents/{applicationId}")
-    public String showDocumentsPage(
-            @PathVariable("applicationId") Long applicationId,
-            HttpSession session,
-            Model model
-    ) {
-        if (session.getAttribute("userId") == null) {
-            return "redirect:/login";
-        }
+    public String showDocumentsPage(@PathVariable("applicationId") Long applicationId,
+                                    HttpSession session,
+                                    Model model) {
+        if (session.getAttribute("userId") == null) return "redirect:/login";
 
-        Map<String, Object> application =
-                documentService.getApplication(applicationId);
+        Optional<Application> appOpt = documentService.getApplication(applicationId);
 
-        if (application == null) {
+        if (appOpt.isEmpty()) {
             return "redirect:/applications";
         }
 
-        model.addAttribute("application", application);
-        model.addAttribute(
-                "documents",
-                documentService.getDocuments(applicationId)
-        );
+        model.addAttribute("application", appOpt.get());
+        model.addAttribute("documents", documentService.getDocuments(applicationId));
         model.addAttribute("applicationId", applicationId);
 
         return "documents";
     }
 
     @PostMapping("/document/upload")
-    public String uploadDocument(
-            @RequestParam("applicationId") Long applicationId,
-            @RequestParam("docType") String docType,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session,
-            Model model
-    ) {
-        if (session.getAttribute("userId") == null) {
-            return "redirect:/login";
-        }
+    public String uploadDocument(@RequestParam("applicationId") Long applicationId,
+                                 @RequestParam("docType") String docType,
+                                 @RequestParam("file") MultipartFile file,
+                                 HttpSession session,
+                                 Model model) {
+        if (session.getAttribute("userId") == null) return "redirect:/login";
 
         if (file.isEmpty()) {
             model.addAttribute("error", "Ingen fil vald.");
@@ -81,77 +79,50 @@ public class DocumentController {
             return "redirect:/documents/" + applicationId;
         }
 
-        String storedFilename =
-                applicationId + "_" + originalFilename;
+        String storedFilename = applicationId + "_" + originalFilename;
 
         File uploadDir = new File(UPLOAD_DIR);
-
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
         }
 
-        File destination =
-                new File(UPLOAD_DIR + storedFilename);
+        File destination = new File(UPLOAD_DIR + storedFilename);
 
         try {
             file.transferTo(destination);
-
         } catch (IOException e) {
-            model.addAttribute(
-                    "error",
-                    "Uppladdning misslyckades: " + e.getMessage()
-            );
-
+            model.addAttribute("error", "Uppladdning misslyckades: " + e.getMessage());
             return "redirect:/documents/" + applicationId;
         }
 
-        documentService.registerUploadedDocument(
-                applicationId,
-                storedFilename,
-                originalFilename,
-                docType
-        );
+        documentService.registerUploadedDocument(applicationId, storedFilename, originalFilename, docType);
 
         return "redirect:/documents/" + applicationId;
     }
 
     @GetMapping("/document/{id}")
-    public ResponseEntity<Resource> downloadDocument(
-            @PathVariable("id") Long documentId,
-            HttpSession session
-    ) {
+    public ResponseEntity<Resource> downloadDocument(@PathVariable("id") Long documentId,
+                                                     HttpSession session) {
         if (session.getAttribute("userId") == null) {
-            return ResponseEntity
-                    .status(302)
-                    .header("Location", "/login")
-                    .build();
+            return ResponseEntity.status(302).header("Location", "/login").build();
         }
 
-        Map<String, Object> document =
-                documentService.getDocument(documentId);
+        Optional<Document> docOpt = documentService.getDocument(documentId);
 
-        if (document == null) {
+        if (docOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        String filename =
-                (String) document.get("filename");
-
-        File file =
-                new File(UPLOAD_DIR + filename);
+        String filename = docOpt.get().getFilename();
+        File file = new File(UPLOAD_DIR + filename);
 
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
         }
 
-        Resource resource =
-                new FileSystemResource(file);
-
+        Resource resource = new FileSystemResource(file);
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + filename + "\""
-                )
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
