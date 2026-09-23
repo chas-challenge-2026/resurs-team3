@@ -1,13 +1,14 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/lib/utils"
+import { joinClassNames } from "@/lib/joinClassNames"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { useEscapeKey } from "@/hooks/use-escape-key"
 import { useFocusTrap } from "@/hooks/use-focus-trap"
 import { useScrollLock } from "@/hooks/use-scroll-lock"
 import { useOpenTransition } from "@/hooks/use-open-transition"
 import { Icon } from "@/components/Icon"
+import styles from "./Sheet.module.css"
 
 type Side = "top" | "right" | "bottom" | "left"
 
@@ -55,20 +56,11 @@ function SheetClose({ onClick, ...props }: React.ComponentProps<"button">) {
   )
 }
 
-const SIDE_STYLES: Record<Side, string> = {
-  right: "inset-y-0 right-0 h-full w-3/4 border-l border-white/10 sm:max-w-sm",
-  left: "inset-y-0 left-0 h-full w-3/4 border-r border-white/10 sm:max-w-sm",
-  top: "inset-x-0 top-0 h-auto border-b border-white/10",
-  bottom: "inset-x-0 bottom-0 h-auto border-t border-white/10",
-}
-
-// The off-screen starting/ending transform for each side — slides in from
-// (and back out to) the edge the panel is anchored to.
-const SIDE_HIDDEN_TRANSFORM: Record<Side, string> = {
-  right: "translate-x-full",
-  left: "-translate-x-full",
-  top: "-translate-y-full",
-  bottom: "translate-y-full",
+const SIDE_CLASS: Record<Side, string> = {
+  right: styles.sideRight,
+  left: styles.sideLeft,
+  top: styles.sideTop,
+  bottom: styles.sideBottom,
 }
 
 function SheetContent({
@@ -91,7 +83,7 @@ function SheetContent({
   return createPortal(
     <div
       data-slot="sheet-overlay"
-      className={cn("fixed inset-0 z-50 bg-black/60 transition-opacity duration-300", visible ? "opacity-100" : "opacity-0")}
+      className={joinClassNames(styles.overlay, visible && styles.overlayVisible)}
       onMouseDown={() => setOpen(false)}
     >
       <div
@@ -101,19 +93,14 @@ function SheetContent({
         tabIndex={-1}
         data-slot="sheet-content"
         onMouseDown={(event) => event.stopPropagation()}
-        className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-card text-white shadow-lg transition-transform duration-300 ease-in-out",
-          SIDE_STYLES[side],
-          visible ? "translate-x-0 translate-y-0" : SIDE_HIDDEN_TRANSFORM[side],
-          className
-        )}
+        className={joinClassNames(styles.content, SIDE_CLASS[side], visible && styles.contentVisible, className)}
         {...props}
       >
         {children}
         {showCloseButton ? (
-          <SheetClose className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Icon name="x" className="size-4" />
-            <span className="sr-only">Stäng</span>
+          <SheetClose className={styles.closeButton}>
+            <Icon name="x" className={styles.closeIcon} />
+            <span className={styles.srOnly}>Stäng</span>
           </SheetClose>
         ) : null}
       </div>
@@ -123,16 +110,16 @@ function SheetContent({
 }
 
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="sheet-header" className={cn("flex flex-col gap-1.5 p-4", className)} {...props} />
+  return <div data-slot="sheet-header" className={joinClassNames(styles.header, className)} {...props} />
 }
 
 function SheetTitle({ className, ...props }: React.ComponentProps<"h2">) {
-  return <h2 data-slot="sheet-title" className={cn("font-semibold text-foreground", className)} {...props} />
+  return <h2 data-slot="sheet-title" className={joinClassNames(styles.title, className)} {...props} />
 }
 
 function SheetDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
-    <p data-slot="sheet-description" className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <p data-slot="sheet-description" className={joinClassNames(styles.description, className)} {...props} />
   )
 }
 

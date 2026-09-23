@@ -5,52 +5,99 @@
   color: #ffffff;
 }
 
-.grid {
+.metricsWrap {
   margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 @media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .metricsWrap {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1rem;
+  }
+}
+
+.heroTile {
+  border-radius: var(--radius-lg);
+  background-color: var(--color-resurs-panel);
+  border-left: 3px solid var(--color-resurs-orange);
+  padding: 1.5rem 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .heroTile {
+    flex: 0 0 58%;
+    padding: 2rem 2.25rem;
+  }
+}
+
+.heroValue {
+  overflow-wrap: break-word;
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .heroValue {
+    font-size: 3rem;
+    line-height: 3.25rem;
+  }
+}
+
+.heroLabel {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-resurs-muted);
+}
+
+/* A short, quiet column of three compact cards beside the hero — no
+   sparkline, no accent border, just label + number. On narrow screens
+   the parent stack collapses so this column sits full-width below the
+   hero instead of beside it, still stacked. */
+.secondaryGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 640px) {
+  .secondaryGrid {
+    gap: 0.75rem;
   }
 }
 
 .tile {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border-radius: var(--radius-lg);
   background-color: var(--color-resurs-panel);
-  padding: 1rem;
+  padding: 0.75rem 1rem;
 }
 
 .tileValue {
   overflow-wrap: break-word;
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 800;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 700;
   color: #ffffff;
-}
-
-@media (min-width: 640px) {
-  .tileValue {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
+  font-variant-numeric: tabular-nums;
 }
 
 .tileLabel {
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
   font-size: 0.75rem;
   line-height: 1rem;
   color: var(--color-resurs-muted);
-}
-
-.sparkline {
-  margin-top: 0.75rem;
-  height: 1.5rem;
-  width: 100%;
-  color: var(--color-resurs-teal-light);
 }
 
 .queueWrap {

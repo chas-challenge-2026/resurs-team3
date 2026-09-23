@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react'
+import styles from './Icon.module.css'
 
 interface IconProps {
   name: IconName
-  /** Tailwind classes — size (h-4 w-4, etc.) and color (text-*, since the icon strokes with currentColor) are set here by the caller. */
+  /** Size (defaults to 1rem square) and color (via currentColor) are set here by the caller. */
   className?: string
 }
 
@@ -26,7 +27,7 @@ export type IconName =
  * A single, uniform icon set for the app — every icon shares the same 24x24
  * grid, 2px stroke, and rounded caps/joins.
  */
-export function Icon({ name, className = 'h-4 w-4' }: IconProps) {
+export function Icon({ name, className = styles.icon }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"

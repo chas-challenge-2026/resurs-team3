@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import styles from './TextField.module.css'
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
@@ -21,7 +22,7 @@ export function TextField({
   const messageId = message ? `${inputId}-message` : undefined
   return (
     <div className={className}>
-      <label htmlFor={inputId} className="block text-sm text-white/90 mb-1.5">
+      <label htmlFor={inputId} className={styles.label}>
         {label}
         {required ? '*' : ''}
       </label>
@@ -60,7 +61,7 @@ export function TextArea({ label, id, className = '', ...rest }: TextAreaProps) 
   return (
     <div className={className}>
       {label ? (
-        <label htmlFor={inputId} className="block text-sm text-white/90 mb-1.5">
+        <label htmlFor={inputId} className={styles.label}>
           {label}
         </label>
       ) : null}

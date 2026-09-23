@@ -1,0 +1,47 @@
+.base {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.base:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary {
+  background-color: var(--color-resurs-orange);
+  color: var(--color-resurs-on-orange);
+}
+
+.primary:hover {
+  background-color: var(--color-resurs-orange-dark);
+}
+
+.primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-resurs-panel), 0 0 0 4px var(--color-resurs-orange);
+}
+
+.secondary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgb(255 255 255 / 0.3);
+}
+
+.secondary:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+.secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-resurs-panel), 0 0 0 4px rgb(255 255 255 / 0.4);
+}
