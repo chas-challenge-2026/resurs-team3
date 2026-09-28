@@ -34,48 +34,93 @@ public class StatusService {
     public List<Map<String, String>> buildStatusSteps(String currentStatus) {
         List<Map<String, String>> steps = new ArrayList<>();
 
-        Map<String, String> step1 = new HashMap<>();
-        step1.put("name", "Ansökan inlämnad");
-        step1.put("eta", "—");
-        step1.put("status", "DONE");
-        step1.put("description", "Ansökan har mottagits av systemet.");
-        steps.add(step1);
+        steps.add(createStep(
+                "Inkommen",
+                "—",
+                "Ansökan har mottagits av systemet.",
+                "DONE"
+        ));
 
-        Map<String, String> step2 = new HashMap<>();
-        step2.put("name", "Dokumentgranskning");
-        step2.put("eta", "2 dagar");
-        step2.put("description", "Årsredovisning och F-skatteintyg granskas.");
-        if ("PENDING_DOCS".equals(currentStatus)) {
-            step2.put("status", "CURRENT");
-        } else {
-            step2.put("status", "DONE");
-        }
-        steps.add(step2);
+        steps.add(createStep(
+                "Valideras",
+                "1 dag",
+                "Ansökan och grundläggande uppgifter valideras.",
+                "DONE"
+        ));
 
-        Map<String, String> step3 = new HashMap<>();
-        step3.put("name", "Kreditbedömning");
-        step3.put("eta", "3 dagar");
-        step3.put("description", "Finansiella nyckeltal analyseras och scoring körs.");
         if ("UNDER_REVIEW".equals(currentStatus)) {
-            step3.put("status", "CURRENT");
-        } else if ("PENDING_DOCS".equals(currentStatus)) {
-            step3.put("status", "PENDING");
-        } else {
-            step3.put("status", "DONE");
-        }
-        steps.add(step3);
+            steps.add(createStep(
+                    "Granskas",
+                    "3 dagar",
+                    "Ansökan granskas och kreditbedömningen genomförs.",
+                    "CURRENT"
+            ));
 
-        Map<String, String> step4 = new HashMap<>();
-        step4.put("name", "Beslut");
-        step4.put("eta", "1 dag");
-        step4.put("description", "Kreditbeslut fattas av handläggare eller automatiskt.");
-        if ("APPROVED".equals(currentStatus) || "REJECTED".equals(currentStatus)) {
-            step4.put("status", "DONE");
+            steps.add(createStep(
+                    "Komplettering krävs",
+                    "1 dag",
+                    "Ytterligare dokument eller information kan behöva skickas in.",
+                    "PENDING"
+            ));
+
+        } else if ("PENDING_DOCS".equals(currentStatus)) {
+            steps.add(createStep(
+                    "Granskas",
+                    "3 dagar",
+                    "Ansökan granskas och kreditbedömningen genomförs.",
+                    "DONE"
+            ));
+
+            steps.add(createStep(
+                    "Komplettering krävs",
+                    "1 dag",
+                    "Ytterligare dokument eller information behöver skickas in.",
+                    "CURRENT"
+            ));
+
         } else {
-            step4.put("status", "PENDING");
+            steps.add(createStep(
+                    "Granskas",
+                    "3 dagar",
+                    "Ansökan granskas och kreditbedömningen genomförs.",
+                    "DONE"
+            ));
+
+            steps.add(createStep(
+                    "Komplettering krävs",
+                    "—",
+                    "Ingen komplettering krävs.",
+                    "DONE"
+            ));
         }
-        steps.add(step4);
+
+        String decisionStatus =
+                "APPROVED".equals(currentStatus) || "REJECTED".equals(currentStatus)
+                        ? "DONE"
+                        : "PENDING";
+
+        steps.add(createStep(
+                "Beslut",
+                "1 dag",
+                "Kreditbeslut fattas av handläggare eller automatiskt.",
+                decisionStatus
+        ));
 
         return steps;
+    }
+
+    private Map<String, String> createStep(
+            String name,
+            String eta,
+            String description,
+            String status) {
+
+        Map<String, String> step = new HashMap<>();
+        step.put("name", name);
+        step.put("eta", eta);
+        step.put("description", description);
+        step.put("status", status);
+
+        return step;
     }
 }
