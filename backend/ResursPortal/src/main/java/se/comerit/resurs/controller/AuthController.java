@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import se.comerit.resurs.model.CaseWorker;
 import se.comerit.resurs.model.Company;
 import se.comerit.resurs.service.AuthService;
+import se.comerit.resurs.service.BankIdService;
 
 import javax.servlet.http.HttpSession;
 import java.util.Optional;
@@ -18,6 +19,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private BankIdService bankIdService;
 
     @GetMapping("/")
     public String root() {
@@ -43,7 +47,7 @@ public class AuthController {
     public String loginCompany(@RequestParam("orgNumber") String orgNumber,
                                HttpSession session,
                                Model model) {
-        if (!authService.isAllowedCompanyOrgNumber(orgNumber)) {
+        if (!bankIdService.authenticateCompany(orgNumber)) {
             model.addAttribute("error", "BankID-autentisering misslyckades. Org.nummer ej godkänt.");
             model.addAttribute("activeTab", "company");
             return "login";

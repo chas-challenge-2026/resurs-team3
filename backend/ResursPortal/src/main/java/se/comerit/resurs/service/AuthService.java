@@ -21,9 +21,6 @@ public class AuthService {
         this.caseWorkerRepository = caseWorkerRepository;
     }
 
-    public boolean isAllowedCompanyOrgNumber(String orgNumber) {
-        return "556000-1234".equals(orgNumber) || "556000-5678".equals(orgNumber);
-    }
 
     public Optional<Company> findCompany(String orgNumber) {
         return companyRepository.findByOrgNumber(orgNumber);
