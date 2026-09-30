@@ -54,10 +54,18 @@ export function TextField({
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
+  error?: string
 }
 
-export function TextArea({ label, id, className = '', ...rest }: TextAreaProps) {
+export function TextArea({
+  label,
+  error,
+  id,
+  className = '',
+  ...rest
+}: TextAreaProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+  const messageId = error ? `${inputId}-error` : undefined
   return (
     <div className={className}>
       {label ? (
@@ -65,11 +73,20 @@ export function TextArea({ label, id, className = '', ...rest }: TextAreaProps) 
           {label}
         </label>
       ) : null}
+
       <textarea
         id={inputId}
-        className="w-full rounded-md bg-resurs-input text-gray-800 placeholder:text-gray-500 px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-resurs-orange min-h-24 sm:py-2 sm:text-sm"
         {...rest}
-      />
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
+        className="w-full rounded-md bg-resurs-input text-gray-800 placeholder:text-gray-500 px-3 py-2.5 text-base outline-none focus:ring-2 focus:ring-resurs-orange min-h-24 sm:py-2 sm:text-sm"
+            />
+
+      {error ? (
+        <p id={messageId} className={styles.helperText}>
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
