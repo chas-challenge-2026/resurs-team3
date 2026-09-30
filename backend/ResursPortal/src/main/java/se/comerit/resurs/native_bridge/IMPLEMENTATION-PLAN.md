@@ -22,6 +22,13 @@ Behövs:
 
 Titta på ResursCrypto.java för hur man gör detta.
 
+**Status:** `ResursAudit.java`, en tom `ResursAuditService.java` och
+`jna.library.path` i `pom.xml` är klara och kompilerar.
+
+**Nästa:** ett röktest (`ResursAuditSmokeTest.java`, kräver `make` i `native/`)
+som kontrollerar att Java-koden kan ladda och anropa `libresurs_audit.so`.
+Görs innan vi delar upp arbetet.
+
 ### 2. AuditChainResult.java
 En låda som innehåller resultatet av en signering.
 
