@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import se.comerit.resurs.service.ApplicationService;
+import se.comerit.resurs.service.CompanyValidationService;
 import se.comerit.resurs.service.ScoringResult;
 import se.comerit.resurs.service.ScoringService;
+import se.comerit.resurs.service.CreditApplicationValidationService;
 
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -23,13 +25,19 @@ public class ApplicationController {
 
     private final ScoringService scoringService;
     private final ApplicationService applicationService;
+    private final CompanyValidationService companyValidationService;
+    private final CreditApplicationValidationService validationService;
 
     public ApplicationController(
             ScoringService scoringService,
-            ApplicationService applicationService
+            ApplicationService applicationService,
+            CompanyValidationService companyValidationService,
+            CreditApplicationValidationService validationService
     ) {
         this.scoringService = scoringService;
         this.applicationService = applicationService;
+        this.companyValidationService = companyValidationService;
+        this.validationService = validationService;
     }
 
     @GetMapping("/apply")
@@ -42,6 +50,7 @@ public class ApplicationController {
         if (!"company".equals(session.getAttribute("role"))) {
             return "redirect:/login";
         }
+
 
         model.addAttribute("companyName", session.getAttribute("companyName"));
         model.addAttribute("orgNumber", session.getAttribute("orgNumber"));
@@ -114,6 +123,31 @@ public class ApplicationController {
 
             model.addAttribute("companyName", companyName);
             model.addAttribute("orgNumber", orgNumber);
+
+            return "apply";
+        }
+        List<String> validationErrors = validationService.validate(
+                companyName,
+                orgNumber,
+                authorizedSignatory,
+                purpose,
+                requestedAmount,
+                BigDecimal.valueOf(nettoomsattning)
+        );
+        CompanyValidationService.CompanyValidationResult validationResult =
+                companyValidationService.validate(orgNumber);
+        if(!validationResult.valid()) {
+            model.addAttribute("error", validationResult.message());
+            model.addAttribute("companyName", companyName);
+            model.addAttribute("orgNumber", orgNumber);
+            return "apply";
+        }
+        if (!validationErrors.isEmpty()) {
+            model.addAttribute("validationErrors", validationErrors);
+            model.addAttribute("companyName", companyName);
+            model.addAttribute("orgNumber", orgNumber);
+            model.addAttribute("requestedAmount", requestedAmount);
+            model.addAttribute("nettoomsattning", nettoomsattning);
 
             return "apply";
         }
