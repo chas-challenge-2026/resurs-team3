@@ -36,6 +36,60 @@ Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
 
 **Nästa:** punkt 2–4 nedan. Kan delas upp mellan oss nu.
 
+## Beslut och uppdelning (punkt 2–5)
+
+### Gemensamma beslut
+- **Format utåt:** hash och signatur skickas som Base64-strängar (samma som
+  `ResursCryptoService`). Det är också så de sparas i databasen.
+- **Teckenkodning:** alltid `StandardCharsets.UTF_8`, aldrig `getBytes()` utan
+  argument. Annars kan JSON med å/ä/ö ge olika bytes och verifieringen går sönder.
+- **Nycklar:** tas in som `byte[]`-parametrar. Var de kommer ifrån i produktion
+  bestäms senare.
+- **Längdkontroll i Java:** C-funktionerna får bara en pekare och läser alltid
+  ett fast antal bytes, så en för kort array ger ingen felkod utan läser utanför
+  minnet. Servicen kontrollerar därför längderna *innan* C anropas och kastar
+  `IllegalArgumentException` om något är fel:
+  - `privateKey` = `RESURS_AUDIT_PRIVKEY_LEN`, `publicKey` = `RESURS_AUDIT_PUBKEY_LEN`
+  - `prevHash` (avkodad) = `RESURS_AUDIT_HASH_LEN`
+  - varje hash = `RESURS_AUDIT_HASH_LEN`, varje signatur = `RESURS_AUDIT_SIGNATURE_LEN`
+- **Felhantering:**
+  - `verifyChain`: `RESURS_ERR_AUTH_FAILED` är ett normalt utfall (kedjan är
+    ogiltig) → returnera `VerifyChainResult(false, index)`, inget undantag.
+  - Alla andra felkoder (och alla fel i `signEntry`) → kasta undantag, som i
+    `ResursCryptoService`.
+- **Tom kedja:** `verifyChain` med tomma listor ger `VerifyChainResult(true, -1)`.
+  Samma som C-koden gör (`entry_count == 0` → `RESURS_OK`).
+
+### Metodsignaturer i ResursAuditService
+Skrivs in först (med `UnsupportedOperationException`) så att vi kan jobba
+parallellt:
+
+    public AuditChainResult signEntry(String entryJson, String prevHashBase64, byte[] privateKey)
+    public VerifyChainResult verifyChain(List<String> entriesJson, List<String> hashesBase64,
+                                         List<String> signaturesBase64, byte[] publicKey)
+
+- `prevHashBase64` är `null` för första posten i kedjan.
+- Listorna i `verifyChain` måste vara lika långa och i kedjeordning.
+
+### Uppdelning
+
+**Person A — signering (Gustaf)**
+- `AuditChainResult` (record: `hash`, `signature`, båda Base64)
+- `signEntry`
+- Tester: signera första posten (`prevHash = null`), signera en kedja,
+  fel nyckellängd ger undantag
+
+**Person B — verifiering (Powell)**
+- `VerifyChainResult` (record: `valid`, `firstInvalidIndex`, `-1` om giltig)
+- `verifyChain` — packa listorna till platta arrayer (`byte[]` + `long[]`
+  med längder) innan anropet
+- Tester: giltig kedja, manipulerad post, fel publik nyckel, tom kedja
+- Behöver en signerad kedja i testerna: anropa `ResursAudit.INSTANCE` direkt
+  (som i röktestet) tills `signEntry` är klar
+
+Gemensamt till sist: ett rundturstest (signera 3 poster med `signEntry`,
+verifiera med `verifyChain`).
+
 ### 2. AuditChainResult.java
 En låda som innehåller resultatet av en signering.
 
