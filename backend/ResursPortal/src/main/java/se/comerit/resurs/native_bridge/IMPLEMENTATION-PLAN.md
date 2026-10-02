@@ -23,11 +23,18 @@ Behövs:
 Titta på ResursCrypto.java för hur man gör detta.
 
 **Status:** `ResursAudit.java`, en tom `ResursAuditService.java` och
-`jna.library.path` i `pom.xml` är klara och kompilerar.
+`jna.library.path` i `pom.xml` är klara och kompilerar. Röktestet
+`ResursAuditSmokeTest.java` (i `src/test/.../native_bridge/`) går igenom: det
+signerar en post och verifierar den via `libresurs_audit.so`.
 
-**Nästa:** ett röktest (`ResursAuditSmokeTest.java`, kräver `make` i `native/`)
-som kontrollerar att Java-koden kan ladda och anropa `libresurs_audit.so`.
-Görs innan vi delar upp arbetet.
+Köra röktestet:
+```
+cd native && make
+cd ../backend/ResursPortal && mvn test -Dtest=ResursAuditSmokeTest
+```
+Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
+
+**Nästa:** punkt 2–4 nedan. Kan delas upp mellan oss nu.
 
 ### 2. AuditChainResult.java
 En låda som innehåller resultatet av en signering.
