@@ -1,128 +1,254 @@
 .page {
-  position: relative;
-  display: flex;
+  --resurs-bg: var(--color-resurs-bg, #0a2422);
+  --resurs-panel: var(--color-resurs-panel, #0e332f);
+  --resurs-card: var(--color-resurs-card, #123a35);
+  --resurs-muted: var(--color-resurs-muted, #9fb8b3);
+  --resurs-orange: var(--color-resurs-orange, #dd7e22);
+  --resurs-on-orange: var(--color-resurs-on-orange, #0a2422);
   min-height: 100vh;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: var(--color-resurs-bg);
-}
-
-.logoWrap {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-}
-
-.contentWrap {
-  position: relative;
-  z-index: 10;
   display: flex;
-  flex: 1 1 0%;
   align-items: center;
   justify-content: center;
-  padding-inline: 1rem;
-  padding-bottom: 2rem;
+  box-sizing: border-box;
+  padding: 32px 24px;
+  background: var(--resurs-bg);
+  color: #fff;
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.card {
+.splitCard {
   width: 100%;
-  max-width: 28rem;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-resurs-panel);
-  padding: 1.25rem;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-@media (min-width: 640px) {
-  .card {
-    padding: 2rem;
-  }
-}
-
-.title {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: var(--color-resurs-muted);
-}
-
-.tabRow {
-  margin-top: 1.5rem;
-  display: flex;
-  border-radius: var(--radius-md);
-  background-color: rgb(0 0 0 / 0.2);
-  padding: 0.25rem;
-}
-
-.tab {
-  min-height: 44px;
-  min-width: 0;
-  flex: 1 1 0%;
+  max-width: 980px;
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border-radius: var(--radius-md);
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 600;
-  color: rgb(255 255 255 / 0.8);
-  transition: color 0.15s ease, background-color 0.15s ease;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
+  background: var(--resurs-panel);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 24px;
+  box-shadow: 0 0 0 1px #1717170d, 0 1px 3px #0000001a, 0 1px 2px -1px #0000001a;
+  /* Plays on every mount — the intro screen on first load, and again when
+     started flips and React mounts the login layout in its place — so the
+     intro→login swap reads as a soft transition rather than a hard cut. */
+  animation: splitCardIn 350ms ease-out;
 }
 
-.tab:hover:not(.tabActive) {
-  color: #ffffff;
+@keyframes splitCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.tabActive {
-  background-color: var(--color-resurs-orange);
-  color: var(--color-resurs-on-orange);
+@media (prefers-reduced-motion: reduce) {
+  .splitCard { animation: none; }
 }
 
-@media (min-width: 640px) {
-  .tab {
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-.bankIdRow {
-  margin-top: 1.5rem;
+.formPanel, .heroPanel, .introLogoPanel {
+  min-width: 0;
+  padding: 40px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+}
+.introLogoPanel {
+  background: #fff;
   align-items: center;
+  justify-content: center;
+}
+.formPanel {
+  background: #fff;
+  /* Light-panel overrides — scoped to .formPanel only so the dark-panel
+     defaults (--resurs-muted, and TextField's own defaults) still apply
+     everywhere else in the app, including .heroPanel on this same page. */
+  --resurs-ink: #0a2422;
+  --resurs-ink-muted: #4a6560;
+  --tf-label-color: var(--resurs-ink);
+  --tf-hint-color: var(--resurs-ink-muted);
+  --tf-error-color: #b91c1c;
+  --tf-input-bg: #F2F3F3;
+  /* .heroPanel is first in DOM order (physically left), .formPanel second
+     (physically right) — see LoginPage.tsx. This divider sits on
+     .formPanel's left edge, the shared boundary between the two. */
+  border-left: 1px solid rgb(10 36 34 / 10%);
+}
+.heroPanel { background: var(--resurs-panel); }
+
+.brandLogo { margin-bottom: 20px; }
+.securityBadge {
+  padding: 4px 10px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 18px;
+  background: rgb(0 0 0 / 20%);
+  color: var(--resurs-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 
-.bankIdCaption {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: var(--color-resurs-muted);
+.formContainer { width: 100%; max-width: 380px; margin: auto; display: flex; flex-direction: column; }
+.cardHeader { margin-bottom: 24px; }
+.title { margin: 0 0 6px; color: var(--resurs-ink); font-size: 22px; font-weight: 600; letter-spacing: -.03em; }
+.subtitle { margin: 0; color: var(--resurs-ink-muted); font-size: 13px; }
+.tabContainer { display: flex; margin-bottom: 24px; padding: 3px; border-radius: 18px; background: rgb(10 36 34 / 6%); }
+.tabBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  background: transparent;
+  color: var(--resurs-ink-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.tabBtn:focus-visible { outline: 2px solid var(--resurs-orange); outline-offset: 2px; }
+.tabBtn:hover:not(.tabActive) { color: var(--resurs-ink); }
+/* Card/bordered active state rather than a solid accent fill — the accent
+   color stays reserved for the primary CTA (submitButton below) so the two
+   don't compete for attention. */
+.tabActive {
+  background: var(--resurs-card);
+  border-color: rgb(255 255 255 / 10%);
+  color: #fff;
+  box-shadow: 0 1px 2px #0000001f;
+}
+.panel {
+  min-width: 0;
+  /* key={activeTab} on this element (LoginPage.tsx) forces a real
+     remount on every tab switch, so this replays each time — same
+     technique/animation as .splitCard's intro→login swap. */
+  animation: splitCardIn 350ms ease-out;
 }
 
+/* Taller, more rounded field than the shared TextField default — scoped
+   to this page only via the outer wrapper class, since other forms in the
+   app should keep the standard --radius-md sizing. Applied to every field
+   on this page (org number, email, password) so they all match the
+   button/tab pill radius. Targets the input via a descendant selector
+   (higher specificity than the single-class utility strings TextField's
+   input uses, so no !important needed here). */
+.pillField input {
+  width: 100%;
+  border-radius: 9999px;
+  padding: 1rem 1.25rem;
+}
+
+/* AdminLoginForm/BankIdLoginForm reference these — field spacing, the
+   error banner, and the submit button's shape all live here rather than
+   in the shared Button/TextField components, since they're specific to
+   this page's layout. */
 .form {
-  margin-top: 1.5rem;
-  border-radius: var(--radius-md);
-  background-color: var(--color-resurs-card);
-  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Replaces per-field "*" marks on forms where every field is required (see
+   TextField's hideRequiredMark) — one line beats N redundant asterisks. */
+.requiredNote {
+  margin: -8px 0 0;
+  color: var(--resurs-ink-muted);
+  font-size: 12px;
+}
+
+.formError {
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  background: rgb(185 28 28 / 10%);
+  color: #b91c1c;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .submitButton {
-  margin-top: 1rem;
   width: 100%;
+  margin-top: 4px;
+  /* Fuller pill shape than the app-wide 10px radius — this page already
+     departs from that standard (see splitCard/tabBtn above), and a round
+     CTA reads as the clear, inviting primary action. !important because
+     Button's own .base sets border-radius too, at equal selector
+     specificity — module bundling order isn't guaranteed to let this
+     page's class win otherwise. */
+  border-radius: 9999px !important;
+  /* Dark fill instead of Button's default orange — the BankID mark in the
+     icon slot is a fixed white asset (not currentColor), so it needs a
+     dark background to read clearly (white-on-orange here is ~2.97:1,
+     under the 3:1 non-text/graphical-object floor). Text goes white to
+     match. !important for the same specificity reason as the radius. */
+  background-color: var(--resurs-ink, #0a2422) !important;
+  color: #fff !important;
+}
+.submitButton:hover {
+  background-color: #051614 !important;
+}
+.submitButton:focus {
+  /* The inner ring is meant to match the surrounding page so the outer
+     orange ring reads as offset — page is white now, so the gap ring
+     needs to be white too instead of Button's dark-panel default. */
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--resurs-orange) !important;
 }
 
-.passwordField {
-  margin-top: 1rem;
+.leftFooter, .rightFooter { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 24px; font-size: 11px; }
+.leftFooter { border-top: 1px solid rgb(10 36 34 / 10%); color: var(--resurs-ink-muted); }
+.footerNav { display: flex; flex-wrap: wrap; gap: 12px; }
+/* Underlined at rest, not just on hover — .leftFooter sets the same
+   ink-muted color on its plain copyright text, so without an underline
+   these links are distinguishable only by color, which fails for
+   colorblind users (see docs/ux.md §16). */
+.footerLink, .leftFooter a { color: var(--resurs-ink-muted); text-decoration: underline; }
+.footerLink:hover, .leftFooter a:hover { color: var(--resurs-ink); }
+.heroContent { max-width: 420px; margin: auto 0; }
+.heroHeadline { margin: 0 0 16px; color: #fff; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.03em; }
+.heroDescription { margin: 0; color: var(--resurs-muted); font-size: 14px; line-height: 1.6; }
+
+.heroFeatures {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heroFeatureItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.heroFeatureIcon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--resurs-orange);
+}
+.rightFooter { border-top: 1px solid rgb(255 255 255 / 10%); color: var(--resurs-muted); }
+.trustBadges { display: flex; gap: 16px; align-items: center; }
+.trustBadge { display: flex; align-items: center; gap: 6px; color: var(--resurs-muted); font-size: 11px; }
+.helpLink { color: #fff; font-size: 12px; font-weight: 500; text-decoration: none; }
+.helpLink:hover { text-decoration: underline; }
+
+.ctaButton {
+  width: 100%;
+  margin-top: 24px;
+  border-radius: 9999px !important;
+}
+
+@media (max-width: 820px) {
+  .page { align-items: flex-start; }
+  .splitCard { grid-template-columns: 1fr; border-radius: 20px; }
+  .formPanel, .heroPanel, .introLogoPanel { min-height: 420px; padding: 32px; }
+  .heroPanel { min-height: 300px; gap: 32px; }
+  .formPanel { border-top: 1px solid rgb(10 36 34 / 10%); border-left: 0; }
+}
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .splitCard { border-radius: 16px; }
+  .formPanel, .heroPanel, .introLogoPanel { min-height: 0; padding: 24px 20px; }
+  .formContainer { margin: 52px auto; }
+  .leftFooter { align-items: flex-start; flex-direction: column; }
 }

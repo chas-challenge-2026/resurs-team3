@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider } from './auth/AuthContext'
 import { CasesProvider } from './context/CasesContext'
-import { useAuth } from './context/useAuth'
+import { useAuth } from './auth/useAuth'
 import { LoginPage } from './pages/LoginPage'
 import { WizardPage } from './pages/wizard/WizardPage'
-import { ProtectedRoute } from './routes/ProtectedRoute'
-import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
+import { OverviewPage } from './pages/overview/OverviewPage'
+import { DocumentsPage } from './pages/documents/DocumentsPage'
+import { ProtectedRoute } from './auth/ProtectedRoute'
+import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
 import { AppLayout } from './components/layout/AppLayout'
 import { BackofficeLayout } from './pages/backoffice/BackofficeLayout'
 
@@ -13,8 +15,8 @@ import { BackofficeLayout } from './pages/backoffice/BackofficeLayout'
 // BackofficeLayout manages its own internal sections rather than nested
 // routes, so it ignores the nested "/" route below when it renders.
 function AuthedRoot() {
-  const { state } = useAuth()
-  return state.loginMethod === 'handlaggare' ? <BackofficeLayout /> : <AppLayout />
+  const { user } = useAuth()
+  return user?.role === 'admin' ? <BackofficeLayout /> : <AppLayout />
 }
 
 function AppRoutes() {
@@ -40,6 +42,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/" element={<WizardPage />} />
       </Route>
 
@@ -57,3 +61,4 @@ export default function App() {
     </AuthProvider>
   )
 }
+

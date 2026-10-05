@@ -1,37 +1,74 @@
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
 .label {
   display: block;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: rgb(255 255 255 / 0.9);
-  margin-bottom: 0.375rem;
+  color: var(--tf-label-color, rgb(255 255 255 / 0.9));
+}
+
+.labelHint {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+  color: var(--tf-hint-color, var(--color-resurs-muted));
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.inputIcon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6b7280;
+  pointer-events: none;
 }
 
 .input {
   width: 100%;
   border-radius: var(--radius-md);
-  background-color: var(--color-resurs-input);
+  background-color: var(--tf-input-bg, var(--color-resurs-input));
   color: #1f2937;
   padding: 0.625rem 0.75rem;
   font-size: 1rem;
   line-height: 1.5rem;
+  border: 1px solid transparent;
   outline: none;
 }
 
 .input::placeholder {
-  color: #6b7280;
+  /* #4b5563 clears AA (4.5:1) against both this app's default input
+     background (--color-resurs-input, cream) and LoginPage's --tf-input-bg
+     override (#F2F3F3) — the previous #6b7280 only managed 4.35:1 against
+     the latter, just under the AA floor. */
+  color: #4b5563;
 }
 
 .input:focus {
   box-shadow: 0 0 0 2px var(--color-resurs-orange);
 }
 
-@media (min-width: 640px) {
-  .input {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
+.inputError {
+  box-shadow: 0 0 0 2px #f87171;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 2px #f87171;
 }
 
 .textarea {
@@ -39,9 +76,16 @@
   min-height: 96px;
 }
 
-.helperText {
+.message {
   margin-top: 0.25rem;
   font-size: 0.75rem;
   line-height: 1rem;
-  color: var(--color-resurs-muted);
+}
+
+.messageHelp {
+  color: var(--tf-hint-color, var(--color-resurs-muted));
+}
+
+.messageError {
+  color: var(--tf-error-color, #fca5a5);
 }
