@@ -1,0 +1,66 @@
+.pendingPanel {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-resurs-card);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  outline: none;
+}
+
+/* Focused programmatically (LoginPage.tsx-style pattern, not by keyboard
+   tab), so :focus rather than :focus-visible — otherwise this panel
+   would silently fall back to the browser default blue outline instead of
+   the app’s own orange ring used everywhere else (tabs, buttons). */
+.pendingPanel:focus {
+  outline: 2px solid var(--color-resurs-orange);
+  outline-offset: 2px;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 3px solid rgb(255 255 255 / 0.15);
+  border-top-color: var(--color-resurs-orange);
+  animation: bankIdSpin 0.8s linear infinite;
+}
+
+@keyframes bankIdSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pendingText {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-resurs-muted);
+}
+
+.pendingCompany {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.pendingActions {
+  margin-top: 0.5rem;
+  display: flex;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.pendingActions > * {
+  flex: 1 1 0%;
+}
+
+.devNote {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+  font-style: italic;
+}
