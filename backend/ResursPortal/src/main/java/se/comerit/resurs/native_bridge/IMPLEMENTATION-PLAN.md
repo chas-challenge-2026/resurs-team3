@@ -59,6 +59,13 @@ Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
     `ResursCryptoService`.
 - **Tom kedja:** `verifyChain` med tomma listor ger `VerifyChainResult(true, -1)`.
   Samma som C-koden gör (`entry_count == 0` → `RESURS_OK`).
+- **Resultatklasser (record vs class):** `AuditChainResult` och
+  `VerifyChainResult` ska bli `record` när Java 21 är mergat till `develop`.
+  Tills dess (projektet kör Java 11) skrivs de som `final class` med
+  record-liknande accessorer — `hash()`, `signature()`, `valid()`,
+  `firstInvalidIndex()`, inte `getHash()` osv — plus `equals`/`hashCode`.
+  Då räcker det att byta klasskroppen mot ett `record` senare; inga anrop
+  behöver ändras.
 
 ### Metodsignaturer i ResursAuditService
 Skrivs in först (med `UnsupportedOperationException`) så att vi kan jobba
@@ -74,13 +81,13 @@ parallellt:
 ### Uppdelning
 
 **Person A — signering (Gustaf)**
-- `AuditChainResult` (record: `hash`, `signature`, båda Base64)
+- `AuditChainResult` (`final class` → `record` med Java 21: `hash`, `signature`, båda Base64)
 - `signEntry`
 - Tester: signera första posten (`prevHash = null`), signera en kedja,
   fel nyckellängd ger undantag
 
 **Person B — verifiering (Powell)**
-- `VerifyChainResult` (record: `valid`, `firstInvalidIndex`, `-1` om giltig)
+- `VerifyChainResult` (`final class` → `record` med Java 21: `valid`, `firstInvalidIndex`, `-1` om giltig)
 - `verifyChain` — packa listorna till platta arrayer (`byte[]` + `long[]`
   med längder) innan anropet
 - Tester: giltig kedja, manipulerad post, fel publik nyckel, tom kedja
