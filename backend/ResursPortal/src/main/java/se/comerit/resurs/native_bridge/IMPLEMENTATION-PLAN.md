@@ -91,6 +91,11 @@ parallellt:
 
 ### Uppdelning
 
+Vi jobbar båda direkt på `feature/28-cpp-java-interface` (inga under-brancher).
+Hämta den andras ändringar (`git pull`) innan du pushar. Rör bara din egen metod
+(`signEntry` / `verifyChain`) i `ResursAuditService` och ha egna testklasser (`ResursAuditServiceSignTest` /
+`ResursAuditServiceVerifyTest`) så krockar vi inte.
+
 **Person A — signering (Gustaf)**
 - `AuditChainResult` (`final class` → `record` med Java 21: `hash`, `signature`, båda Base64)
 - `signEntry`
