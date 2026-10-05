@@ -1,16 +1,19 @@
 import { TextArea, TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
+import type { CreditDetailsErrors } from '../creditDetails.validation'
 import styles from './CreditDetailsStep.module.css'
 
 type CreditField = 'requestedAmount' | 'purpose'
 
 interface CreditDetailsStepProps {
   data: CreditApplicationData
+  errors: CreditDetailsErrors
   onChange: (field: CreditField, value: string) => void
 }
 
 export function CreditDetailsStep({
   data,
+  errors,
   onChange,
 }: CreditDetailsStepProps) {
   return (
@@ -27,6 +30,7 @@ export function CreditDetailsStep({
           type="number"
           required
           value={data.requestedAmount}
+          error={errors.requestedAmount}
           onChange={(event) =>
             onChange('requestedAmount', event.target.value)
           }
@@ -37,6 +41,7 @@ export function CreditDetailsStep({
           label="Syfte med krediten"
           required
           value={data.purpose}
+          error={errors.purpose}
           onChange={(event) => onChange('purpose', event.target.value)}
           placeholder="Beskriv kort vad krediten ska användas till"
         />
