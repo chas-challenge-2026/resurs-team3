@@ -67,6 +67,17 @@ Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
   Då räcker det att byta klasskroppen mot ett `record` senare; inga anrop
   behöver ändras.
 
+  > **Vad är ett record?** Ett record (Java 16+) är Javas inbyggda sätt att
+  > skriva en oföränderlig klass som bara bär data:
+  > `public record AuditChainResult(String hash, String signature) {}`
+  >
+  > **Skillnad mot vår `final class`:** beteendet är detsamma — samma
+  > konstruktor, `hash()`, `signature()`, `equals`, `hashCode`, `toString`,
+  > och värdena kan inte ändras. Skillnaden är att vi skriver allt för hand
+  > och själva måste hålla det korrekt (t.ex. uppdatera `equals` om ett fält
+  > läggs till), medan Java genererar det i ett record och kompilatorn
+  > garanterar att det stämmer. Därför byter vi när vi kör Java 21.
+
 ### Metodsignaturer i ResursAuditService
 Skrivs in först (med `UnsupportedOperationException`) så att vi kan jobba
 parallellt:
