@@ -10,6 +10,10 @@ import se.comerit.resurs.model.Application;
 import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.ScoringResult;
 import se.comerit.resurs.service.ScoringService;
+import se.comerit.resurs.service.CompanyValidationService;
+import se.comerit.resurs.service.CreditApplicationValidationService;
+
+import java.util.List;
 
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -28,10 +32,18 @@ public class ApplicationController {
 
     private final ScoringService scoringService;
     private final ApplicationService applicationService;
+    private final CompanyValidationService companyValidationService;
+    private final CreditApplicationValidationService validationService;
 
-    public ApplicationController(ScoringService scoringService, ApplicationService applicationService) {
+
+    public ApplicationController(ScoringService scoringService,
+                                 ApplicationService applicationService,
+                                 CompanyValidationService companyValidationService,
+                                 CreditApplicationValidationService validationService) {
         this.scoringService = scoringService;
         this.applicationService = applicationService;
+        this.companyValidationService = companyValidationService;
+        this.validationService = validationService;
     }
 
     // ============================================================
@@ -97,6 +109,32 @@ public class ApplicationController {
             model.addAttribute("orgNumber", orgNumber);
             return "apply";
         }
+        List<String> validationErrors = validationService.validate(
+                companyName,
+                orgNumber,
+                authorizedSignatory,
+                purpose,
+                requestedAmount,
+                BigDecimal.valueOf(nettoomsattning)
+        );
+        CompanyValidationService.CompanyValidationResult validationResult =
+                companyValidationService.validate(orgNumber);
+        if(!validationResult.valid()) {
+            model.addAttribute("error", validationResult.message());
+            model.addAttribute("companyName", companyName);
+            model.addAttribute("orgNumber", orgNumber);
+            return "apply";
+        }
+        if (!validationErrors.isEmpty()) {
+            model.addAttribute("validationErrors", validationErrors);
+            model.addAttribute("companyName", companyName);
+            model.addAttribute("orgNumber", orgNumber);
+            model.addAttribute("requestedAmount", requestedAmount);
+            model.addAttribute("nettoomsattning", nettoomsattning);
+
+            return "apply";
+        }
+
 
         double operativtKassaflode = parseOptionalDouble(operativtKassaflodeStr);
         double investeringsKassaflode = parseOptionalDouble(investeringsKassaflodeStr);
@@ -116,6 +154,10 @@ public class ApplicationController {
 
         String decision = scoringResult.getDecision();
         String status = scoringResult.getStatus();
+        String decisionReason = scoringResult.getDecisionReason();
+        String scoringLog = scoringResult.getScoringLog();
+        int flagCount = scoringResult.getFlagCount();
+
 
         String initialAuditLog = "[{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + orgNumber + "\"}]";
