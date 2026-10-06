@@ -1,5 +1,8 @@
 package se.comerit.resurs.native_bridge;
 
+import com.sun.jna.ptr.LongByReference;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
@@ -16,7 +19,20 @@ public class ResursAuditService {
                     "privateKey måste vara " + ResursAudit.RESURS_AUDIT_PRIVKEY_LEN + " bytes");
         }
         byte[] prevHash = decodePrevHash(prevHashBase64);
-        throw new UnsupportedOperationException("signEntry är inte implementerad än");
+        byte[] entry = entryJson.getBytes(StandardCharsets.UTF_8);
+        byte[] hash = new byte[ResursAudit.RESURS_AUDIT_HASH_LEN];
+        byte[] signature = new byte[ResursAudit.RESURS_AUDIT_SIGNATURE_LEN];
+        LongByReference signatureLen = new LongByReference(signature.length);
+
+        int result = ResursAudit.INSTANCE.resurs_audit_chain_entry(
+                prevHash, entry, entry.length, privateKey, hash, signature, signatureLen);
+
+        if (result != ResursAudit.RESURS_OK) {
+            throw new RuntimeException("Signering av audit-post misslyckades, felkod: " + result);
+        }
+
+        Base64.Encoder encoder = Base64.getEncoder();
+        return new AuditChainResult(encoder.encodeToString(hash), encoder.encodeToString(signature));
     }
 
     /** Listorna måste vara lika långa och i kedjeordning. */

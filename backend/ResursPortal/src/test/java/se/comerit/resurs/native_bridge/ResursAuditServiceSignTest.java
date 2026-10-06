@@ -1,14 +1,20 @@
 package se.comerit.resurs.native_bridge;
 
+import com.sun.jna.ptr.IntByReference;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tester för ResursAuditService.signEntry. Valideringstesterna kastar innan C anropas
- * och kräver därför inte libresurs_audit.so.
+ * och kräver därför inte libresurs_audit.so. Signeringstesterna kräver `make` i native/.
  */
 class ResursAuditServiceSignTest {
 
@@ -58,5 +64,30 @@ class ResursAuditServiceSignTest {
     void emptyPrevHashIsRejected() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.signEntry(ENTRY, "", VALID_KEY));
+    }
+
+    @Test
+    void firstEntryHashIsSha256OfEntryJson() throws NoSuchAlgorithmException {
+        AuditChainResult result = service.signEntry(ENTRY, null, AuditTestKeys.TEST_PRIV);
+
+        // Första posten har ingen prevHash, så hashen är bara SHA-256 av JSON-texten.
+        byte[] expected = MessageDigest.getInstance("SHA-256")
+                .digest(ENTRY.getBytes(StandardCharsets.UTF_8));
+        assertArrayEquals(expected, Base64.getDecoder().decode(result.hash()));
+    }
+
+    @Test
+    void firstEntrySignatureVerifiesWithPublicKey() {
+        AuditChainResult result = service.signEntry(ENTRY, null, AuditTestKeys.TEST_PRIV);
+
+        byte[] entry = ENTRY.getBytes(StandardCharsets.UTF_8);
+        byte[] hash = Base64.getDecoder().decode(result.hash());
+        byte[] signature = Base64.getDecoder().decode(result.signature());
+        IntByReference firstInvalid = new IntByReference();
+
+        int verifyResult = ResursAudit.INSTANCE.resurs_audit_verify_chain(
+                entry, new long[] {entry.length}, hash, signature, 1, AuditTestKeys.TEST_PUB, firstInvalid);
+
+        assertEquals(ResursAudit.RESURS_OK, verifyResult);
     }
 }
