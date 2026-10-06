@@ -52,6 +52,9 @@ Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
   - `privateKey` = `RESURS_AUDIT_PRIVKEY_LEN`, `publicKey` = `RESURS_AUDIT_PUBKEY_LEN`
   - `prevHash` (avkodad) = `RESURS_AUDIT_HASH_LEN`
   - varje hash = `RESURS_AUDIT_HASH_LEN`, varje signatur = `RESURS_AUDIT_SIGNATURE_LEN`
+- **Null-argument:** obligatoriska argument (`entryJson`, nycklar, listor) som är
+  `null` ger `IllegalArgumentException`, inte `NullPointerException`. Undantaget
+  är `prevHashBase64`, som får vara `null` för första posten.
 - **Felhantering:**
   - `verifyChain`: `RESURS_ERR_AUTH_FAILED` är ett normalt utfall (kedjan är
     ogiltig) → returnera `VerifyChainResult(false, index)`, inget undantag.

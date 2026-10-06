@@ -30,4 +30,10 @@ class ResursAuditServiceSignTest {
     void nullPrivateKeyIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> service.signEntry(ENTRY, null, null));
     }
+
+    @Test
+    void nullEntryJsonIsRejected() {
+        byte[] key = new byte[ResursAudit.RESURS_AUDIT_PRIVKEY_LEN];
+        assertThrows(IllegalArgumentException.class, () -> service.signEntry(null, null, key));
+    }
 }
