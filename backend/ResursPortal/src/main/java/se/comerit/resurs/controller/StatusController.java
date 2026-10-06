@@ -9,7 +9,7 @@ import se.comerit.resurs.model.Application;
 import se.comerit.resurs.model.Document;
 import se.comerit.resurs.service.StatusService;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

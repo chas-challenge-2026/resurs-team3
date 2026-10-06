@@ -11,7 +11,7 @@ import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.ScoringResult;
 import se.comerit.resurs.service.ScoringService;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
