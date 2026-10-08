@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -106,6 +107,14 @@ class ResursAuditServiceVerifyTest {
         List<String> signatures = Collections.singletonList(null);
         assertThrows(IllegalArgumentException.class,
                 () -> service.verifyChain(ONE_ENTRY, ONE_HASH, signatures, VALID_KEY));
+    }
+
+    @Test
+    void emptyChainIsValid() {
+        VerifyChainResult result = service.verifyChain(
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), VALID_KEY);
+
+        assertEquals(new VerifyChainResult(true, -1), result);
     }
 
     private static String zeroBytesBase64(int length) {

@@ -50,6 +50,10 @@ public class ResursAuditService {
                     "publicKey måste vara " + ResursAudit.RESURS_AUDIT_PUBKEY_LEN + " bytes");
         }
         int count = entriesJson.size();
+        // Samma svar som C ger för entry_count == 0, men utan att skicka tomma arrayer via JNA.
+        if (count == 0) {
+            return new VerifyChainResult(true, -1);
+        }
         byte[] hashes = new byte[count * ResursAudit.RESURS_AUDIT_HASH_LEN];
         byte[] signatures = new byte[count * ResursAudit.RESURS_AUDIT_SIGNATURE_LEN];
         for (int i = 0; i < count; i++) {
