@@ -1,35 +1,54 @@
 import type { CSSProperties } from 'react'
-import { Outlet } from 'react-router-dom'
-import { AppSidebar } from './AppSidebar'
-import type { SidebarItem } from './AppSidebar'
-import { Icon } from '../Icon'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/Sidebar'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { SidebarProvider, SidebarInset } from '@/components/ui/Sidebar'
+import { useAuth } from '../../auth/useAuth'
+import { AccountBadge } from '../AccountBadge'
+import { Logo } from '../Logo'
+import { joinClassNames } from '../../lib/joinClassNames'
 import styles from './AppLayout.module.css'
-
-const NAV_ITEMS: SidebarItem[] = [
-  { key: 'kreditansokan', label: 'Kreditansökan', icon: <Icon name="edit" /> },
-  { key: 'portal', label: 'Portal', icon: <Icon name="grid" /> },
-  { key: 'aviseringar', label: 'Aviseringar', icon: <Icon name="bell" /> },
-  { key: 'installningar', label: 'Inställningar', icon: <Icon name="settings" /> },
-]
+import { ROUTES } from '../../routes'
 
 const SIDEBAR_SIZE = {
-  '--sidebar-width': '450px',
+  '--sidebar-width': '0px',
   '--sidebar-width-icon': '4rem',
 } as CSSProperties
 
-/** Shared authenticated-area chrome: the sidebar nav + whatever the current route renders. */
+/** Applicant portal chrome. Case workers use the separate backoffice shell. */
 export function AppLayout() {
+  const { pathname } = useLocation()
+  const isWizard = pathname.startsWith(ROUTES.wizard)
+  // An application's status page lives under Översikt (its breadcrumb says
+  // so), so the nav marks Översikt as where the applicant is.
+  const inOverview = pathname.startsWith(`${ROUTES.application}/`)
+  const { user, logout } = useAuth()
+  const displayName = user?.role === 'client' ? user.companyName : (user?.name ?? '')
+
   return (
-    <SidebarProvider style={SIDEBAR_SIZE} className={styles.providerRoot}>
-      <AppSidebar items={NAV_ITEMS} activeKey="kreditansokan" />
+    <SidebarProvider
+      style={SIDEBAR_SIZE}
+      className={styles.providerRoot}
+    >
       <SidebarInset className={styles.inset}>
-        <div className={styles.topBar}>
-          <SidebarTrigger className={styles.trigger} />
-        </div>
-        <main className={styles.main}>
+        {/* First tab stop: past the menu to the page itself. */}
+        <a href="#main" className={styles.skipLink}>Hoppa till innehållet</a>
+        <header className={styles.topBar}>
+          <div className={styles.brand}>
+            <Logo className={styles.logo} />
+          </div>
+          <nav className={styles.nav} aria-label="Huvudmeny">
+            {inOverview ? <Link to={ROUTES.overview} aria-current="location">Översikt</Link> : <NavLink to={ROUTES.overview}>Översikt</NavLink>}
+            <NavLink to={ROUTES.wizard}>Ny kreditansökan</NavLink>
+            <NavLink to={ROUTES.documents}>Mina handlingar</NavLink>
+          </nav>
+          <div className={styles.account}>
+            <AccountBadge companyDisplayName={displayName} onLogout={logout} />
+          </div>
+        </header>
+        {/* SidebarInset already renders the page's <main>; this is only the
+            skip link's target, so the page has one main landmark. */}
+        <div id="main" tabIndex={-1} className={joinClassNames(styles.main, isWizard && styles.mainWizard)}>
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )

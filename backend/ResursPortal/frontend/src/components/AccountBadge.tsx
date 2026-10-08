@@ -1,4 +1,3 @@
-import { Button } from './ui/Button'
 import styles from './AccountBadge.module.css'
 
 interface AccountBadgeProps {
@@ -8,7 +7,7 @@ interface AccountBadgeProps {
 
 /**
  * The avatar circle + display name + logout button cluster shared by
- * WizardTopBar and BackofficeTopBar — previously duplicated byte-for-byte
+ * BackofficeTopBar (and the applicant top bar) — previously duplicated byte-for-byte
  * in both. Each caller keeps its own outer flex wrapper since their
  * surrounding layouts differ slightly; this owns only the three elements
  * that were identical.
@@ -22,9 +21,11 @@ export function AccountBadge({ companyDisplayName, onLogout }: AccountBadgeProps
         {initial}
       </div>
       <span className={styles.name}>{companyDisplayName}</span>
-      <Button variant="primary" onClick={onLogout} className={styles.logoutButton}>
+      {/* Quiet on purpose: orange is reserved for the one primary action on
+          a screen (DESIGN.md), and logging out is never that. */}
+      <button type="button" onClick={onLogout} className={styles.logoutButton}>
         Logga ut
-      </Button>
+      </button>
     </>
   )
 }

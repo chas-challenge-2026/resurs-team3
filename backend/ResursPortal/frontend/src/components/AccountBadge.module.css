@@ -14,20 +14,53 @@
 }
 
 .name {
-  display: none;
+  /* Phones too: which company is logged in matters more than the avatar,
+     so below 640px the name shows (truncated) and the avatar steps aside. */
+  display: inline;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: rgb(255 255 255 / 0.9);
+  color: var(--account-name-color, rgb(255 255 255 / 0.9));
 }
 
+@media (max-width: 639px) {
+  .avatar {
+    display: none;
+  }
+}
 @media (min-width: 640px) {
   .name {
-    display: inline;
+    max-width: none;
   }
 }
 
 .logoutButton {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--account-name-color, rgb(255 255 255 / 0.9));
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.logoutButton:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.logoutButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoutButton { transition: none; }
 }
