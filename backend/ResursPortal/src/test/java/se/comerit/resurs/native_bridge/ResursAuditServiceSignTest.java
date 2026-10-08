@@ -2,6 +2,7 @@ package se.comerit.resurs.native_bridge;
 
 import com.sun.jna.ptr.IntByReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tester för ResursAuditService.signEntry. Valideringstesterna kastar innan C anropas
- * och kräver därför inte libresurs_audit.so. Signeringstesterna kräver `make` i native/.
+ * och kräver därför inte libresurs_audit.so. Signeringstesterna hoppas över om biblioteket saknas.
  */
 class ResursAuditServiceSignTest {
 
@@ -74,6 +75,7 @@ class ResursAuditServiceSignTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void firstEntryHashIsSha256OfEntryJson() throws NoSuchAlgorithmException {
         AuditChainResult result = service.signEntry(ENTRY, null, AuditTestKeys.TEST_PRIV);
 
@@ -84,6 +86,7 @@ class ResursAuditServiceSignTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void firstEntrySignatureVerifiesWithPublicKey() {
         AuditChainResult result = service.signEntry(ENTRY, null, AuditTestKeys.TEST_PRIV);
 
@@ -99,6 +102,7 @@ class ResursAuditServiceSignTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void secondEntryHashIsSha256OfPrevHashAndEntryJson() throws NoSuchAlgorithmException {
         AuditChainResult first = service.signEntry(ENTRY, null, AuditTestKeys.TEST_PRIV);
         AuditChainResult second = service.signEntry(SECOND_ENTRY, first.hash(), AuditTestKeys.TEST_PRIV);
@@ -111,6 +115,7 @@ class ResursAuditServiceSignTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void threeEntryChainVerifiesWithPublicKey() {
         String[] entries = {ENTRY, SECOND_ENTRY, THIRD_ENTRY};
         ByteArrayOutputStream entryBytes = new ByteArrayOutputStream();
@@ -139,6 +144,7 @@ class ResursAuditServiceSignTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void swedishCharactersAreHashedAsUtf8() throws NoSuchAlgorithmException {
         AuditChainResult result = service.signEntry(SWEDISH_ENTRY, null, AuditTestKeys.TEST_PRIV);
 

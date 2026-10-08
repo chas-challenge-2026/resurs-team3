@@ -3,6 +3,7 @@ package se.comerit.resurs.native_bridge;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.nio.charset.StandardCharsets;
 
@@ -10,8 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Smoke test: verifies that libresurs_audit.so can be loaded and that the JNA
- * mapping in ResursAudit passes arguments correctly. Requires `make` in native/.
+ * mapping in ResursAudit passes arguments correctly. Skipped if `make` has not been run in native/.
  */
+@EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
 class ResursAuditSmokeTest {
 
     @Test

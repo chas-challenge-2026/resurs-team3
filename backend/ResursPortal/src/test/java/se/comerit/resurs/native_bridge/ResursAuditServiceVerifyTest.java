@@ -1,6 +1,7 @@
 package se.comerit.resurs.native_bridge;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tester för ResursAuditService.verifyChain. Valideringstesterna kastar innan C anropas
- * och kräver därför inte libresurs_audit.so. Verifieringstesterna kräver `make` i native/.
+ * och kräver därför inte libresurs_audit.so. Verifieringstesterna hoppas över om biblioteket saknas.
  */
 class ResursAuditServiceVerifyTest {
 
@@ -126,6 +127,7 @@ class ResursAuditServiceVerifyTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void validChainIsValid() {
         Chain chain = signChain();
 
@@ -136,6 +138,7 @@ class ResursAuditServiceVerifyTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void tamperedEntryIsDetected() {
         Chain chain = signChain();
         chain.entries.set(1, "{\"action\":\"APPLICATION_REJECTED\",\"id\":\"1\"}");
@@ -147,6 +150,7 @@ class ResursAuditServiceVerifyTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void tamperedSignatureIsDetected() {
         Chain chain = signChain();
         byte[] signature = Base64.getDecoder().decode(chain.signatures.get(2));
@@ -160,6 +164,7 @@ class ResursAuditServiceVerifyTest {
     }
 
     @Test
+    @EnabledIf("se.comerit.resurs.native_bridge.NativeAuditLibrary#isAvailable")
     void wrongPublicKeyIsDetected() {
         Chain chain = signChain();
 
