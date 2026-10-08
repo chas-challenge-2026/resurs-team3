@@ -93,9 +93,13 @@ med ett testfall (`test_reordered_chain_detected` i
     0  = RESURS_OK
    -1  = RESURS_ERR_NULL_ARG
    -2  = RESURS_ERR_CRYPTO (oväntat hash-/signeringsfel)
-   -3  = RESURS_ERR_AUTH_FAILED (kedjan/signaturen verifierades inte, eller
-         chain_entry anropades med fel privat nyckel-längd)
+   -3  = RESURS_ERR_AUTH_FAILED (kedjan/signaturen verifierades inte;
+         returneras bara av resurs_audit_verify_chain)
    -4  = RESURS_ERR_BUFFER_TOO_SMALL
+
+Nycklar, `prev_hash` och hashar skickas som pekare utan längd, så modulen kan
+inte upptäcka en för kort array. Anroparen måste kontrollera längderna innan
+anropet (det gör `ResursAuditService` på Java-sidan).
 
 `resurs_audit_verify_chain` returnerar `RESURS_ERR_AUTH_FAILED` så fort en
 post inte stämmer (fel hash *eller* fel signatur) och sätter

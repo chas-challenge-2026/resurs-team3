@@ -35,7 +35,8 @@ cd ../backend/ResursPortal && mvn test -Dtest='ResursAudit*'
 Utan `make` hoppas testerna som anropar C över (skipped). Valideringstesterna
 körs ändå, eftersom de kastar innan C anropas.
 
-**Nästa:** punkt 2–4 nedan. Kan delas upp mellan oss nu.
+Punkt 2–5 nedan är klara. Rundturstestet (signera med `signEntry`, verifiera
+med `verifyChain`) är `validChainIsValid` i `ResursAuditServiceVerifyTest`.
 
 ## Beslut och uppdelning (punkt 2–5)
 
