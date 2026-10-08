@@ -169,12 +169,18 @@ class ResursAuditServiceVerifyTest {
         assertEquals(new VerifyChainResult(false, 0), result);
     }
 
-    /** Signerar tre poster med signEntry. Listorna går att ändra, så testerna kan manipulera dem. */
+    /**
+     * Signerar tre poster med signEntry. Listorna går att ändra, så testerna kan manipulera dem.
+     * Mittenposten har å/ä/ö, så fel längd (tecken i stället för UTF-8-bytes) förskjuter även posten efter.
+     */
     private Chain signChain() {
         Chain chain = new Chain();
         String prevHash = null;
-        for (String action : List.of("APPLICATION_CREATED", "APPLICATION_APPROVED", "APPLICATION_PAID_OUT")) {
-            String entry = "{\"action\":\"" + action + "\",\"id\":\"1\"}";
+        for (String entry : List.of(
+                "{\"action\":\"APPLICATION_CREATED\",\"id\":\"1\"}",
+                "{\"action\":\"MANUAL_DECISION\",\"decision\":\"APPROVED\",\"worker\":\"Åsa Öberg\","
+                        + "\"comment\":\"Godkänd efter granskning av årsredovisning\"}",
+                "{\"action\":\"SCORING_RUN\",\"result\":\"APPROVED\",\"flags\":0}")) {
             AuditChainResult result = service.signEntry(entry, prevHash, AuditTestKeys.TEST_PRIV);
             chain.entries.add(entry);
             chain.hashes.add(result.hash());
