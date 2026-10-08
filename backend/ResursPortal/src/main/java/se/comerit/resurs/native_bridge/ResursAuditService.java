@@ -1,7 +1,9 @@
 package se.comerit.resurs.native_bridge;
 
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -54,9 +56,17 @@ public class ResursAuditService {
         if (count == 0) {
             return new VerifyChainResult(true, -1);
         }
+        ByteArrayOutputStream entries = new ByteArrayOutputStream();
+        long[] entryLens = new long[count];
         byte[] hashes = new byte[count * ResursAudit.RESURS_AUDIT_HASH_LEN];
         byte[] signatures = new byte[count * ResursAudit.RESURS_AUDIT_SIGNATURE_LEN];
         for (int i = 0; i < count; i++) {
+            if (entriesJson.get(i) == null) {
+                throw new IllegalArgumentException("entriesJson[" + i + "] får inte vara null");
+            }
+            byte[] entry = entriesJson.get(i).getBytes(StandardCharsets.UTF_8);
+            entries.writeBytes(entry);
+            entryLens[i] = entry.length;
             byte[] hash = decodeFixed(hashesBase64.get(i), ResursAudit.RESURS_AUDIT_HASH_LEN,
                     "hashesBase64[" + i + "]");
             System.arraycopy(hash, 0, hashes, i * ResursAudit.RESURS_AUDIT_HASH_LEN, hash.length);
@@ -64,7 +74,19 @@ public class ResursAuditService {
                     "signaturesBase64[" + i + "]");
             System.arraycopy(signature, 0, signatures, i * ResursAudit.RESURS_AUDIT_SIGNATURE_LEN, signature.length);
         }
-        throw new UnsupportedOperationException("verifyChain är inte implementerad än");
+        IntByReference firstInvalidIndex = new IntByReference();
+
+        int result = ResursAudit.INSTANCE.resurs_audit_verify_chain(
+                entries.toByteArray(), entryLens, hashes, signatures, count, publicKey, firstInvalidIndex);
+
+        if (result == ResursAudit.RESURS_OK) {
+            return new VerifyChainResult(true, -1);
+        }
+        // En ogiltig kedja är ett normalt utfall, inget fel.
+        if (result == ResursAudit.RESURS_ERR_AUTH_FAILED) {
+            return new VerifyChainResult(false, firstInvalidIndex.getValue());
+        }
+        throw new RuntimeException("Verifiering av audit-kedja misslyckades, felkod: " + result);
     }
 
     /** Bara null betyder första posten; "" avkodas till 0 bytes och avvisas av längdkontrollen. */

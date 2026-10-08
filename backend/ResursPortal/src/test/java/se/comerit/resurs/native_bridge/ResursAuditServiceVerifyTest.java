@@ -2,6 +2,7 @@ package se.comerit.resurs.native_bridge;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tester för ResursAuditService.verifyChain. Valideringstesterna kastar innan C anropas
- * och kräver därför inte libresurs_audit.so.
+ * och kräver därför inte libresurs_audit.so. Verifieringstesterna kräver `make` i native/.
  */
 class ResursAuditServiceVerifyTest {
 
@@ -115,6 +116,78 @@ class ResursAuditServiceVerifyTest {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), VALID_KEY);
 
         assertEquals(new VerifyChainResult(true, -1), result);
+    }
+
+    @Test
+    void nullEntryIsRejected() {
+        List<String> entries = Collections.singletonList(null);
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(entries, ONE_HASH, ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void validChainIsValid() {
+        Chain chain = signChain();
+
+        VerifyChainResult result = service.verifyChain(
+                chain.entries, chain.hashes, chain.signatures, AuditTestKeys.TEST_PUB);
+
+        assertEquals(new VerifyChainResult(true, -1), result);
+    }
+
+    @Test
+    void tamperedEntryIsDetected() {
+        Chain chain = signChain();
+        chain.entries.set(1, "{\"action\":\"APPLICATION_REJECTED\",\"id\":\"1\"}");
+
+        VerifyChainResult result = service.verifyChain(
+                chain.entries, chain.hashes, chain.signatures, AuditTestKeys.TEST_PUB);
+
+        assertEquals(new VerifyChainResult(false, 1), result);
+    }
+
+    @Test
+    void tamperedSignatureIsDetected() {
+        Chain chain = signChain();
+        byte[] signature = Base64.getDecoder().decode(chain.signatures.get(2));
+        signature[0] ^= 0x01;
+        chain.signatures.set(2, Base64.getEncoder().encodeToString(signature));
+
+        VerifyChainResult result = service.verifyChain(
+                chain.entries, chain.hashes, chain.signatures, AuditTestKeys.TEST_PUB);
+
+        assertEquals(new VerifyChainResult(false, 2), result);
+    }
+
+    @Test
+    void wrongPublicKeyIsDetected() {
+        Chain chain = signChain();
+
+        VerifyChainResult result = service.verifyChain(
+                chain.entries, chain.hashes, chain.signatures, AuditTestKeys.WRONG_PUB);
+
+        assertEquals(new VerifyChainResult(false, 0), result);
+    }
+
+    /** Signerar tre poster med signEntry. Listorna går att ändra, så testerna kan manipulera dem. */
+    private Chain signChain() {
+        Chain chain = new Chain();
+        String prevHash = null;
+        for (String action : List.of("APPLICATION_CREATED", "APPLICATION_APPROVED", "APPLICATION_PAID_OUT")) {
+            String entry = "{\"action\":\"" + action + "\",\"id\":\"1\"}";
+            AuditChainResult result = service.signEntry(entry, prevHash, AuditTestKeys.TEST_PRIV);
+            chain.entries.add(entry);
+            chain.hashes.add(result.hash());
+            chain.signatures.add(result.signature());
+            prevHash = result.hash();
+        }
+        return chain;
+    }
+
+    private static final class Chain {
+        final List<String> entries = new ArrayList<>();
+        final List<String> hashes = new ArrayList<>();
+        final List<String> signatures = new ArrayList<>();
     }
 
     private static String zeroBytesBase64(int length) {
