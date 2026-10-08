@@ -10,11 +10,11 @@ const mockedUseAuth = vi.mocked(useAuth)
 
 function renderPublicOnly() {
   return render(
-    <MemoryRouter initialEntries={['/login']}>
+    <MemoryRouter initialEntries={['/logga-in']}>
       <Routes>
         <Route path="/" element={<div>Home Page</div>} />
         <Route
-          path="/login"
+          path="/logga-in"
           element={
             <PublicOnlyRoute>
               <div>Login Form</div>

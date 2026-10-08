@@ -33,14 +33,6 @@ const NAV_ITEMS: SidebarItem[] = [
   { key: 'aviseringar', label: 'Aviseringar', icon: <Icon name="bell" /> },
 ]
 
-const SIDEBAR_SIZE = {
-  '--sidebar-width': '450px',
-  '--sidebar-width-icon': '4rem',
-} as CSSProperties
-
-/**
- * Caseworker backoffice layout with sidebar navigation and local view state.
- */
 export function BackofficeLayout() {
   const [view, setView] = useState<BackofficeView>('dashboard')
   const [search, setSearch] = useState('')

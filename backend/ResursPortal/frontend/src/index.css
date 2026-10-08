@@ -29,14 +29,19 @@ body,
 }
 
 body {
+  margin: 0;
   background-color: var(--color-resurs-bg);
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
 }
 
 input::placeholder,
 textarea::placeholder {
   color: #6b7a78;
 }
+
+/* With the page scrolling, focus and in-page jumps stop short of the
+   wizard's sticky action bar instead of landing underneath it. */
+html { scroll-padding-top: .75rem; scroll-padding-bottom: 7rem; }

@@ -6,10 +6,12 @@ import { LoginPage } from './pages/LoginPage'
 import { WizardPage } from './pages/wizard/WizardPage'
 import { OverviewPage } from './pages/overview/OverviewPage'
 import { DocumentsPage } from './pages/documents/DocumentsPage'
+import { ApplicationStatusPage } from './pages/status/ApplicationStatusPage'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
 import { AppLayout } from './components/layout/AppLayout'
 import { BackofficeLayout } from './pages/backoffice/BackofficeLayout'
+import { ROUTES } from './routes'
 
 // Case workers get the backoffice shell instead of the applicant layout.
 // BackofficeLayout manages its own internal sections rather than nested
@@ -23,7 +25,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
-        path="/login"
+        path={ROUTES.login}
         element={
           <PublicOnlyRoute>
             <LoginPage />
@@ -42,9 +44,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="/overview" element={<OverviewPage />} />
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/" element={<WizardPage />} />
+        <Route path={ROUTES.overview} element={<OverviewPage />} />
+        <Route path={ROUTES.documents} element={<DocumentsPage />} />
+        <Route path={`${ROUTES.application}/:id`} element={<ApplicationStatusPage />} />
+        <Route path={ROUTES.wizard} element={<WizardPage />} />
+        <Route path={`${ROUTES.wizard}/:steg`} element={<WizardPage />} />
+        {/* A company's home is the application; case workers get the
+            backoffice from AuthedRoot whatever the path. */}
+        <Route path="/" element={<Navigate to={ROUTES.wizard} replace />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -61,4 +68,3 @@ export default function App() {
     </AuthProvider>
   )
 }
-

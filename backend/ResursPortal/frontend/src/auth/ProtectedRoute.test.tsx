@@ -13,7 +13,7 @@ function renderProtected(allowedRoles?: UserRole[]) {
   return render(
     <MemoryRouter initialEntries={['/protected']}>
       <Routes>
-        <Route path="/login" element={<div>Login Page</div>} />
+        <Route path="/logga-in" element={<div>Login Page</div>} />
         <Route path="/" element={<div>Home Page</div>} />
         <Route
           path="/protected"
@@ -29,7 +29,7 @@ function renderProtected(allowedRoles?: UserRole[]) {
 }
 
 describe('ProtectedRoute', () => {
-  it('redirects to /login when not authenticated', () => {
+  it('redirects to /logga-in when not authenticated', () => {
     mockedUseAuth.mockReturnValue({
       user: null,
       isAuthenticated: false,
@@ -72,7 +72,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('Protected Content')).toBeInTheDocument()
   })
 
-  it('redirects to / (not /login) when authenticated but the role is not in allowedRoles', () => {
+  it('redirects to / (not /logga-in) when authenticated but the role is not in allowedRoles', () => {
     mockedUseAuth.mockReturnValue({
       user: { role: 'client', id: '1', orgNumber: '556000-1234', companyName: 'Göteborg Handel AB' },
       isAuthenticated: true,
