@@ -38,6 +38,17 @@ public class ResursAuditService {
     /** Listorna måste vara lika långa och i kedjeordning. */
     public VerifyChainResult verifyChain(List<String> entriesJson, List<String> hashesBase64,
                                          List<String> signaturesBase64, byte[] publicKey) {
+        if (entriesJson == null || hashesBase64 == null || signaturesBase64 == null) {
+            throw new IllegalArgumentException("Listorna får inte vara null");
+        }
+        if (hashesBase64.size() != entriesJson.size() || signaturesBase64.size() != entriesJson.size()) {
+            throw new IllegalArgumentException("Listorna måste vara lika långa");
+        }
+        // C läser alltid exakt RESURS_AUDIT_PUBKEY_LEN bytes och kan inte upptäcka fel längd själv.
+        if (publicKey == null || publicKey.length != ResursAudit.RESURS_AUDIT_PUBKEY_LEN) {
+            throw new IllegalArgumentException(
+                    "publicKey måste vara " + ResursAudit.RESURS_AUDIT_PUBKEY_LEN + " bytes");
+        }
         throw new UnsupportedOperationException("verifyChain är inte implementerad än");
     }
 

@@ -1,0 +1,70 @@
+package se.comerit.resurs.native_bridge;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+/**
+ * Tester för ResursAuditService.verifyChain. Valideringstesterna kastar innan C anropas
+ * och kräver därför inte libresurs_audit.so.
+ */
+class ResursAuditServiceVerifyTest {
+
+    private static final List<String> ONE_ENTRY = List.of("{\"action\":\"APPLICATION_CREATED\",\"id\":\"1\"}");
+
+    // Innehållet spelar ingen roll i valideringstesterna, bara att listorna är lika långa.
+    private static final List<String> ONE_HASH = List.of("hash");
+
+    private static final List<String> ONE_SIGNATURE = List.of("signatur");
+
+    private static final byte[] VALID_KEY = new byte[ResursAudit.RESURS_AUDIT_PUBKEY_LEN];
+
+    private final ResursAuditService service = new ResursAuditService();
+
+    @Test
+    void tooShortPublicKeyIsRejected() {
+        byte[] key = new byte[ResursAudit.RESURS_AUDIT_PUBKEY_LEN - 1];
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, ONE_SIGNATURE, key));
+    }
+
+    @Test
+    void tooLongPublicKeyIsRejected() {
+        byte[] key = new byte[ResursAudit.RESURS_AUDIT_PUBKEY_LEN + 1];
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, ONE_SIGNATURE, key));
+    }
+
+    @Test
+    void nullPublicKeyIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, ONE_SIGNATURE, null));
+    }
+
+    @Test
+    void nullEntriesListIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(null, ONE_HASH, ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void nullHashesListIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, null, ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void nullSignaturesListIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, null, VALID_KEY));
+    }
+
+    @Test
+    void listsOfDifferentLengthAreRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, Collections.emptyList(), ONE_SIGNATURE, VALID_KEY));
+    }
+}
