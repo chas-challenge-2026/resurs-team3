@@ -49,6 +49,17 @@ public class ResursAuditService {
             throw new IllegalArgumentException(
                     "publicKey måste vara " + ResursAudit.RESURS_AUDIT_PUBKEY_LEN + " bytes");
         }
+        int count = entriesJson.size();
+        byte[] hashes = new byte[count * ResursAudit.RESURS_AUDIT_HASH_LEN];
+        byte[] signatures = new byte[count * ResursAudit.RESURS_AUDIT_SIGNATURE_LEN];
+        for (int i = 0; i < count; i++) {
+            byte[] hash = decodeFixed(hashesBase64.get(i), ResursAudit.RESURS_AUDIT_HASH_LEN,
+                    "hashesBase64[" + i + "]");
+            System.arraycopy(hash, 0, hashes, i * ResursAudit.RESURS_AUDIT_HASH_LEN, hash.length);
+            byte[] signature = decodeFixed(signaturesBase64.get(i), ResursAudit.RESURS_AUDIT_SIGNATURE_LEN,
+                    "signaturesBase64[" + i + "]");
+            System.arraycopy(signature, 0, signatures, i * ResursAudit.RESURS_AUDIT_SIGNATURE_LEN, signature.length);
+        }
         throw new UnsupportedOperationException("verifyChain är inte implementerad än");
     }
 
@@ -57,17 +68,23 @@ public class ResursAuditService {
         if (prevHashBase64 == null) {
             return null;
         }
-        byte[] prevHash;
+        return decodeFixed(prevHashBase64, ResursAudit.RESURS_AUDIT_HASH_LEN, "prevHashBase64");
+    }
+
+    // C läser alltid ett fast antal bytes och kan inte upptäcka fel längd själv.
+    private static byte[] decodeFixed(String base64, int length, String name) {
+        if (base64 == null) {
+            throw new IllegalArgumentException(name + " får inte vara null");
+        }
+        byte[] decoded;
         try {
-            prevHash = Base64.getDecoder().decode(prevHashBase64);
+            decoded = Base64.getDecoder().decode(base64);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("prevHashBase64 är inte giltig Base64", e);
+            throw new IllegalArgumentException(name + " är inte giltig Base64", e);
         }
-        // C läser alltid exakt RESURS_AUDIT_HASH_LEN bytes och kan inte upptäcka fel längd själv.
-        if (prevHash.length != ResursAudit.RESURS_AUDIT_HASH_LEN) {
-            throw new IllegalArgumentException(
-                    "prevHashBase64 måste avkodas till " + ResursAudit.RESURS_AUDIT_HASH_LEN + " bytes");
+        if (decoded.length != length) {
+            throw new IllegalArgumentException(name + " måste avkodas till " + length + " bytes");
         }
-        return prevHash;
+        return decoded;
     }
 }

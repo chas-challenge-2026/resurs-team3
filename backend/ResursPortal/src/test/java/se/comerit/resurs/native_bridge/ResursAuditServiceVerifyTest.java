@@ -2,6 +2,7 @@ package se.comerit.resurs.native_bridge;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,10 +16,9 @@ class ResursAuditServiceVerifyTest {
 
     private static final List<String> ONE_ENTRY = List.of("{\"action\":\"APPLICATION_CREATED\",\"id\":\"1\"}");
 
-    // Innehållet spelar ingen roll i valideringstesterna, bara att listorna är lika långa.
-    private static final List<String> ONE_HASH = List.of("hash");
+    private static final List<String> ONE_HASH = List.of(zeroBytesBase64(ResursAudit.RESURS_AUDIT_HASH_LEN));
 
-    private static final List<String> ONE_SIGNATURE = List.of("signatur");
+    private static final List<String> ONE_SIGNATURE = List.of(zeroBytesBase64(ResursAudit.RESURS_AUDIT_SIGNATURE_LEN));
 
     private static final byte[] VALID_KEY = new byte[ResursAudit.RESURS_AUDIT_PUBKEY_LEN];
 
@@ -66,5 +66,49 @@ class ResursAuditServiceVerifyTest {
     void listsOfDifferentLengthAreRejected() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.verifyChain(ONE_ENTRY, Collections.emptyList(), ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void invalidBase64HashIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, List.of("inte base64!"), ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void tooShortHashIsRejected() {
+        List<String> hashes = List.of(zeroBytesBase64(ResursAudit.RESURS_AUDIT_HASH_LEN - 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, hashes, ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void nullHashIsRejected() {
+        List<String> hashes = Collections.singletonList(null);
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, hashes, ONE_SIGNATURE, VALID_KEY));
+    }
+
+    @Test
+    void invalidBase64SignatureIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, List.of("inte base64!"), VALID_KEY));
+    }
+
+    @Test
+    void tooShortSignatureIsRejected() {
+        List<String> signatures = List.of(zeroBytesBase64(ResursAudit.RESURS_AUDIT_SIGNATURE_LEN - 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, signatures, VALID_KEY));
+    }
+
+    @Test
+    void nullSignatureIsRejected() {
+        List<String> signatures = Collections.singletonList(null);
+        assertThrows(IllegalArgumentException.class,
+                () -> service.verifyChain(ONE_ENTRY, ONE_HASH, signatures, VALID_KEY));
+    }
+
+    private static String zeroBytesBase64(int length) {
+        return Base64.getEncoder().encodeToString(new byte[length]);
     }
 }
