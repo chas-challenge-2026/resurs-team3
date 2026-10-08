@@ -1,6 +1,7 @@
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
+import { joinClassNames } from "@/lib/joinClassNames"
+import styles from "./Separator.module.css"
 
 interface SeparatorProps extends React.ComponentProps<"div"> {
   orientation?: "horizontal" | "vertical"
@@ -13,9 +14,9 @@ export function Separator({ className, orientation = "horizontal", ...props }: S
       role="separator"
       aria-orientation={orientation}
       data-slot="separator"
-      className={cn(
-        "shrink-0 bg-border",
-        orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
+      className={joinClassNames(
+        styles.separator,
+        orientation === "horizontal" ? styles.horizontal : styles.vertical,
         className
       )}
       {...props}

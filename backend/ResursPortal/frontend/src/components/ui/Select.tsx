@@ -1,13 +1,14 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/lib/utils"
+import { joinClassNames } from "@/lib/joinClassNames"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { useEscapeKey } from "@/hooks/use-escape-key"
 import { useFloatingPosition } from "@/hooks/use-floating-position"
 import { useOpenTransition } from "@/hooks/use-open-transition"
 import { Icon } from "@/components/Icon"
+import styles from "./Select.module.css"
 
 const TRANSITION_MS = 150
 
@@ -85,14 +86,11 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       onClick={() => setOpen(!open)}
-      className={cn(
-        "flex w-fit items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8",
-        className
-      )}
+      className={joinClassNames(styles.trigger, className)}
       {...props}
     >
       {children}
-      <Icon name="chevron-down" className="size-4 shrink-0 opacity-50" />
+      <Icon name="chevron-down" className={styles.chevronIcon} />
     </button>
   )
 }
@@ -101,7 +99,7 @@ function SelectValue({ placeholder, className }: { placeholder?: string; classNa
   const { value, labels } = useSelectContext()
   const label = value ? labels[value] : undefined
   return (
-    <span className={cn("line-clamp-1 flex items-center gap-2", !label && "text-muted-foreground", className)}>
+    <span className={joinClassNames(styles.value, !label && styles.valueMuted, className)}>
       {label ?? placeholder}
     </span>
   )
@@ -165,11 +163,7 @@ function SelectContent({ className, children, ...props }: React.ComponentProps<"
       data-slot="select-content"
       onKeyDown={onKeyDown}
       style={{ ...style, minWidth: rect?.width, opacity: ready && visible ? 1 : 0 }}
-      className={cn(
-        "z-50 max-h-72 overflow-y-auto rounded-md border border-white/10 bg-popover p-1 text-popover-foreground shadow-md transition-[opacity,scale] duration-150",
-        visible ? "scale-100" : "scale-95",
-        className
-      )}
+      className={joinClassNames(styles.content, visible && styles.contentVisible, className)}
       {...props}
     >
       {children}
@@ -179,7 +173,7 @@ function SelectContent({ className, children, ...props }: React.ComponentProps<"
 }
 
 function SelectLabel({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="select-label" className={cn("px-2 py-1.5 text-xs text-muted-foreground", className)} {...props} />
+  return <div data-slot="select-label" className={joinClassNames(styles.label, className)} {...props} />
 }
 
 function SelectItem({
@@ -205,14 +199,11 @@ function SelectItem({
         setValue(itemValue)
         setOpen(false)
       }}
-      className={cn(
-        "relative flex w-full items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-left text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
-        className
-      )}
+      className={joinClassNames(styles.item, className)}
       {...props}
     >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        {isSelected ? <Icon name="check" className="size-4" /> : null}
+      <span className={styles.itemCheck}>
+        {isSelected ? <Icon name="check" className={styles.itemCheckIcon} /> : null}
       </span>
       {children}
     </button>
@@ -220,7 +211,7 @@ function SelectItem({
 }
 
 function SelectSeparator({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="select-separator" className={cn("pointer-events-none -mx-1 my-1 h-px bg-border", className)} {...props} />
+  return <div data-slot="select-separator" className={joinClassNames(styles.separator, className)} {...props} />
 }
 
 export { Select, SelectContent, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue }

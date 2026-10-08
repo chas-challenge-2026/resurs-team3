@@ -39,11 +39,7 @@ const SIDEBAR_SIZE = {
 } as CSSProperties
 
 /**
- * Case-worker backoffice shell: sidebar nav + top bar + whichever section is
- * active. Mirrors AppLayout's shell but manages its own view state instead
- * of nested routes, since the backoffice sections aren't separate URLs yet —
- * App.tsx renders this in place of AppLayout for handlaggare logins, so it
- * intentionally doesn't render an <Outlet />.
+ * Caseworker backoffice layout with sidebar navigation and local view state.
  */
 export function BackofficeLayout() {
   const [view, setView] = useState<BackofficeView>('dashboard')

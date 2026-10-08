@@ -30,4 +30,14 @@
 
   /* Type */
   --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Sidebar-specific tokens — the sidebar sits on its own darker panel
+     (resurs-sidebar) rather than the page background/card colors, so it
+     gets its own small token set. Used by Sidebar.module.css. */
+  --color-sidebar: var(--color-resurs-sidebar);
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-accent: var(--color-resurs-card);
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #103330;
+  --color-sidebar-ring: var(--color-resurs-teal-light);
 }

@@ -1,0 +1,124 @@
+.trigger {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-resurs-input);
+  background-color: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.trigger:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-resurs-teal-light);
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.trigger[data-size='default'] {
+  height: 2.25rem;
+}
+
+.trigger[data-size='sm'] {
+  height: 2rem;
+}
+
+.chevronIcon {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.valueMuted {
+  color: var(--color-resurs-muted);
+}
+
+.content {
+  z-index: 50;
+  max-height: 18rem;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background-color: var(--color-resurs-card);
+  padding: 0.25rem;
+  color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  transition: opacity 150ms ease, transform 150ms ease;
+  transform: scale(0.95);
+}
+
+.contentVisible {
+  transform: scale(1);
+}
+
+.label {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-resurs-muted);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 2px;
+  padding: 0.375rem 2rem 0.375rem 0.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  outline: none;
+  user-select: none;
+  background-color: transparent;
+  color: #ffffff;
+}
+
+.item:hover,
+.item:focus-visible {
+  background-color: var(--color-resurs-card);
+  color: #ffffff;
+}
+
+.itemCheck {
+  position: absolute;
+  right: 0.5rem;
+  display: flex;
+  height: 0.875rem;
+  width: 0.875rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.itemCheckIcon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.separator {
+  pointer-events: none;
+  margin: 0.25rem -0.25rem;
+  height: 1px;
+  background-color: #1c4a44;
+}

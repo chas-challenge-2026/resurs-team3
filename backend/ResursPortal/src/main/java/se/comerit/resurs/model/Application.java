@@ -2,6 +2,7 @@ package se.comerit.resurs.model;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "applications")
@@ -16,6 +17,9 @@ public class Application {
 
     @Column(name = "requested_amount")
     private BigDecimal requestedAmount;
+
+    @Column(name = "case_number")
+    private String caseNumber;
 
     private String purpose;
 
@@ -108,5 +112,29 @@ public class Application {
 
     public void setScoringResult(String scoringResult) {
         this.scoringResult = scoringResult;
+    }
+
+    public String getCaseNumber() {
+        return caseNumber;
+    }
+
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

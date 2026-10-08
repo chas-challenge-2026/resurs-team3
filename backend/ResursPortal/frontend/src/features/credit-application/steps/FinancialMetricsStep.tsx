@@ -1,6 +1,7 @@
 import { TextField } from '../../../components/ui/TextField'
 import type { CreditApplicationData } from '../creditApplication.types'
 import styles from './FinancialMetricsStep.module.css'
+import type { FinancialMetricsErrors } from '../financialMetrics.validation'
 
 type FinancialField =
   | 'equity'
@@ -13,11 +14,13 @@ type FinancialField =
 
 interface FinancialMetricsStepProps {
   data: CreditApplicationData
+  errors: FinancialMetricsErrors
   onChange: (field: FinancialField, value: string) => void
 }
 
 export function FinancialMetricsStep({
   data,
+  errors,
   onChange,
 }: FinancialMetricsStepProps) {
   return (
@@ -33,6 +36,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.equity}
+          error={errors.equity}
           onChange={(event) => onChange('equity', event.target.value)}
         />
 
@@ -41,6 +45,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.totalCapital}
+          error={errors.totalCapital}
           onChange={(event) => onChange('totalCapital', event.target.value)}
         />
 
@@ -49,6 +54,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.currentAssets}
+          error={errors.currentAssets}
           onChange={(event) => onChange('currentAssets', event.target.value)}
         />
 
@@ -57,6 +63,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.shortTermLiabilities}
+          error={errors.shortTermLiabilities}
           onChange={(event) =>
             onChange('shortTermLiabilities', event.target.value)
           }
@@ -67,6 +74,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.totalDebt}
+          error={errors.totalDebt}
           onChange={(event) => onChange('totalDebt', event.target.value)}
         />
 
@@ -75,6 +83,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.operatingProfit}
+          error={errors.operatingProfit}
           onChange={(event) => onChange('operatingProfit', event.target.value)}
         />
 
@@ -83,6 +92,7 @@ export function FinancialMetricsStep({
           type="number"
           required
           value={data.netSales}
+          error={errors.netSales}
           onChange={(event) => onChange('netSales', event.target.value)}
         />
       </div>

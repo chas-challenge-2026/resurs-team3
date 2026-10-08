@@ -1,13 +1,14 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/lib/utils"
+import { joinClassNames } from "@/lib/joinClassNames"
 import { useControllableState } from "@/hooks/use-controllable-state"
 import { useEscapeKey } from "@/hooks/use-escape-key"
 import { useFocusTrap } from "@/hooks/use-focus-trap"
 import { useScrollLock } from "@/hooks/use-scroll-lock"
 import { useOpenTransition } from "@/hooks/use-open-transition"
 import { Icon } from "@/components/Icon"
+import styles from "./Dialog.module.css"
 
 const TRANSITION_MS = 200
 
@@ -80,10 +81,7 @@ function DialogContent({
   return createPortal(
     <div
       data-slot="dialog-overlay"
-      className={cn(
-        "fixed inset-0 z-50 bg-black/60 transition-opacity duration-200",
-        visible ? "opacity-100" : "opacity-0"
-      )}
+      className={joinClassNames(styles.overlay, visible && styles.overlayVisible)}
       onMouseDown={() => setOpen(false)}
     >
       <div
@@ -95,18 +93,14 @@ function DialogContent({
         tabIndex={-1}
         data-slot="dialog-content"
         onMouseDown={(event) => event.stopPropagation()}
-        className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-white/10 bg-card p-6 text-white shadow-lg outline-none transition-all duration-200 sm:max-w-lg",
-          visible ? "scale-100 opacity-100" : "scale-95 opacity-0",
-          className
-        )}
+        className={joinClassNames(styles.content, visible && styles.contentVisible, className)}
         {...props}
       >
         {children}
         {showCloseButton ? (
-          <DialogClose className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Icon name="x" className="size-4" />
-            <span className="sr-only">Stäng</span>
+          <DialogClose className={styles.closeButton}>
+            <Icon name="x" className={styles.closeIcon} />
+            <span className={styles.srOnly}>Stäng</span>
           </DialogClose>
         ) : null}
       </div>
@@ -116,14 +110,14 @@ function DialogContent({
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="dialog-header" className={cn("flex flex-col gap-2 text-center sm:text-left", className)} {...props} />
+  return <div data-slot="dialog-header" className={joinClassNames(styles.header, className)} {...props} />
 }
 
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      className={joinClassNames(styles.footer, className)}
       {...props}
     />
   )
@@ -131,12 +125,12 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 
 function DialogTitle({ className, ...props }: React.ComponentProps<"h2">) {
   const { titleId } = useDialogContext()
-  return <h2 id={titleId} data-slot="dialog-title" className={cn("text-lg leading-none font-semibold", className)} {...props} />
+  return <h2 id={titleId} data-slot="dialog-title" className={joinClassNames(styles.title, className)} {...props} />
 }
 
 function DialogDescription({ className, ...props }: React.ComponentProps<"p">) {
   const { descriptionId } = useDialogContext()
-  return <p id={descriptionId} data-slot="dialog-description" className={cn("text-sm text-muted-foreground", className)} {...props} />
+  return <p id={descriptionId} data-slot="dialog-description" className={joinClassNames(styles.description, className)} {...props} />
 }
 
 export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger }

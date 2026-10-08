@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { CreditCase } from '../../types/case'
 import { useCases } from '../../context/useCases'
-import { formatSEK, formatDate } from '../../utils/format'
+import { formatSEKParts, formatDate } from '../../utils/format'
 import styles from './QueueTable.module.css'
 
 function useDecision(itemId: string) {
@@ -21,7 +21,7 @@ function FlaggedMetrics({ item }: { item: CreditCase }) {
   return (
     <>
       <span className={styles.flagCount}>
-        {flagCount} flagga{flagCount === 1 ? '' : 'or'}
+        {flagCount} {flagCount === 1 ? 'flagga' : 'flaggor'}
       </span>
       {flaggedMetrics.length > 0 ? (
         <ul className={styles.flaggedList}>
@@ -52,13 +52,16 @@ function DecisionButtons({ onApprove, onReject }: { onApprove: () => void; onRej
 /** Table row — used from `sm:` up, where there's room for eight columns. */
 function QueueRow({ item, index }: { item: CreditCase; index: number }) {
   const { comment, setComment, approve, reject } = useDecision(item.id)
+  const amount = formatSEKParts(item.amount)
 
   return (
     <tr className={styles.row}>
       <td className={styles.cellIndex}>{index + 1}</td>
       <td className={styles.cellCompany}>{item.companyName}</td>
       <td className={styles.cellText}>{item.orgNumber}</td>
-      <td className={styles.cellText}>{formatSEK(item.amount)}</td>
+      <td className={styles.cellAmount}>
+        {amount.amount} <span className={styles.amountUnit}>{amount.unit}</span>
+      </td>
       <td className={styles.cellText}>{item.purpose || '—'}</td>
       <td className={styles.cellScoring}>
         <FlaggedMetrics item={item} />
@@ -85,12 +88,15 @@ function QueueRow({ item, index }: { item: CreditCase; index: number }) {
 /** Stacked card — used below `sm:`, where an 8-column table would force horizontal scrolling. */
 function QueueCard({ item }: { item: CreditCase }) {
   const { comment, setComment, approve, reject } = useDecision(item.id)
+  const amount = formatSEKParts(item.amount)
 
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <p className={styles.cardCompany}>{item.companyName}</p>
-        <p className={styles.cardAmount}>{formatSEK(item.amount)}</p>
+        <p className={styles.cardAmount}>
+          {amount.amount} <span className={styles.amountUnit}>{amount.unit}</span>
+        </p>
       </div>
       <p className={styles.cardMeta}>
         {item.orgNumber} · {formatDate(item.submittedAt)}
@@ -147,7 +153,7 @@ export function QueueTable() {
                   <th scope="col" className={styles.th}>#</th>
                   <th scope="col" className={styles.th}>Företag</th>
                   <th scope="col" className={styles.th}>Org.nr</th>
-                  <th scope="col" className={styles.th}>Belopp</th>
+                  <th scope="col" className={styles.thAmount}>Belopp</th>
                   <th scope="col" className={styles.th}>Syfte</th>
                   <th scope="col" className={styles.th}>Scoring</th>
                   <th scope="col" className={styles.th}>Inlämnad</th>
