@@ -18,6 +18,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     List<Application> findTop20ByStatusInOrderByUpdatedAtDesc(List<String> statuses);
 
+    long countByCaseNumberStartingWith(String prefix);
+
     @Query(
             "SELECT new map(a.id as id, a.requestedAmount as requested_amount, a.purpose as purpose, " +
                     "a.status as status, a.createdAt as created_at, a.scoringResult as scoring_result, " +
