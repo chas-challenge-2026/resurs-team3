@@ -23,6 +23,12 @@ const financialFields: FinancialField[] = [
   'netSales',
 ]
 
+// Backend currently has stricter validation for some financial fields
+// (for example equity, total capital, assets and liabilities).
+// Frontend intentionally keeps required + numeric validation only until
+// the team confirms the final source-of-truth rules.
+// Keep this validation in sync with CreateApplicationRequest when agreed.
+
 export function validateFinancialMetrics(
   data: CreditApplicationData,
 ): FinancialMetricsErrors {
