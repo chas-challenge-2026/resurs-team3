@@ -45,3 +45,39 @@
   outline: none;
   box-shadow: 0 0 0 2px var(--color-resurs-panel), 0 0 0 4px rgb(255 255 255 / 0.4);
 }
+
+/* Light (paper) surfaces: dark-teal pill primary, white pill secondary,
+   orange gap-ring focus (--color-focus) that holds 3:1 against white. */
+.paperPrimary,
+.paperSecondary {
+  border-radius: 9999px;
+}
+
+.paperPrimary {
+  background-color: var(--color-resurs-bg);
+  color: #ffffff;
+}
+
+.paperPrimary:hover {
+  background-color: var(--color-ink-deep);
+}
+
+.paperSecondary {
+  border: 1px solid rgb(10 36 34 / 0.24);
+  background-color: #ffffff;
+  color: var(--color-resurs-bg);
+}
+
+.paperSecondary:hover {
+  background-color: var(--color-mist);
+}
+
+.paperPrimary:focus,
+.paperSecondary:focus {
+  outline: none;
+}
+
+.paperPrimary:focus-visible,
+.paperSecondary:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--color-focus);
+}

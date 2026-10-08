@@ -39,12 +39,25 @@
   pointer-events: none;
 }
 
+.inputSuffix {
+  position: absolute;
+  top: 50%;
+  right: 1.25rem;
+  transform: translateY(-50%);
+  color: var(--tf-hint-color, var(--color-ink-muted));
+  font-size: .875rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .input {
   width: 100%;
   border-radius: var(--radius-md);
   background-color: var(--tf-input-bg, var(--color-resurs-input));
   color: #1f2937;
   padding: 0.625rem 0.75rem;
+  /* Textareas don't inherit the page font by default (monospace). */
+  font-family: inherit;
   font-size: 1rem;
   line-height: 1.5rem;
   border: 1px solid transparent;
@@ -60,15 +73,25 @@
 }
 
 .input:focus {
-  box-shadow: 0 0 0 2px var(--color-resurs-orange);
+  box-shadow: 0 0 0 2px var(--tf-focus-ring, var(--color-resurs-orange));
 }
 
+/* Defaults suit dark surfaces; light surfaces override --tf-focus-ring and
+   --tf-error-ring (see DESIGN.md: Focus Blue / Error Ink on paper). */
 .inputError {
-  box-shadow: 0 0 0 2px #f87171;
+  box-shadow: 0 0 0 2px var(--tf-error-ring, #f87171);
 }
 
 .inputError:focus {
-  box-shadow: 0 0 0 2px #f87171;
+  box-shadow: 0 0 0 2px var(--tf-error-ring, #f87171), 0 0 0 4px var(--tf-focus-ring, var(--color-resurs-orange));
+}
+
+.inputAttention {
+  box-shadow: 0 0 0 2px var(--tf-attention-ring, var(--color-review-ink));
+}
+
+.inputAttention:focus {
+  box-shadow: 0 0 0 2px var(--tf-attention-ring, var(--color-review-ink)), 0 0 0 4px var(--tf-focus-ring, var(--color-resurs-orange));
 }
 
 .textarea {
@@ -86,6 +109,16 @@
   color: var(--tf-hint-color, var(--color-resurs-muted));
 }
 
+/* A field not filled in yet: the amber ring marks it, the text stays a
+   quiet where-to-find-it note so ten empty fields don't shout. */
+.messageAttention {
+  color: var(--tf-hint-color, var(--color-resurs-muted));
+}
+
 .messageError {
   color: var(--tf-error-color, #fca5a5);
+  /* Surfaces can give errors more weight than hints (the wizard does). */
+  font-size: var(--tf-error-size, 0.75rem);
+  line-height: var(--tf-error-line, 1rem);
+  font-weight: var(--tf-error-weight, 400);
 }
