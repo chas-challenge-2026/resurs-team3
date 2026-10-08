@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
+
 public class CreateApplicationRequest {
 
     @NotBlank(message = "Organisationsnummer krävs")
@@ -45,9 +46,11 @@ public class CreateApplicationRequest {
     @NotBlank(message = "Syfte krävs")
     private String purpose;
 
-    private double operativtKassaflode;
+    @NotNull(message = "Operativt kassaflöde krävs")
+    private Double operativtKassaflode;
 
-    private double investeringsKassaflode;
+    @NotNull(message = "Investeringskassaflöde krävs")
+    private Double investeringsKassaflode;
 
     @PositiveOrZero(message = "Räntekostnader får inte vara negativa")
     private double ranteKostnader;
@@ -151,19 +154,19 @@ public class CreateApplicationRequest {
         this.purpose = purpose;
     }
 
-    public double getOperativtKassaflode() {
+    public Double getOperativtKassaflode() {
         return operativtKassaflode;
     }
 
-    public void setOperativtKassaflode(double operativtKassaflode) {
+    public void setOperativtKassaflode(Double operativtKassaflode) {
         this.operativtKassaflode = operativtKassaflode;
     }
 
-    public double getInvesteringsKassaflode() {
+    public Double getInvesteringsKassaflode() {
         return investeringsKassaflode;
     }
 
-    public void setInvesteringsKassaflode(double investeringsKassaflode) {
+    public void setInvesteringsKassaflode(Double investeringsKassaflode) {
         this.investeringsKassaflode = investeringsKassaflode;
     }
 
