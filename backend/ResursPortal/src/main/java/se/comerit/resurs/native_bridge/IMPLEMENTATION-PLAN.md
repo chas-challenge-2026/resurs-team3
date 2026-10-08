@@ -3,7 +3,7 @@
 ## Vad är redan gjort
 
 - C-programmet för signering och verifiering (libresurs_audit.so) är färdigt och testat
-- Design är dokumenterad i audit-integration.md
+- Design är dokumenterad i `native/audit-design.md`
 - Vi vet vad C-koden kan göra
 
 ## Vad vi ska göra nu
@@ -22,17 +22,18 @@ Behövs:
 
 Titta på ResursCrypto.java för hur man gör detta.
 
-**Status:** `ResursAudit.java`, en tom `ResursAuditService.java` och
-`jna.library.path` i `pom.xml` är klara och kompilerar. Röktestet
-`ResursAuditSmokeTest.java` (i `src/test/.../native_bridge/`) går igenom: det
-signerar en post och verifierar den via `libresurs_audit.so`.
+**Status:** `ResursAudit.java`, `ResursAuditService.java` (`signEntry` och
+`verifyChain`) och `jna.library.path` i `pom.xml` är klara. Testerna ligger i
+`src/test/.../native_bridge/`: `ResursAuditSmokeTest`,
+`ResursAuditServiceSignTest` och `ResursAuditServiceVerifyTest`.
 
-Köra röktestet:
+Köra testerna:
 ```
 cd native && make
-cd ../backend/ResursPortal && mvn test -Dtest=ResursAuditSmokeTest
+cd ../backend/ResursPortal && mvn test -Dtest='ResursAudit*'
 ```
-Utan `make` misslyckas testet med `UnsatisfiedLinkError` — det är meningen.
+Utan `make` hoppas testerna som anropar C över (skipped). Valideringstesterna
+körs ändå, eftersom de kastar innan C anropas.
 
 **Nästa:** punkt 2–4 nedan. Kan delas upp mellan oss nu.
 
