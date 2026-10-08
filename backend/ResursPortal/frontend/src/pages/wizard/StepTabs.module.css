@@ -1,73 +1,9 @@
-.tabList {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.25rem;
-  border-radius: var(--radius-md);
-  background-color: var(--color-resurs-panel);
-  padding: 0.25rem;
-}
-
-.tab {
-  min-height: 44px;
-  min-width: 0;
-  flex: 1 1 0%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border-radius: var(--radius-md);
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 600;
-  transition: color 0.15s ease, background-color 0.15s ease;
-  background-color: transparent;
-  border: none;
-}
-
-@media (min-width: 640px) {
-  .tab {
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-/* Exactly one of these four applies at a time — active/completed/reachable/
-   locked are mutually exclusive states of one "tab status" axis, picked in
-   JS (see StepTabs.tsx) rather than layered as independent booleans. */
-.tabActive {
-  background-color: var(--color-resurs-orange);
-  color: var(--color-resurs-on-orange);
-  cursor: pointer;
-}
-
-.tabCompleted {
-  color: var(--color-resurs-orange);
-  cursor: pointer;
-}
-
-.tabCompleted:hover {
-  color: var(--color-resurs-yellow);
-}
-
-.tabReachable {
-  color: rgb(255 255 255 / 0.8);
-  cursor: pointer;
-}
-
-.tabReachable:hover {
-  color: #ffffff;
-}
-
-.tabLocked {
-  cursor: not-allowed;
-  color: rgb(255 255 255 / 0.3);
-}
-
-.checkIcon {
-  margin-right: 0.25rem;
-  display: inline;
-  height: 0.875rem;
-  width: 0.875rem;
-  vertical-align: -2px;
-}
+/* Wizard progress: one line of text and one bar, flat on the page, the
+   same on desktop and phones. */
+.progress { display: grid; gap: .625rem; padding: .25rem 0 .5rem; }
+.text { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .625rem; margin: 0; color: var(--resurs-ink-muted, #4a6560); font-size: .875rem; line-height: 1.4; }
+.label { color: var(--resurs-ink, #0a2422); font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+.attention { flex-basis: 100%; color: var(--color-review-ink); font-weight: 600; }
+.track { height: 6px; border-radius: 9999px; background: rgb(10 36 34 / 10%); overflow: hidden; }
+.fill { height: 100%; border-radius: inherit; background: var(--color-resurs-bg); transition: width .3s ease; }
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
