@@ -32,7 +32,7 @@ public class ApplicationRestController {
                 request.getOmsattningstillgangar(),
                 request.getKortfristigaSkulder(),
                 request.getTotalaSkulder(),
-                request.getRorelsesresultat(),
+                request.getRorelseresultat(),
                 request.getNettoomsattning(),
                 request.getRequestedAmount(),
                 request.getOperativtKassaflode(),
