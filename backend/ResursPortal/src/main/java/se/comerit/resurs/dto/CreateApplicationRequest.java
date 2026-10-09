@@ -1,3 +1,4 @@
+
 package se.comerit.resurs.dto;
 
 import java.math.BigDecimal;
@@ -35,7 +36,6 @@ public class CreateApplicationRequest {
 
     private double rorelseresultat;
 
-
     private double nettoomsattning;
 
     @NotNull(message = "Ansökt belopp krävs")
@@ -53,7 +53,6 @@ public class CreateApplicationRequest {
     private double ranteKostnader;
 
     private String bransch;
-
 
     public String getOrgNumber() {
         return orgNumber;
@@ -119,11 +118,11 @@ public class CreateApplicationRequest {
         this.totalaSkulder = totalaSkulder;
     }
 
-    public double getRorelsesresultat() {
+    public double getRorelseresultat() {
         return rorelseresultat;
     }
 
-    public void setRorelsesresultat(double rorelseresultat) {
+    public void setRorelseresultat(double rorelseresultat) {
         this.rorelseresultat = rorelseresultat;
     }
 
