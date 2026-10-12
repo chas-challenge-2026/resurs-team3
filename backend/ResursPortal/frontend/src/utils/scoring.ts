@@ -13,7 +13,7 @@ import type {
  * The backend is the source of truth: every rule, threshold, credit-score
  * delta and message below mirrors the Java code in the same order, so the
  * prototype reaches the same decision the real service would. When the
- * Java changes, change this file to match.
+ * When Java changes, this file changes to match.
  */
 export const SCORING_THRESHOLDS = {
   soliditet: { reject: 0.2, flag: 0.25 },
