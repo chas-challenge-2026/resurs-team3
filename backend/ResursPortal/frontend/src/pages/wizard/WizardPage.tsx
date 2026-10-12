@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { Button } from '../../components/ui/Button'
 import { Icon } from '../../components/Icon'
-import { useCases } from '../../context/useCases'
 import type { CompanyValidationResult } from '../../types/case'
 import { BankIdMark } from '../../components/BankIdMark'
 import { companyValidationService } from '../../services/companyValidationService'
@@ -19,7 +18,6 @@ import {
   type CompanyDetailsErrors,
 } from '../../features/credit-application/companyDetails.validation'
 import { clearApplicationDraft, loadApplicationDraft, saveApplicationDraft } from '../../features/credit-application/applicationDraft'
-import { toCaseSubmission } from '../../features/credit-application/creditApplication.mapper'
 import { StepTabs } from './StepTabs'
 import { SCORING_THRESHOLDS } from '../../utils/scoring'
 import { SigningView } from './SigningView'
@@ -29,6 +27,10 @@ import { joinClassNames } from '../../lib/joinClassNames'
 import styles from './WizardPage.module.css'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { parseWizardStep, wizardStepPath } from '../../routes'
+import {
+  createApplication,
+  toCreateApplicationRequest,
+} from '../../features/credit-application/creditApplication.api'
 
 const TOTAL_STEPS = 4
 
@@ -112,7 +114,6 @@ function normalizedOrgNumber(value: string): string | null {
 
 export function WizardPage() {
   const { user } = useAuth()
-  const { addCase } = useCases()
   const navigate = useNavigate()
   // Resume an in-progress application from this tab, if there is one.
   const [restoredDraft] = useState(() => (user ? loadApplicationDraft(user.id, createInitialApplicationData(user)) : null))
@@ -429,19 +430,35 @@ function handleChangeMany(updates: Partial<Record<keyof CreditApplicationData, s
       return
     }
     submittingRef.current = true
-    const { companyInfo, financials, creditRequest } = toCaseSubmission(applicationData, { attested })
-    const createdCase = addCase(companyInfo, financials, creditRequest, {
-      companyValidation: currentCompanyCheck ?? undefined,
-      signature: { signedBy: result.signedBy, signedAt: result.signedAt, orderRef: result.orderRef },
-    })
-    clearApplicationDraft(user?.id)
-    setShowRestoredNotice(false)
-    setSigningState('idle')
-    setSubmitted(true)
-    // The status page is the end of the flow: decision, BankID receipt,
-    // next steps and progress live there (and update when a case worker
-    // decides). justSubmitted makes it open with the confirmation.
-    navigate(applicationStatusPath(createdCase.id), { state: { justSubmitted: true } })
+
+    try {
+      const request = toCreateApplicationRequest(applicationData)
+      const response = await createApplication(request)
+
+      // Clear the draft only after Java confirms successful creation.
+      clearApplicationDraft(user?.id)
+      setShowRestoredNotice(false)
+      setSigningState('idle')
+      setSubmitted(true)
+
+      navigate(applicationStatusPath(String(response.applicationId)), {
+        state: {
+          justSubmitted: true,
+          backendResult: response,
+        },
+      })
+    } catch (error) {
+      // Allow another attempt after a failed request.
+      submittingRef.current = false
+      setSigningState('idle')
+      setSigningError({
+        message: error instanceof Error
+          ? error.message
+          : 'Ansökan kunde inte skickas. Försök igen.',
+      })
+
+      requestAnimationFrame(() => signingErrorRef.current?.focus())
+    }
   }
 
   // Back to the review with the attestation still given: nothing changed.
