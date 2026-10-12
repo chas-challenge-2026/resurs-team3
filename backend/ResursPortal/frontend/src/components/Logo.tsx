@@ -1,50 +1,41 @@
 import type { CSSProperties } from 'react'
 
 interface LogoProps {
-  /** Rendered height in px; width scales automatically to the logo's aspect ratio. Ignored if width/height are set. */
-  size?: number
-  /** Explicit box width (px number, or a CSS value like '100%'). Use with height for a fixed/fluid placement. */
-  width?: number | string
-  /** Explicit box height (px number, or a CSS value like '100%'). Use with width. */
+  /** Rendered height in px (or a CSS length); width follows the logo's ratio. */
   height?: number | string
+  /** Rendered width (px or CSS length) instead of a height. */
+  width?: number | string
+  /** Kept for older call sites: same as height. */
+  size?: number
+  /** 'white' has white "Resurs" text, for dark surfaces. */
+  variant?: 'color' | 'white'
   className?: string
+  /** Empty for a decorative copy next to the real name. */
+  alt?: string
 }
 
-// The logo file's own intrinsic ratio (its <svg viewBox="0 0 2481 1350">).
-// The root <svg> there also carries width="100%" height="100%", which
-// leaves an <img> pointed at it without a reliable intrinsic ratio to
-// derive an "auto" dimension from — browsers can fall back to the CSS
-// default replaced-element ratio (2:1) instead of the real ~1.838:1,
-// visibly distorting the logo whenever only one of width/height is set.
-// Hardcoding the ratio here sidesteps that entirely.
-const LOGO_ASPECT_RATIO = 2481 / 1350
+// The files are cropped to the artwork itself (viewBox 261 319 2031 604),
+// so the size you set is the size you see. The original exports had about
+// 25% empty space above and below, which made the logo look small and
+// off-centre wherever it was placed.
+const LOGO_WIDTH = 2031
+const LOGO_HEIGHT = 604
 
-export function Logo({ size, width, height, className = '' }: LogoProps) {
-  let style: CSSProperties
-
-  if (typeof height === 'number' && width === undefined) {
-    style = { height, width: height * LOGO_ASPECT_RATIO }
-  } else if (typeof width === 'number' && height === undefined) {
-    style = { width, height: width / LOGO_ASPECT_RATIO }
-  } else if (width !== undefined || height !== undefined) {
-    // Percentage/mixed values (e.g. width="70%" height="auto") — can't
-    // precompute a pixel pair, so pin the ratio via CSS and let object-fit
-    // fill the box without stretching.
-    style = {
-      width: width ?? 'auto',
-      height: height ?? 'auto',
-      aspectRatio: `${LOGO_ASPECT_RATIO}`,
-      objectFit: 'contain',
-    }
-  } else {
-    const s = size ?? 40
-    style = { height: s, width: s * LOGO_ASPECT_RATIO }
-  }
+/**
+ * The Resurs Direkt logo. Give it a height (or width) here, or leave both
+ * out and size it with CSS on className (`height: 28px; width: auto`).
+ */
+export function Logo({ height, width, size, variant = 'color', className = '', alt = 'Resurs Direkt' }: LogoProps) {
+  const h = height ?? size
+  const style: CSSProperties | undefined =
+    h !== undefined ? { height: h, width: 'auto' } : width !== undefined ? { width, height: 'auto' } : undefined
 
   return (
     <img
-      src="/logos/ResursDirekt1_vertical.svg"
-      alt="Resurs Direkt"
+      src={variant === 'white' ? '/logos/resurs-direkt-white.svg' : '/logos/resurs-direkt.svg'}
+      width={LOGO_WIDTH}
+      height={LOGO_HEIGHT}
+      alt={alt}
       style={style}
       className={className}
     />
