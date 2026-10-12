@@ -8,6 +8,8 @@ interface IconProps {
 }
 
 export type IconName =
+  | 'home'
+  | 'folder'
   | 'edit'
   | 'grid'
   | 'bell'
@@ -44,6 +46,16 @@ export function Icon({ name, className = styles.icon }: IconProps) {
 
 const PATHS: Record<IconName, ReactElement> = {
   edit: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />,
+  home: (
+      <>
+        <path d="m3 10 9-7 9 7" />
+        <path d="M5 9v12h14V9" />
+        <path d="M9 21v-7h6v7" />
+      </>
+    ),
+    folder: (
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+    ),
   grid: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1" />

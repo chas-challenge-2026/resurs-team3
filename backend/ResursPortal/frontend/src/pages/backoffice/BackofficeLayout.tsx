@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { AppSidebar } from '../../components/layout/AppSidebar'
 import type { SidebarItem } from '../../components/layout/AppSidebar'
 import { Icon } from '../../components/Icon'
@@ -44,7 +43,7 @@ export function BackofficeLayout() {
   }
 
   return (
-    <SidebarProvider style={SIDEBAR_SIZE} className={styles.providerRoot}>
+    <SidebarProvider className={styles.providerRoot}>
       <AppSidebar items={NAV_ITEMS} activeKey={view} onSelect={handleSelectNav} />
       <SidebarInset className={styles.inset}>
         <div className={styles.topBarRow}>
