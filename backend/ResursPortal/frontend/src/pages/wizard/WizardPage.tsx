@@ -1,83 +1,80 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import { Button } from '../../components/ui/Button'
 import { Icon } from '../../components/Icon'
 import { useCases } from '../../context/useCases'
-import type { CreditCase, ApplicationStatus } from '../../types/case'
-import {
-  validateFinancialMetrics,
-  type FinancialMetricsErrors,
-} from '../../features/credit-application/financialMetrics.validation'
+import type { CompanyValidationResult } from '../../types/case'
+import { BankIdMark } from '../../components/BankIdMark'
+import { companyValidationService } from '../../services/companyValidationService'
+import { signApplication } from '../../features/credit-application/bankIdSigning'
 import { CompanyDetailsStep } from '../../features/credit-application/steps/CompanyDetailsStep'
 import { FinancialMetricsStep } from '../../features/credit-application/steps/FinancialMetricsStep'
 import { CreditDetailsStep } from '../../features/credit-application/steps/CreditDetailsStep'
 import type { CreditApplicationData } from '../../features/credit-application/creditApplication.types'
+import { noFiguresEntered, validateCreditRequest, validateFinancialMetrics, type CreditRequestErrors, type FinancialErrors } from '../../features/credit-application/creditApplication.validation'
 import {
   validateCompanyDetails,
+  validateCompanyCheck,
   type CompanyDetailsErrors,
 } from '../../features/credit-application/companyDetails.validation'
-import {
-  validateCreditDetails,
-  type CreditDetailsErrors,
-} from '../../features/credit-application/creditDetails.validation'
+import { clearApplicationDraft, loadApplicationDraft, saveApplicationDraft } from '../../features/credit-application/applicationDraft'
 import { toCaseSubmission } from '../../features/credit-application/creditApplication.mapper'
-import { WizardTopBar } from './WizardTopBar'
 import { StepTabs } from './StepTabs'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/Dialog'
+import { SCORING_THRESHOLDS } from '../../utils/scoring'
+import { SigningView } from './SigningView'
+import { applicationStatusPath } from '../status/applicationProgress'
+import { STEPS } from './steps'
 import { joinClassNames } from '../../lib/joinClassNames'
 import styles from './WizardPage.module.css'
+import { useDocumentTitle } from '../../lib/useDocumentTitle'
+import { parseWizardStep, wizardStepPath } from '../../routes'
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 4
+
+// Step 2 figure names for the short "X saknas" summary items.
+const FIGURE_LABEL: Record<string, string> = {
+  netSales: 'Nettoomsättning',
+  operatingProfit: 'Rörelseresultat',
+  interestExpenses: 'Räntekostnader',
+  currentAssets: 'Omsättningstillgångar',
+  totalCapital: 'Balansomslutning',
+  equity: 'Eget kapital',
+  shortTermLiabilities: 'Kortfristiga skulder',
+  longTermLiabilities: 'Långfristiga skulder',
+  operatingCashFlow: 'Operativt kassaflöde',
+  investingCashFlow: 'Investeringskassaflöde',
+}
 
 const initialApplicationData: CreditApplicationData = {
   orgNumber: '',
   companyName: '',
   authorizedSignatory: '',
+  financialYear: String(new Date().getFullYear() - 1),
+  industry: '',
   equity: '',
   totalCapital: '',
   currentAssets: '',
   shortTermLiabilities: '',
-  totalDebt: '',
+  longTermLiabilities: '',
   operatingProfit: '',
   netSales: '',
+  operatingCashFlow: '',
+  investingCashFlow: '',
+  noCashFlowStatement: '',
+  interestExpenses: '',
   requestedAmount: '',
+  repaymentTerm: '36',
   purpose: '',
 }
 
-// Same outcome copy the other project's Step4Confirmation shows — the case
-// is scored synchronously by useCases().addCase (utils/scoring.ts), so the
-// confirmation screen can show the real decision instead of a generic
-// "we'll review it" message.
-const OUTCOME_COPY: Record<ApplicationStatus, { heading: string; body: string }> = {
-  APPROVED: {
-    heading: 'Ansökan godkänd',
-    body: 'Grattis! Er kreditansökan har godkänts automatiskt baserat på era finansiella nyckeltal. Beslutet är slutgiltigt och kräver ingen ytterligare handläggning.',
-  },
-  REJECTED: {
-    heading: 'Ansökan avslagen',
-    body: 'Er kreditansökan kunde tyvärr inte godkännas baserat på de inlämnade finansiella nyckeltalen. Se motiveringen nedan för detaljer.',
-  },
-  UNDER_REVIEW: {
-    heading: 'Ansökan under granskning',
-    body: 'Er ansökan kräver manuell granskning av en handläggare innan ett slutgiltigt beslut kan fattas. Ni meddelas när beslut har fattats.',
-  },
-  PENDING_DOCS: {
-    heading: 'Ansökan mottagen',
-    body: 'Er ansökan har tagits emot och väntar på komplettering.',
-  },
-}
-
-const STATUS_BADGE_CLASS: Record<ApplicationStatus, string> = {
-  APPROVED: styles.statusApproved,
-  REJECTED: styles.statusRejected,
-  UNDER_REVIEW: styles.statusUnderReview,
-  PENDING_DOCS: styles.statusPendingDocs,
+function createInitialApplicationData(user: ReturnType<typeof useAuth>['user']): CreditApplicationData {
+  return {
+    ...initialApplicationData,
+    orgNumber: user?.role === 'client' ? user.orgNumber : '',
+    companyName: user?.role === 'client' ? user.companyName : '',
+    authorizedSignatory: user?.role === 'client' ? user.authorizedSignatory ?? '' : '',
+  }
 }
 
 /**
@@ -86,31 +83,168 @@ const STATUS_BADGE_CLASS: Record<ApplicationStatus, string> = {
  * the field logic underneath is unchanged from features/credit-application —
  * one flat useState instead of that project's ApplicationContext/reducer.
  *
+ * The panel/tabs/dialog visual treatment (white panel, ink text, pill
+ * fields/buttons, focus-on-content-change, animated transitions) mirrors
+ * LoginPage's rework — see WizardPage.module.css's .wizardShell for the
+ * shared CSS-custom-property scope that makes this possible without
+ * touching TextField/Button's own dark-panel-oriented defaults.
+ *
  * Submitting now mirrors the other project's wiring too: addCase() (from
  * CasesContext) runs the same ScoringService the backoffice queue trusts
  * and drops the resulting case straight into it, so a submitted application
  * shows up in the caseworker dashboard exactly like a real POST /apply would.
  */
+
+const INDUSTRY_LABEL: Record<string, string> = {
+  BYGG: 'Bygg', FASTIGHET: 'Fastighet', FINANS: 'Finans', HANDEL: 'Handel', IT: 'IT', RESTAURANG: 'Restaurang',
+  TILLVERKNING: 'Tillverkning', TRANSPORT: 'Transport', UTBILDNING: 'Utbildning', VÅRD: 'Vård', OTHER: 'Annan bransch',
+}
+
+/** Invalid fields, plus error messages that stand in for a field (the
+ * company check), in document order. */
+const ERROR_TARGETS = '[aria-invalid="true"], [data-error-target="true"]'
+
+/** "5560001234" or "556000-1234" → "556000-1234"; null if not 10 digits. */
+function normalizedOrgNumber(value: string): string | null {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 10 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : null
+}
+
 export function WizardPage() {
+  const { user } = useAuth()
   const { addCase } = useCases()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [applicationData, setApplicationData] = useState<CreditApplicationData>(initialApplicationData)
-  const [companyDetailsErrors, setCompanyDetailsErrors] =
-  useState<CompanyDetailsErrors>({})
-  const [companyValidationActive, setCompanyValidationActive] =
-  useState(false)
-  const [financialMetricsErrors, setFinancialMetricsErrors] =
-  useState<FinancialMetricsErrors>({})  
-const [financialValidationActive, setFinancialValidationActive] =
-  useState(false)
+  const navigate = useNavigate()
+  // Resume an in-progress application from this tab, if there is one.
+  const [restoredDraft] = useState(() => (user ? loadApplicationDraft(user.id, createInitialApplicationData(user)) : null))
+  const [showRestoredNotice, setShowRestoredNotice] = useState(Boolean(restoredDraft))
+  const [currentStep, setCurrentStep] = useState(restoredDraft?.step ?? 1)
+  const [maxReachedStep, setMaxReachedStep] = useState(restoredDraft?.maxStep ?? restoredDraft?.step ?? 1)
+  // Set when the applicant jumps back from the review via "Ändra", so the
+  // primary action becomes "Tillbaka till granskning" instead of Nästa.
+  const [editingFromReview, setEditingFromReview] = useState(false)
 
-  const [creditDetailsErrors, setCreditDetailsErrors] =
-  useState<CreditDetailsErrors>({})
+  // The step is mirrored in the URL (/kreditansokan/steg-2), one history entry per step,
+  // so the browser's and the phone's Back go to the previous step instead
+  // of leaving the wizard. State stays the source of truth; the URL follows
+  // it, and a URL change from history (Back/Forward) is applied to it below.
+  const { steg } = useParams()
+  const urlStep = parseWizardStep(steg, TOTAL_STEPS)
+  const [seenUrlStep, setSeenUrlStep] = useState(urlStep)
+  const [confirmingRestart, setConfirmingRestart] = useState(false)
+  // The signatory's attestation, given first thing in the signing view.
+  // Deliberately not part of the saved draft: after a restore or an "Ändra"
+  // round trip they confirm again against the figures as they are now.
+  const [attested, setAttested] = useState(false)
+  // Step 2 submitted with no figures at all (see showStepErrors).
+  const [showFiguresPrompt, setShowFiguresPrompt] = useState(false)
+  const [applicationData, setApplicationData] = useState<CreditApplicationData>(() => restoredDraft?.data ?? createInitialApplicationData(user))
+  // BankID login already established which company is applying, so step 1
+  // shows that identity as facts instead of asking for it again.
+  // Company-register check for the org number being applied for. Results
+  // are kept per org number, so a stale lookup never counts for a new one.
+  const [companyCheck, setCompanyCheck] = useState<CompanyValidationResult | null>(null)
+  const identityFromLogin = user?.role === 'client' && Boolean(user.orgNumber && user.companyName)
+  const orgToCheck = normalizedOrgNumber(applicationData.orgNumber)
+  const currentCompanyCheck = companyCheck && companyCheck.orgNumber === orgToCheck ? companyCheck : null
 
-const [creditValidationActive, setCreditValidationActive] =
-  useState(false)
-  const [submittedCase, setSubmittedCase] = useState<CreditCase | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  useEffect(() => {
+    if (!orgToCheck) return
+    let cancelled = false
+    companyValidationService.lookup(orgToCheck).then((result) => {
+      if (!cancelled) setCompanyCheck(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [orgToCheck])
+
+  function companyErrorsFor(data: CreditApplicationData): CompanyDetailsErrors {
+    const base = validateCompanyDetails(data, { checkOrgNumberChecksum: !identityFromLogin })
+    const org = normalizedOrgNumber(data.orgNumber)
+    if (!org || base.orgNumber) return base
+    const check = companyCheck && companyCheck.orgNumber === org ? companyCheck : null
+    const errors: CompanyDetailsErrors = { ...validateCompanyCheck(data, check), ...base }
+    // Without a check result (still running) or for a blocked company there
+    // is no signatory choice on screen, so don't point the summary at one.
+    if (errors.companyStatus) delete errors.authorizedSignatory
+    return errors
+  }
+  const [signingState, setSigningState] = useState<'idle' | 'awaiting' | 'signing'>('idle')
+  const [signingError, setSigningError] = useState<{ message: string; fixStep?: number } | undefined>()
+  const signingPanelRef = useRef<HTMLHeadingElement>(null)
+  const signingErrorRef = useRef<HTMLDivElement>(null)
+  const [financialErrors, setFinancialErrors] = useState<FinancialErrors>({})
+  const [creditErrors, setCreditErrors] = useState<CreditRequestErrors>({})
+  const [validatedSteps, setValidatedSteps] = useState<number[]>([])
+  const companyDetailsErrors: CompanyDetailsErrors = validatedSteps.includes(1) ? companyErrorsFor(applicationData) : {}
+  // Set once signing has created the case; the status page takes over from
+  // here, so this only stops the draft from being saved again on the way out.
+  const [submitted, setSubmitted] = useState(false)
+  // The tab title names the step, so it is read out on each step change.
+  useDocumentTitle(
+    submitted ? false : `Steg ${currentStep} av ${TOTAL_STEPS}: ${signingState !== 'idle' ? 'Signera' : STEPS[currentStep - 1]?.label}`,
+    'Ansök om företagskredit',
+  )
+  const [showErrorSummary, setShowErrorSummary] = useState(false)
+
+  const formStepRef = useRef<HTMLFormElement>(null)
+  const pageIntroRef = useRef<HTMLDivElement>(null)
+  // True while an on-screen keyboard leaves little room: the sticky action
+  // bar then scrolls with the form instead of covering a third of it.
+  const [shortViewport, setShortViewport] = useState(false)
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const update = () => setShortViewport(viewport.height < 560)
+    update()
+    viewport.addEventListener('resize', update)
+    return () => viewport.removeEventListener('resize', update)
+  }, [])
+  const errorSummaryRef = useRef<HTMLDivElement>(null)
+  const submittingRef = useRef(false)
+  // Step the focus effect last handled; compared instead of a "first render"
+  // flag so StrictMode's double effect run doesn't count as a step change.
+  const lastFocusedStepRef = useRef<number | null>(null)
+  // Set when a step change happens *because* of errors on the new step, so
+  // focus lands on those errors instead of the step container.
+  const focusErrorsAfterStepChangeRef = useRef(false)
+
+  // Same reasoning as LoginPage's intro→login focus effect: switching steps
+  // swaps the visible form content, so keyboard/screen-reader users need to
+  // land on the new step instead of staying wherever the old "Nästa"/
+  // "Tillbaka" button used to be. Skips the very first render (step 1 on
+  // initial mount) since nothing changed yet.
+  useEffect(() => {
+    const previousStep = lastFocusedStepRef.current
+    lastFocusedStepRef.current = currentStep
+    if (previousStep === null || previousStep === currentStep) return
+    if (focusErrorsAfterStepChangeRef.current) {
+      focusErrorsAfterStepChangeRef.current = false
+      focusFirstError()
+      return
+    }
+    // The page scrolls, so bring the title, progress and the new step's
+    // heading to the top instead of leaving the view mid-page.
+    formStepRef.current?.focus({ preventScroll: true })
+    pageIntroRef.current?.scrollIntoView({ block: 'start' })
+  }, [currentStep])
+
+  // State → URL. Arriving without ?steg, or with a step not reached yet,
+  // replaces the entry; every step change made in the wizard adds one.
+  useEffect(() => {
+    if (submitted || urlStep === currentStep) return
+    const replace = urlStep === null || urlStep > maxReachedStep
+    navigate(wizardStepPath(currentStep), { replace })
+  }, [currentStep, urlStep, maxReachedStep, submitted, navigate])
+
+  // Keep the draft in this tab so leaving the page (or a reload) doesn't
+  // lose the applicant's figures. An untouched form isn't a draft.
+  useEffect(() => {
+    if (!user || submitted) return
+    const untouched = JSON.stringify(applicationData) === JSON.stringify(createInitialApplicationData(user))
+    if (untouched && currentStep === 1) return
+    saveApplicationDraft({ userId: user.id, step: currentStep, maxStep: maxReachedStep, data: applicationData })
+  }, [user, applicationData, currentStep, maxReachedStep, submitted])
 
 function handleChange(field: keyof CreditApplicationData, value: string) {
   const updatedData = {
