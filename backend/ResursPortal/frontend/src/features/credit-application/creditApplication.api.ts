@@ -1,0 +1,209 @@
+import type { CreditApplicationData } from "./creditApplication.types";
+import { isWholeKronor } from "./amount";
+
+/**
+ * Request contract for POST /api/applications.
+ *
+ * The current Java API requires both cashflow values.
+ * Industry remains optional.
+ */
+export type CreateApplicationRequest = {
+  orgNumber: string;
+  companyName: string;
+  authorizedSignatory: string;
+
+  egetKapital: number;
+  totaltKapital: number;
+  omsattningstillgangar: number;
+  kortfristigaSkulder: number;
+  totalaSkulder: number;
+  rorelseresultat: number;
+  nettoomsattning: number;
+
+  requestedAmount: number;
+  purpose: string;
+
+
+  // Actual financial values from the applicant's form.
+  // Missing cashflow information must not be represented as zero.
+
+  operativtKassaflode: number;
+  investeringsKassaflode: number;
+  ranteKostnader: number;
+  bransch?: string;
+};
+
+/**
+ * Success response returned by POST /api/applications.
+ *
+ * Note:
+ * - caseNumber is not included yet because backend generation/response support
+ *   is still being worked on separately.
+ */
+export type CreateApplicationResponse = {
+  applicationId: number;
+  status: "APPROVED" | "REJECTED" | "UNDER_REVIEW";
+  decision: "APPROVED" | "REJECTED" | "REVIEW";
+  decisionReason: string;
+  flagCount: number;
+  creditScore: number;
+};
+
+/**
+ * Backend validation errors are returned as:
+ * HTTP 400 + { errors: { fieldName: message } }
+ */
+export type ApplicationValidationErrors = Record<string, string>;
+
+/**
+ * Custom error type for application submission failures.
+ * We keep backend field errors on the error object so WizardPage can later map
+ * them back to the correct form fields.
+ */
+export class ApplicationApiError extends Error {
+  status: number;
+  errors: ApplicationValidationErrors;
+
+  constructor(
+    status: number,
+    message: string,
+    errors: ApplicationValidationErrors = {},
+  ) {
+    super(message);
+    this.name = "ApplicationApiError";
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+/**
+ * Maps the React form model to the Java REST API request model.
+ * - form inputs are stored as strings in React
+ * - backend expects JSON numbers for financial values / requestedAmount
+ */
+
+function requiredAmount(value: string, label: string): number {
+  const raw = value.trim();
+  const amount = Number(raw);
+
+  if (!isWholeKronor(raw) || !Number.isSafeInteger(amount)) {
+    throw new Error(`${label}: ange ett giltigt belopp i hela kronor.`);
+  }
+
+  return amount;
+}
+
+export function toCreateApplicationRequest(
+  data: CreditApplicationData,
+): CreateApplicationRequest {
+  if (
+    data.noCashFlowStatement === "true" ||
+    !data.operatingCashFlow.trim() ||
+    !data.investingCashFlow.trim()
+  ) {
+    throw new Error(
+      "Kassaflödesuppgifter saknas. Ansökan kan inte skickas med det nuvarande API-kontraktet.",
+    );
+  }
+
+  const shortTermLiabilities = requiredAmount(
+    data.shortTermLiabilities,
+    "Kortfristiga skulder",
+  );
+
+  const longTermLiabilities = requiredAmount(
+    data.longTermLiabilities,
+    "Långfristiga skulder",
+  );
+
+  return {
+    orgNumber: data.orgNumber.trim(),
+    companyName: data.companyName.trim(),
+    authorizedSignatory: data.authorizedSignatory.trim(),
+
+    egetKapital: requiredAmount(data.equity, "Eget kapital"),
+    totaltKapital: requiredAmount(data.totalCapital, "Balansomslutning"),
+    omsattningstillgangar: requiredAmount(
+      data.currentAssets,
+      "Omsättningstillgångar",
+    ),
+
+    kortfristigaSkulder: shortTermLiabilities,
+    totalaSkulder: requiredAmount(
+      String(shortTermLiabilities + longTermLiabilities),
+      "Totala skulder",
+    ),
+
+    rorelseresultat: requiredAmount(
+      data.operatingProfit,
+      "Rörelseresultat",
+    ),
+    nettoomsattning: requiredAmount(
+      data.netSales,
+      "Nettoomsättning",
+    ),
+
+    operativtKassaflode: requiredAmount(
+      data.operatingCashFlow,
+      "Operativt kassaflöde",
+    ),
+    investeringsKassaflode: requiredAmount(
+      data.investingCashFlow,
+      "Investeringskassaflöde",
+    ),
+
+    ranteKostnader: Math.abs(
+      requiredAmount(data.interestExpenses, "Räntekostnader"),
+    ),
+
+    ...(data.industry && data.industry !== "OTHER"
+      ? { bransch: data.industry }
+      : {}),
+
+    requestedAmount: requiredAmount(
+      data.requestedAmount,
+      "Ansökt belopp",
+    ),
+    purpose: data.purpose.trim(),
+  };
+}
+
+
+ // Sends the application to the backend REST API.
+ // Uses the Vite dev proxy:       /api/applications -> http://localhost:8083/api/applications
+
+export async function createApplication(
+  request: CreateApplicationRequest,
+): Promise<CreateApplicationResponse> {
+  const response = await fetch("/api/applications", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    let errors: ApplicationValidationErrors = {};
+
+    try {
+      const body = (await response.json()) as {
+        errors?: ApplicationValidationErrors;
+      };
+
+      errors = body.errors ?? {};
+    } catch {
+      // Backend did not return a JSON error body.
+    }
+
+    throw new ApplicationApiError(
+      response.status,
+      response.status === 400
+        ? "Ansökan innehåller ogiltiga uppgifter."
+        : "Ansökan kunde inte skickas. Försök igen.",
+      errors,
+    );
+  }
+
+  return (await response.json()) as CreateApplicationResponse;
+}
