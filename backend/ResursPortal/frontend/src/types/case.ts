@@ -15,6 +15,8 @@
 // ---------------------------------------------------------------------------
 
 export interface FinancialMetrics {
+  /** Financial reporting period used for the submitted figures. */
+  reportingPeriod?: string
   equity: string
   totalCapital: string
   currentAssets: string
@@ -28,6 +30,8 @@ export interface FinancialMetrics {
   operatingCashFlow: string
   investingCashFlow: string
   interestExpenses: string
+  /** The annual report has no kassaflödesanalys; cash flows sent as 0. */
+  cashFlowStatementMissing?: boolean
 }
 
 // applications.status in v1 (PENDING_DOCS is pre-scoring; UNDER_REVIEW/APPROVED/REJECTED
@@ -60,12 +64,32 @@ export interface ScoringMetricResult {
 // its inline, magic-number-laden if/else chain in ApplicationController.
 // Thresholds are consolidated to one value per metric (see utils/scoring.ts)
 // instead of v1's three-different-thresholds-for-soliditet bug.
+/** A rule from ScoringService.java beyond the six ratios (risk,
+ * industry, cash-flow and combination rules). */
+export interface ScoringRuleHit {
+  key: string
+  label: string
+  severity: 'flagged' | 'reject'
+  note: string
+}
+
+/** Industry codes ScoringService.java understands (branschfaktor). */
+export type Industry =
+  | 'BYGG' | 'HANDEL' | 'IT' | 'FASTIGHET' | 'TILLVERKNING'
+  | 'TRANSPORT' | 'RESTAURANG' | 'FINANS' | 'VÅRD' | 'UTBILDNING'
+
 export interface ScoringResult {
   applicationId: string
   decision: ApplicationDecision
   hardReject: boolean
   flagCount: number
   metrics: ScoringMetricResult[]
+  /** Rules that fired beyond the six ratios. Optional for stored cases. */
+  rules?: ScoringRuleHit[]
+  /** ScoringService.java's kreditPoäng (starts at 100). */
+  creditScore?: number
+  /** Same format as ScoringService.java's scoringLog. */
+  scoringLog?: string
   decisionReason: string
   scoredAt: string
 }
@@ -74,7 +98,12 @@ export interface ScoringResult {
 // (APPLICATION_CREATED, SCORING_RUN, DOCUMENT_UPLOADED, MANUAL_DECISION).
 // v2 moves this to an indexed audit_events table; AuditEvent is the read
 // view the frontend renders in a case's audit trail.
-export type AuditAction = 'APPLICATION_CREATED' | 'SCORING_RUN' | 'DOCUMENT_UPLOADED' | 'MANUAL_DECISION'
+export type AuditAction =
+  | 'APPLICATION_CREATED'
+  | 'APPLICATION_SIGNED'
+  | 'SCORING_RUN'
+  | 'DOCUMENT_UPLOADED'
+  | 'MANUAL_DECISION'
 
 export interface AuditEvent {
   id: string
@@ -108,10 +137,40 @@ export interface CreditCase {
   orgNumber: string
   signatory: string
   amount: number
+  termMonths?: number
   purpose: string
   submittedAt: string
   status: ApplicationStatus
   financials: FinancialMetrics
   scoringResult: ScoringResult
   auditTrail: AuditEvent[]
+  // --- v2 flow additions (all optional so seed and stored cases still load)
+  /** Industry used for ScoringService's branschfaktor; empty = unknown. */
+  industry?: Industry | ''
+  /** Company-register check made in the wizard (CompanyValidationService). */
+  companyValidation?: CompanyValidationResult
+  /** BankID signature of the application (BankIdService). */
+  signature?: { signedBy: string; signedAt: string; orderRef: string }
+  /** Documents the applicant has sent in (metadata only in the prototype). */
+  documents?: CaseDocument[]
+}
+
+export interface CaseDocument {
+  id: string
+  category: string
+  fileName: string
+  size: number
+  uploadedAt: string
+}
+
+/** A message to the applicant (e-mail via NotificationService). */
+export interface ApplicantMessage {
+  id: string
+  caseId: string
+  orgNumber: string
+  channel: 'email'
+  subject: string
+  body: string
+  createdAt: string
+  read: boolean
 }
