@@ -1,3 +1,4 @@
+
 package se.comerit.resurs.dto;
 
 import java.math.BigDecimal;
@@ -6,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+
 
 public class CreateApplicationRequest {
 
@@ -35,7 +37,6 @@ public class CreateApplicationRequest {
 
     private double rorelseresultat;
 
-
     private double nettoomsattning;
 
     @NotNull(message = "Ansökt belopp krävs")
@@ -45,15 +46,16 @@ public class CreateApplicationRequest {
     @NotBlank(message = "Syfte krävs")
     private String purpose;
 
-    private double operativtKassaflode;
+    @NotNull(message = "Operativt kassaflöde krävs")
+    private Double operativtKassaflode;
 
-    private double investeringsKassaflode;
+    @NotNull(message = "Investeringskassaflöde krävs")
+    private Double investeringsKassaflode;
 
     @PositiveOrZero(message = "Räntekostnader får inte vara negativa")
     private double ranteKostnader;
 
     private String bransch;
-
 
     public String getOrgNumber() {
         return orgNumber;
@@ -119,11 +121,11 @@ public class CreateApplicationRequest {
         this.totalaSkulder = totalaSkulder;
     }
 
-    public double getRorelsesresultat() {
+    public double getRorelseresultat() {
         return rorelseresultat;
     }
 
-    public void setRorelsesresultat(double rorelseresultat) {
+    public void setRorelseresultat(double rorelseresultat) {
         this.rorelseresultat = rorelseresultat;
     }
 
@@ -151,19 +153,19 @@ public class CreateApplicationRequest {
         this.purpose = purpose;
     }
 
-    public double getOperativtKassaflode() {
+    public Double getOperativtKassaflode() {
         return operativtKassaflode;
     }
 
-    public void setOperativtKassaflode(double operativtKassaflode) {
+    public void setOperativtKassaflode(Double operativtKassaflode) {
         this.operativtKassaflode = operativtKassaflode;
     }
 
-    public double getInvesteringsKassaflode() {
+    public Double getInvesteringsKassaflode() {
         return investeringsKassaflode;
     }
 
-    public void setInvesteringsKassaflode(double investeringsKassaflode) {
+    public void setInvesteringsKassaflode(Double investeringsKassaflode) {
         this.investeringsKassaflode = investeringsKassaflode;
     }
 
