@@ -7,7 +7,7 @@ interface StepTabsProps {
   maxReachedStep: number
   /** Steps whose current data passes validation. */
   validSteps: number[]
-  /** Signing is open: the last step reads "Signera" instead of "Granska". */
+  /** Signing is open: the last step reads "Signera". */
   signing?: boolean
 }
 
