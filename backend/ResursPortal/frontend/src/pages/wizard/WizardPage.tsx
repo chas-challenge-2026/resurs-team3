@@ -253,206 +253,588 @@ function handleChange(field: keyof CreditApplicationData, value: string) {
   }
 
   setApplicationData(updatedData)
+  if (showFiguresPrompt && field !== 'financialYear' && value.trim()) setShowFiguresPrompt(false)
 
-if (companyValidationActive && currentStep === 1) {
-  setCompanyDetailsErrors(validateCompanyDetails(updatedData))
+  if (validatedSteps.includes(currentStep)) {
+    if (currentStep === 2) setFinancialErrors(validateFinancialMetrics(updatedData))
+    if (currentStep === 3) setCreditErrors(validateCreditRequest(updatedData))
+  } else if (field === 'requestedAmount' && creditErrors.requestedAmount) {
+    setCreditErrors({ ...creditErrors, requestedAmount: validateCreditRequest(updatedData).requestedAmount })
+  }
 }
 
-if (financialValidationActive && currentStep === 2) {
-  setFinancialMetricsErrors(validateFinancialMetrics(updatedData))
+/** An amount outside the range is said when the applicant leaves the
+ * field, not first when they press Nästa. An empty field stays quiet. */
+function checkAmountOnBlur() {
+  if (!applicationData.requestedAmount.trim()) return
+  setCreditErrors((errors) => ({ ...errors, requestedAmount: validateCreditRequest(applicationData).requestedAmount }))
 }
 
-if (creditValidationActive && currentStep === 3) {
-  setCreditDetailsErrors(validateCreditDetails(updatedData))
-}
+function handleChangeMany(updates: Partial<Record<keyof CreditApplicationData, string>>) {
+  const updatedData = { ...applicationData, ...updates }
+  setApplicationData(updatedData)
+  if (validatedSteps.includes(2)) setFinancialErrors(validateFinancialMetrics(updatedData))
 }
 
-  function goToStep(step: number) {
-    if (step <= currentStep) setCurrentStep(step)
+  /** Pure check of one step against the current data (no UI side effects). */
+  function validationErrorsFor(step: number): Record<string, string> {
+    if (step === 1) return companyErrorsFor(applicationData) as Record<string, string>
+    if (step === 2) return validateFinancialMetrics(applicationData) as Record<string, string>
+    if (step === 3) return validateCreditRequest(applicationData) as Record<string, string>
+    return {}
   }
 
-function goToNextStep() {
-  if (currentStep === 1) {
-    const errors = validateCompanyDetails(applicationData)
-
-    setCompanyValidationActive(true)
-    setCompanyDetailsErrors(errors)
-
-    if (Object.keys(errors).length > 0) {
+  /** Shows a step's errors and moves focus: the summary when there are
+   * several, the field itself when there is one. */
+  function focusFirstError() {
+    const invalidCount = document.querySelectorAll(ERROR_TARGETS).length
+    // Empty step 2: the prompt is announced (role=alert) and focus goes
+    // straight to where to start typing.
+    if (invalidCount === 0 && document.getElementById('figures-prompt')) {
+      document.getElementById('field-netSales')?.focus()
       return
+    }
+    if (invalidCount > 1 && errorSummaryRef.current) errorSummaryRef.current.focus()
+    else document.querySelector<HTMLElement>(ERROR_TARGETS)?.focus()
+  }
+
+  function showStepErrors(step: number) {
+    // Nothing entered yet on step 2: one pointer to where to start instead
+    // of ten "Ange …" errors. The step isn't marked validated, so typing
+    // the first figure doesn't make the other nine light up.
+    if (step === 2 && noFiguresEntered(applicationData)) {
+      setFinancialErrors({})
+      setShowErrorSummary(false)
+      setShowFiguresPrompt(true)
+      if (step !== currentStep) focusErrorsAfterStepChangeRef.current = true
+      else requestAnimationFrame(focusFirstError)
+      return
+    }
+    setShowFiguresPrompt(false)
+    setValidatedSteps((steps) => (steps.includes(step) ? steps : [...steps, step]))
+    const errors = validationErrorsFor(step)
+    if (step === 2) setFinancialErrors(errors)
+    if (step === 3) setCreditErrors(errors)
+    setShowErrorSummary(true)
+    if (step !== currentStep) {
+      // The step-change effect will focus the errors once the step renders.
+      focusErrorsAfterStepChangeRef.current = true
+    } else {
+      requestAnimationFrame(focusFirstError)
     }
   }
 
-  if (currentStep === 2) {
-  const errors = validateFinancialMetrics(applicationData)
-
-  setFinancialValidationActive(true)
-  setFinancialMetricsErrors(errors)
-
-  if (Object.keys(errors).length > 0) {
-    return
+  /** First step before `target` whose data is invalid right now, if any.
+   * Any step can change after it was first passed (via tabs or "Ändra"),
+   * so forward moves and the final submit check every step, not only the
+   * one on screen. */
+  function firstInvalidStepBefore(target: number): number | null {
+    for (let step = 1; step < target && step < TOTAL_STEPS; step += 1) {
+      if (Object.keys(validationErrorsFor(step)).length > 0) return step
+    }
+    return null
   }
-}
 
-  setCurrentStep((step) => Math.min(step + 1, TOTAL_STEPS))
-}
+  /** Back is always free. Forward (Nästa, a later tab, back to review)
+   * requires every step before the target to be valid; if one isn't, the
+   * applicant lands on it with its errors shown. */
+  function goToStep(target: number) {
+    if (target === currentStep || target > maxReachedStep + 1) return
+    if (currentStep === TOTAL_STEPS) resetAttestation()
+
+    if (target > currentStep) {
+      const invalidStep = firstInvalidStepBefore(target)
+      if (invalidStep !== null) {
+        if (invalidStep !== currentStep) setCurrentStep(invalidStep)
+        showStepErrors(invalidStep)
+        return
+      }
+    }
+
+    setShowErrorSummary(false)
+    setShowFiguresPrompt(false)
+    if (target === TOTAL_STEPS) setEditingFromReview(false)
+    setMaxReachedStep((reached) => Math.max(reached, target))
+    setCurrentStep(target)
+  }
+
+  function goToNextStep() {
+    goToStep(editingFromReview ? TOTAL_STEPS : Math.min(currentStep + 1, TOTAL_STEPS))
+  }
+
+  // Leaving the review in any direction means the figures may change, so
+  // the attestation has to be given again against what is shown.
+  function resetAttestation() {
+    setAttested(false)
+    setSigningState('idle')
+    setSigningError(undefined)
+  }
+
+  function editFromReview(step: number) {
+    setEditingFromReview(true)
+    goToStep(step)
+  }
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (currentStep === TOTAL_STEPS) handleSubmit()
+    else goToNextStep()
+  }
 
   function goToPreviousStep() {
+    if (currentStep === TOTAL_STEPS) resetAttestation()
+    setShowErrorSummary(false)
+    setShowFiguresPrompt(false)
     setCurrentStep((step) => Math.max(step - 1, 1))
   }
 
-  function handleOpenConfirmation() {
-  const errors = validateCreditDetails(applicationData)
-
-  setCreditValidationActive(true)
-  setCreditDetailsErrors(errors)
-
-  if (Object.keys(errors).length > 0) {
-    return
-  }
-
-  setConfirmOpen(true)
-}
-
   function handleSubmit() {
-    const { companyInfo, financials, creditRequest } = toCaseSubmission(applicationData)
-    const createdCase = addCase(companyInfo, financials, creditRequest)
-    setSubmittedCase(createdCase)
+    // A fast double click must not create two cases.
+    if (submittingRef.current) return
+    // Last line of defence: nothing invalid reaches scoring, whatever path
+    // the applicant took through the tabs.
+    const invalidStep = firstInvalidStepBefore(TOTAL_STEPS)
+    if (invalidStep !== null) {
+      resetAttestation()
+      setCurrentStep(invalidStep)
+      showStepErrors(invalidStep)
+      return
+    }
+    // Everything checks out: open signing (attestation, then BankID).
+    // The attestation lives there, next to the signature it belongs to,
+    // so this button can't fail on a box further down the page.
+    setSigningError(undefined)
+    setSigningState('awaiting')
+    requestAnimationFrame(() => signingPanelRef.current?.focus())
   }
 
-  function handleConfirmSubmit() {
-    handleSubmit()
-    setConfirmOpen(false)
+  async function confirmSigning() {
+    if (signingState === 'signing' || submittingRef.current) return
+    setSigningState('signing')
+    // The mock answers in ~0.6 s; hold "Kontrollerar signaturen…" long
+    // enough to be read as a state rather than a flicker.
+    const [result] = await Promise.all([
+      signApplication(orgToCheck ?? applicationData.orgNumber, applicationData.authorizedSignatory),
+      new Promise((resolve) => window.setTimeout(resolve, 1200)),
+    ])
+    if (result.status === 'FAILED') {
+      setSigningState('idle')
+      setSigningError(
+        result.reason === 'NOT_AUTHORIZED_SIGNATORY'
+          ? { message: `${applicationData.authorizedSignatory} är inte registrerad som firmatecknare för ${applicationData.companyName}. Välj en annan firmatecknare.`, fixStep: 1 }
+          : { message: 'Företaget är inte aktivt i företagsregistret och kan inte ansöka om kredit.' },
+      )
+      
+      requestAnimationFrame(() => signingErrorRef.current?.focus())
+      return
+    }
+    submittingRef.current = true
+    const { companyInfo, financials, creditRequest } = toCaseSubmission(applicationData, { attested })
+    const createdCase = addCase(companyInfo, financials, creditRequest, {
+      companyValidation: currentCompanyCheck ?? undefined,
+      signature: { signedBy: result.signedBy, signedAt: result.signedAt, orderRef: result.orderRef },
+    })
+    clearApplicationDraft(user?.id)
+    setShowRestoredNotice(false)
+    setSigningState('idle')
+    setSubmitted(true)
+    // The status page is the end of the flow: decision, BankID receipt,
+    // next steps and progress live there (and update when a case worker
+    // decides). justSubmitted makes it open with the confirmation.
+    navigate(applicationStatusPath(createdCase.id), { state: { justSubmitted: true } })
+  }
+
+  // Back to the review with the attestation still given: nothing changed.
+  // Focus returns to the button that opened signing.
+  function cancelSigning() {
+    setSigningState('idle')
+    requestAnimationFrame(() => document.getElementById('signing-start')?.focus())
   }
 
   function handleRestart() {
-    setApplicationData(initialApplicationData)
+    submittingRef.current = false
+    clearApplicationDraft(user?.id)
+    setShowRestoredNotice(false)
+    setConfirmingRestart(false)
+    setShowErrorSummary(false)
+    setEditingFromReview(false)
+    resetAttestation()
+    setApplicationData(createInitialApplicationData(user))
     setCurrentStep(1)
-    setSubmittedCase(null)
+    setMaxReachedStep(1)
+    setSubmitted(false)
+    setFinancialErrors({})
+    setCreditErrors({})
+    setValidatedSteps([])
+  }
 
-    setCompanyDetailsErrors({})
-    setCompanyValidationActive(false)
+  const FIELD_ORDER: Record<number, string[]> = {
+    1: ['orgNumber', 'companyName', 'companyStatus', 'industry', 'authorizedSignatory'],
+    // Same order as the form (resultaträkning, balansräkning, kassaflöde).
+    2: ['financialYear', 'netSales', 'operatingProfit', 'interestExpenses', 'currentAssets', 'totalCapital', 'equity', 'shortTermLiabilities', 'longTermLiabilities', 'operatingCashFlow', 'investingCashFlow'],
+    3: ['requestedAmount', 'purpose'],
+  }
+  const stepErrors: Record<string, string | undefined> =
+    currentStep === 1 ? companyDetailsErrors : currentStep === 2 ? financialErrors : currentStep === 3 ? creditErrors : {}
+  // Missing figures on step 2 get a short "X saknas" in the summary; the
+  // full where-to-find-it message stays next to the field. Other errors
+  // (format, balance checks) keep their own wording.
+  const summaryItems = (FIELD_ORDER[currentStep] ?? [])
+    .filter((key) => stepErrors[key])
+    .map((key) => {
+      const missingFigure = currentStep === 2 && key in FIGURE_LABEL && !applicationData[key as keyof CreditApplicationData].trim()
+      return { id: `field-${key}`, message: missingFigure ? `${FIGURE_LABEL[key]} saknas` : (stepErrors[key] as string), missingFigure }
+    })
+  const summaryTitle = summaryItems.every((item) => item.missingFigure)
+    // The count lives in the action bar; this line only says what to do.
+    ? 'Fyll i de belopp som saknas'
+    : `Rätta ${summaryItems.length} uppgifter innan ni går vidare`
 
-    setFinancialMetricsErrors({})
-    setFinancialValidationActive(false)
+  // Step 2 with only empty figures left: one line and a way to the next
+  // empty field, instead of a list of every missing figure.
+  const onlyMissingFigures = summaryItems.length > 0 && summaryItems.every((item) => item.missingFigure)
+  const figureKeys = Object.keys(FIGURE_LABEL).filter((key) => applicationData.noCashFlowStatement !== 'true' || !/CashFlow$/.test(key))
+  // Step 2 marks one empty figure at a time, the next one to fill in; the
+  // bar counts the rest. Real errors (format, balance) are always shown.
+  const firstEmptyFigure = figureKeys.find((key) => financialErrors[key as keyof FinancialErrors] && !applicationData[key as keyof CreditApplicationData].trim())
+  const visibleFinancialErrors = Object.fromEntries(
+    Object.entries(financialErrors).filter(([key]) => !(key in FIGURE_LABEL) || applicationData[key as keyof CreditApplicationData].trim() || key === firstEmptyFigure),
+  ) as FinancialErrors
+  const filledFigures = figureKeys.filter((key) => applicationData[key as keyof CreditApplicationData].trim()).length
+  function focusNextEmptyFigure() {
+    const next = figureKeys.find((key) => !applicationData[key as keyof CreditApplicationData].trim())
+    if (next) document.getElementById(`field-${next}`)?.focus()
+  }
 
-    setCreditDetailsErrors({})
-    setCreditValidationActive(false)
+  const validSteps = [1, 2, 3].filter((step) => Object.keys(validationErrorsFor(step)).length === 0)
+
+  const requestedAmount = Number(applicationData.requestedAmount) || 0
+  // An estimate is only shown for an amount the application would accept;
+  // a monthly cost for 100 000 SEK when the minimum is higher misleads.
+  const amountAccepted = requestedAmount > 0 && !validateCreditRequest(applicationData).requestedAmount
+  const monthlyRate = 0.085 / 12
+  const repaymentTerm = Number(applicationData.repaymentTerm) || 36
+  const estimatedMonthlyPayment = requestedAmount > 0
+    ? requestedAmount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -repaymentTerm))
+    : 0
+  const formatSek = (amount: number) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(amount)
+  // Said instead of a bare "—" when an amount is entered but out of range.
+  // The range rule is said once: by the estimate until the field has been
+  // checked, then only by the field's own error.
+  const amountOutOfRange = requestedAmount > 0 && !amountAccepted && !creditErrors.requestedAmount
+  const RANGE_NOTE = 'Exempel visas för 250 000–10 000 000 SEK'
+  const decisionText = requestedAmount > SCORING_THRESHOLDS.storkredit
+    ? 'Granskas av en handläggare. Beslut inom cirka 3 dagar.'
+    : 'Bedöms automatiskt direkt efter signeringen. Ibland granskar en handläggare den.'
+  const sek = (raw: string) => (raw.trim() && Number.isFinite(Number(raw)) ? `${formatSek(Number(raw))} SEK` : '—')
+
+  // One review, grouped the way the applicant entered it, each group with a
+  // way back to its step. Everything the automatic scoring reads is here.
+  const reviewSections: Array<{ step: number; title: string; rows: Array<{ label: string; value: string; stacked?: boolean; group?: string }> }> = [
+    {
+      step: 1,
+      title: 'Företag',
+      rows: [
+        { label: 'Företag', value: applicationData.companyName || '—' },
+        { label: 'Organisationsnummer', value: applicationData.orgNumber || '—' },
+        { label: 'Firmatecknare', value: applicationData.authorizedSignatory || '—' },
+        { label: 'Bransch', value: INDUSTRY_LABEL[applicationData.industry] ?? '—' },
+      ],
+    },
+    {
+      step: 2,
+      title: 'Ekonomi',
+      rows: [
+        { label: 'Räkenskapsår', value: applicationData.financialYear || '—' },
+        { label: 'Nettoomsättning', value: sek(applicationData.netSales), group: 'Resultaträkning' },
+        { label: 'Rörelseresultat', value: sek(applicationData.operatingProfit), group: 'Resultaträkning' },
+        { label: 'Räntekostnader', value: sek(applicationData.interestExpenses.replace(/^-/, '')), group: 'Resultaträkning' },
+        { label: 'Omsättningstillgångar', value: sek(applicationData.currentAssets), group: 'Balansräkning' },
+        { label: 'Balansomslutning', value: sek(applicationData.totalCapital), group: 'Balansräkning' },
+        { label: 'Eget kapital', value: sek(applicationData.equity), group: 'Balansräkning' },
+        { label: 'Kortfristiga skulder', value: sek(applicationData.shortTermLiabilities), group: 'Balansräkning' },
+        { label: 'Långfristiga skulder', value: sek(applicationData.longTermLiabilities), group: 'Balansräkning' },
+        ...(applicationData.noCashFlowStatement === 'true'
+          ? [{ label: 'Kassaflödesanalys', value: 'Saknas i årsredovisningen', group: 'Kassaflöde' }]
+          : [
+              { label: 'Operativt kassaflöde', value: sek(applicationData.operatingCashFlow), group: 'Kassaflöde' },
+              { label: 'Investeringskassaflöde', value: sek(applicationData.investingCashFlow), group: 'Kassaflöde' },
+            ]),
+      ],
+    },
+  ]
+
+  // URL → state: Back/Forward changed ?steg. Never further than the
+  // applicant has reached (e.g. Forward after "Börja om"); leaving the
+  // review drops the attestation, like the in-app Tillbaka does.
+  if (urlStep !== seenUrlStep) {
+    setSeenUrlStep(urlStep)
+    if (urlStep !== null && urlStep !== currentStep && !submitted) {
+      const target = Math.min(urlStep, maxReachedStep)
+      if (currentStep === TOTAL_STEPS) resetAttestation()
+      setShowErrorSummary(false)
+      setShowFiguresPrompt(false)
+      setEditingFromReview(false)
+      setCurrentStep(target)
+    }
   }
 
   return (
-    <div>
-      <WizardTopBar title="Ny kreditansökan" />
-
-      <div className={styles.stepTabsWrap}>
-        <StepTabs currentStep={currentStep} onSelectStep={goToStep} />
+    <div className={joinClassNames(styles.wizardShell, shortViewport && styles.shortViewport)}>
+      <div ref={pageIntroRef} className={styles.pageIntro}>
+        <h1 className={styles.pageTitle}>Ansök om företagskredit</h1>
+        {submitted || currentStep !== 1 ? null : <p className={styles.statusNote}>Utkastet sparas automatiskt i den här webbläsaren i 7 dagar, så ni kan fortsätta senare.</p>}
+        {/* After step 1 the saving is confirmed, quietly, instead of explained. */}
+        {submitted || currentStep === 1 || signingState !== 'idle' ? null : (
+          <p className={joinClassNames(styles.statusNote, styles.savedNote)}><Icon name="check" className={styles.savedIcon} />Utkastet är sparat i den här webbläsaren</p>
+        )}
+        {showRestoredNotice && !submitted ? (
+          <div className={styles.restoredNotice}>
+            {confirmingRestart ? (
+              <>
+                <span>Radera utkastet och börja om från början?</span>
+                <button type="button" className={styles.editLink} onClick={handleRestart}>Radera utkastet</button>
+                <button type="button" className={styles.editLink} onClick={() => setConfirmingRestart(false)}>Behåll</button>
+              </>
+            ) : (
+              <>
+                <span>
+                  Vi har återställt ert påbörjade utkast
+                  {restoredDraft?.savedAt ? ` från ${new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(restoredDraft.savedAt))}` : ''}.
+                </span>
+                <button type="button" className={styles.editLink} onClick={() => setConfirmingRestart(true)}>Börja om</button>
+              </>
+            )}
+          </div>
+        ) : null}
       </div>
 
-      <div className={styles.panel}>
-        {submittedCase ? (
-          <div>
-            <div className={styles.outcomeHeadingRow}>
-              <h2 className={styles.outcomeHeading}>{OUTCOME_COPY[submittedCase.status].heading}</h2>
-              <span className={joinClassNames(styles.statusBadge, STATUS_BADGE_CLASS[submittedCase.status])}>
-                {submittedCase.status}
-              </span>
-            </div>
-            <p className={styles.outcomeBody}>
-              Tack, {applicationData.companyName || 'kund'}. {OUTCOME_COPY[submittedCase.status].body}
-            </p>
+      {submitted ? null : (
+        <div className={styles.stepTabsWrap}>
+          <StepTabs currentStep={currentStep} maxReachedStep={maxReachedStep} validSteps={validSteps} signing={signingState !== 'idle'} />
+        </div>
+      )}
 
-            <div className={styles.reasonPanel}>
-              <p className={styles.reasonLabel}>Motivering från kreditbedömningen</p>
-              <p className={styles.reasonText}>{submittedCase.scoringResult.decisionReason}</p>
-            </div>
-
-            <div className={styles.restartWrap}>
-              <Button type="button" variant="secondary" onClick={handleRestart}>
-                Starta ny ansökan
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.formWrap}>
+      {/* Signing is its own stage: one column, no side cards, and the dark
+          signing card is the container itself rather than a card in a card. */}
+      <div className={joinClassNames(styles.contentGrid, signingState !== 'idle' && styles.contentGridSigning)}>
+        <div className={joinClassNames(styles.panel, signingState !== 'idle' && styles.panelSigning)}>
+          {submitted ? null : (
+          <form key={currentStep} ref={formStepRef} tabIndex={-1} aria-label={`Steg ${currentStep} av ${TOTAL_STEPS}: ${STEPS[currentStep - 1]?.label ?? ''}`} className={styles.formWrap} onSubmit={handleFormSubmit} noValidate>
+            {showErrorSummary && summaryItems.length > 1 && onlyMissingFigures ? (
+              <div ref={errorSummaryRef} tabIndex={-1} role="group" className={joinClassNames(styles.errorSummary, styles.errorSummaryAttention, styles.errorSummaryCompact)} aria-labelledby="error-summary-title">
+                <h2 id="error-summary-title" className={styles.errorSummaryTitle}>{summaryTitle}</h2>
+                <button type="button" className={styles.nextEmptyLink} onClick={focusNextEmptyFigure}>Gå till nästa tomma</button>
+              </div>
+            ) : null}
+            {showErrorSummary && summaryItems.length > 1 && !onlyMissingFigures ? (
+              <div ref={errorSummaryRef} tabIndex={-1} role="group" className={styles.errorSummary} aria-labelledby="error-summary-title">
+                <h2 id="error-summary-title" className={styles.errorSummaryTitle}>{summaryTitle}</h2>
+                <ul>
+                  {summaryItems.map((item) => (
+                    <li key={item.id}>
+                      <a
+                        href={`#${item.id}`}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          document.getElementById(item.id)?.focus()
+                        }}
+                      >
+                        {item.message}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {currentStep === 1 ? (
               <CompanyDetailsStep
                 data={applicationData}
                 errors={companyDetailsErrors}
                 onChange={handleChange}
+                identityFromLogin={identityFromLogin}
+                companyCheck={currentCompanyCheck}
+                canCheckCompany={Boolean(orgToCheck)}
               />
             ) : null}
-           {currentStep === 2 ? (
-            <FinancialMetricsStep
-              data={applicationData}
-              errors={financialMetricsErrors}
-              onChange={handleChange}
-            />
-          ) : null}
+            {currentStep === 2 && showFiguresPrompt ? (
+              <p id="figures-prompt" className={styles.figuresPrompt} role="alert">
+                Fyll i siffrorna från årsredovisningen för {applicationData.financialYear || 'det senaste räkenskapsåret'}. Börja med nettoomsättningen i resultaträkningen.
+              </p>
+            ) : null}
+            {/* Empty step 2: the prompt above can be off screen on a phone, so the
+                field that gets focus says the same thing where the eye is. */}
+            {currentStep === 2 ? <FinancialMetricsStep data={applicationData} errors={showFiguresPrompt ? { netSales: 'Börja här. Nettoomsättningen står på första raden i resultaträkningen.' } : visibleFinancialErrors} onChange={handleChange} onChangeMany={handleChangeMany} /> : null}
+            {currentStep === 3 ? <CreditDetailsStep data={applicationData} errors={creditErrors} onChange={handleChange} onAmountBlur={checkAmountOnBlur} /> : null}
+            {currentStep === TOTAL_STEPS && signingState !== 'idle' ? (
+              <SigningView
+                companyName={applicationData.companyName}
+                signatory={applicationData.authorizedSignatory}
+                amountText={`${formatSek(requestedAmount)} SEK`}
+                termText={`${repaymentTerm} månader`}
+                monthlyText={amountAccepted ? `${formatSek(estimatedMonthlyPayment)} SEK` : ''}
+                checking={signingState === 'signing'}
+                headingRef={signingPanelRef}
+                attested={attested}
+                onAttestedChange={setAttested}
+                onConfirm={confirmSigning}
+                onCancel={cancelSigning}
+              />
+            ) : null}
+            {currentStep === 4 && signingState === 'idle' ? (
+              <section>
+                <h2 className={styles.stepHeading}>Granska och signera</h2>
+                <p className={styles.stepDescription}>Stämmer allt? I nästa steg intygar ni uppgifterna och signerar med BankID.</p>
+                {/* What is being committed to comes first; the details follow. */}
+                <section className={styles.commitment} aria-labelledby="review-3">
+                  <div className={styles.reviewSectionHeader}>
+                    <h3 id="review-3" className={styles.reviewSectionTitle}>Ni ansöker om</h3>
+                    <button type="button" className={styles.editLink} onClick={() => editFromReview(3)} aria-label="Ändra kredit">Ändra</button>
+                  </div>
+                  <p className={styles.commitmentAmount}>{formatSek(requestedAmount)} SEK <span>över {repaymentTerm} månader</span></p>
+                  <dl className={styles.commitmentFacts}>
+                    <div><dt>Ca per månad</dt><dd>{amountAccepted ? `${formatSek(estimatedMonthlyPayment)} SEK` : '—'}</dd></div>
+                    <div><dt>Beslut</dt><dd>{decisionText}</dd></div>
+                    <div className={styles.commitmentPurpose}><dt>Syfte</dt><dd>{applicationData.purpose || '—'}</dd></div>
+                  </dl>
+                </section>
+                {reviewSections.map((section) => {
+                  // Everything that is attested is shown; Ekonomi is grouped as
+                  // in the årsredovisning, two columns on wide screens.
+                  const rows = section.rows.filter((row) => !row.group)
+                  const groups = [...new Set(section.rows.map((row) => row.group).filter(Boolean))] as string[]
+                  return (
+                  <section key={section.step} className={styles.reviewSection} aria-labelledby={`review-${section.step}`}>
+                    <div className={styles.reviewSectionHeader}>
+                      <h3 id={`review-${section.step}`} className={styles.reviewSectionTitle}>{section.title}</h3>
+                      <button
+                        type="button"
+                        className={styles.editLink}
+                        onClick={() => editFromReview(section.step)}
+                        aria-label={`Ändra ${section.title.toLowerCase()}`}
+                      >
+                        Ändra
+                      </button>
+                    </div>
+                    <dl id={`review-rows-${section.step}`} className={styles.reviewSummary}>
+                      {rows.map((row) => (
+                        <div key={row.label} className={joinClassNames(styles.reviewRow, row.stacked ? styles.reviewRowStacked : undefined)}>
+                          <dt>{row.label}</dt><dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {groups.map((group) => (
+                      <div key={group} className={styles.reviewGroup}>
+                        <h4 className={styles.reviewGroupTitle}>{group}</h4>
+                        <dl className={joinClassNames(styles.reviewSummary, styles.reviewGrid)}>
+                          {section.rows.filter((row) => row.group === group).map((row) => (
+                            <div key={row.label} className={styles.reviewRow}>
+                              <dt>{row.label}</dt><dd>{row.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    ))}
+                  </section>
+                  )
+                })}
 
-          {currentStep === 3 ? (
-            <CreditDetailsStep
-              data={applicationData}
-              errors={creditDetailsErrors}
-              onChange={handleChange}
-            />
-          ) : null}
+              </section>
+            ) : null}
 
+            {currentStep === TOTAL_STEPS && signingError ? (
+              <div ref={signingErrorRef} tabIndex={-1} className={styles.signingError} role="alert">
+                <p>{signingError.message}</p>
+                {signingError.fixStep ? (
+                  <button type="button" className={styles.editLink} onClick={() => editFromReview(signingError.fixStep as number)}>
+                    Ändra firmatecknare
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* While signing, the card holds every action: a sticky bar with
+                only "Avbryt" would put cancelling in the thumb zone. */}
+            {signingState !== 'idle' ? null : (
             <div className={styles.actionsRow}>
-              {currentStep > 1 ? (
-                <Button type="button" variant="secondary" onClick={goToPreviousStep} icon={<Icon name="arrow-left" />}>
+              {currentStep === 2 ? (
+                <p className={styles.barCount}><strong>{filledFigures}</strong> av {figureKeys.length} belopp ifyllda</p>
+              ) : null}
+              {currentStep === 3 ? (
+                <p className={styles.barEstimate}>
+                  {amountOutOfRange ? <span>{RANGE_NOTE}</span> : (
+                    <>
+                      <span>Ca per månad, {repaymentTerm} mån</span>
+                      <strong>{amountAccepted ? `${formatSek(estimatedMonthlyPayment)} SEK` : '—'}</strong>
+                    </>
+                  )}
+                </p>
+              ) : null}
+              {currentStep > 1 && !editingFromReview && signingState === 'idle' ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  surface="paper"
+                  onClick={goToPreviousStep}
+                  icon={<Icon name="arrow-left" />}
+                >
                   Tillbaka
                 </Button>
               ) : null}
 
               {currentStep < TOTAL_STEPS ? (
-                <Button type="button" onClick={goToNextStep} icon={<Icon name="arrow-right" />}>
-                  Nästa
+                <Button
+                  type="submit"
+                  surface="paper"
+                  icon={<Icon name="arrow-right" />}
+                >
+                  {editingFromReview ? 'Tillbaka till granskning' : 'Nästa'}
                 </Button>
               ) : (
-                <Button type="button" onClick={handleOpenConfirmation} icon={<Icon name="arrow-right" />}>
-                  Skicka in ansökan
-                </Button>
+                signingState === 'idle' ? (
+                  <Button
+                    id="signing-start"
+                    type="submit"
+                    surface="paper"
+                    icon={<BankIdMark height={18} decorative />}
+                  >
+                    Signera med BankID
+                  </Button>
+                ) : null
               )}
             </div>
-          </div>
-        )}
+            )}
+          </form>
+          )}
+        </div>
+
+        {!submitted && signingState === 'idle' ? (
+          <aside className={styles.sideColumn} aria-label="Ansökningsinformation">
+            {/* Step 3 only: on the review and signing card the monthly cost
+                is already part of the commitment. */}
+            {currentStep === 3 ? (
+              <section className={joinClassNames(styles.sideCard, styles.estimateCard)}>
+                <h3>Beräknad månadskostnad</h3>
+                <p className={styles.estimateAmount}>{amountAccepted ? <>{formatSek(estimatedMonthlyPayment)} <small>SEK / mån</small></> : '—'}</p>
+                {amountOutOfRange ? <p className={styles.estimateRange}>{RANGE_NOTE}.</p> : null}
+                <p className={styles.estimateNote}>Exempel med annuitetsbetalning och 8,5 % årsränta, exklusive avgifter. Faktiska villkor fastställs efter kreditprövning.</p>
+                <div className={styles.estimateDetails}>
+                  <div className={styles.estimateRow}><span>Önskat belopp</span><strong>{amountAccepted ? `${formatSek(requestedAmount)} SEK` : '—'}</strong></div>
+                  <div className={styles.estimateRow}><span>Löptid</span><strong>{repaymentTerm} månader</strong></div>
+                </div>
+              </section>
+            ) : null}
+            {/* Help where people get stuck, on every step (and on phones,
+                below the form), instead of only after submitting. */}
+            <section className={styles.sideCard} aria-labelledby="help-title">
+              <h3 id="help-title">Frågor om ansökan?</h3>
+              <p className={styles.sideCopy}>Ring kundservice om något är oklart, till exempel vilken rad i årsredovisningen ett belopp står på.</p>
+              <a className={styles.helpLink} href="tel:+46850012000">08-500 120 00</a>
+              <p className={styles.helpNote}>Uppgifterna omfattas av banksekretess.</p>
+            </section>
+          </aside>
+        ) : null}
       </div>
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bekräfta ansökan</DialogTitle>
-            <DialogDescription>
-              Kontrollera uppgifterna innan ansökan skickas in. Ansökan bedöms automatiskt baserat på de finansiella
-              uppgifterna.
-            </DialogDescription>
-          </DialogHeader>
-
-          <dl className={styles.confirmSummary}>
-            <div className={styles.confirmRow}>
-              <dt>Företag</dt>
-              <dd>{applicationData.companyName || '\u2014'}</dd>
-            </div>
-            <div className={styles.confirmRow}>
-              <dt>Organisationsnummer</dt>
-              <dd>{applicationData.orgNumber || '\u2014'}</dd>
-            </div>
-            <div className={styles.confirmRow}>
-              <dt>Begärt belopp</dt>
-              <dd>{applicationData.requestedAmount ? `${applicationData.requestedAmount} SEK` : '\u2014'}</dd>
-            </div>
-          </dl>
-
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setConfirmOpen(false)}>
-              Avbryt
-            </Button>
-            <Button type="button" onClick={handleConfirmSubmit}>
-              Skicka in ansökan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
