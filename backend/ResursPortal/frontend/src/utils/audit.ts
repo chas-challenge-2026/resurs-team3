@@ -23,11 +23,11 @@ export function createAuditEvent(
 }
 
 /**
- * The audit trail v1 writes for every new application, before this
- * refactors it into an indexed table (docs/v2-targets.md #2): one
- * APPLICATION_CREATED entry at intake, then one SCORING_RUN entry once the
- * ScoringService has produced a decision — same two events, same order, as
- * ApplicationController's POST /apply (INSERT 2 then INSERT 3).
+ * The v1 audit trail adds two entries for each new application, before
+ * the data is moved into an indexed table (docs/v2-targets.md #2):
+ * first APPLICATION_CREATED when the application arrives, then
+ * SCORING_RUN after ScoringService makes a decision. This matches
+ * ApplicationController's POST /apply, which inserts entries 2 and 3.
  */
 export function buildInitialAuditTrail(applicationId: string, orgNumber: string, scoring: ScoringResult): AuditEvent[] {
   return [
@@ -41,6 +41,7 @@ export function buildInitialAuditTrail(applicationId: string, orgNumber: string,
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   APPLICATION_CREATED: 'Ansökan skapad',
+  APPLICATION_SIGNED: 'Signerad med BankID',
   SCORING_RUN: 'Automatisk scoring',
   DOCUMENT_UPLOADED: 'Dokument uppladdat',
   MANUAL_DECISION: 'Handläggarbeslut',
