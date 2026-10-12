@@ -1,14 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardPage } from "./WizardPage";
 import { CasesProvider } from "../../context/CasesContext";
 import { useAuth } from "../../auth/useAuth";
-import { createApplication } from "../../features/credit-application/creditApplication.api";
-import userEvent from '@testing-library/user-event'
-import { waitFor } from '@testing-library/react'
-import { saveApplicationDraft } from '../../features/credit-application/applicationDraft'
-import type { CreditApplicationData } from '../../features/credit-application/creditApplication.types'
+import {
+  ApplicationApiError,
+  createApplication,
+} from "../../features/credit-application/creditApplication.api";
+import userEvent from "@testing-library/user-event";
+import { waitFor } from "@testing-library/react";
+import {
+  loadApplicationDraft,
+  saveApplicationDraft,
+} from "../../features/credit-application/applicationDraft";
+import type { CreditApplicationData } from "../../features/credit-application/creditApplication.types";
 
 vi.mock("../../auth/useAuth", () => ({
   useAuth: vi.fn(),
@@ -27,7 +33,35 @@ vi.mock("../../features/credit-application/creditApplication.api", async () => {
 
 const mockedCreateApplication = vi.mocked(createApplication);
 
+const data: CreditApplicationData = {
+  orgNumber: "556000-1234",
+  companyName: "Göteborg Handel AB",
+  authorizedSignatory: "Anna Andersson",
+  financialYear: "2025",
+  industry: "HANDEL",
+  equity: "300000",
+  totalCapital: "1000000",
+  currentAssets: "500000",
+  shortTermLiabilities: "200000",
+  longTermLiabilities: "100000",
+  operatingProfit: "-5000",
+  netSales: "2000000",
+  operatingCashFlow: "30000",
+  investingCashFlow: "0",
+  noCashFlowStatement: "",
+  interestExpenses: "0",
+  requestedAmount: "250000",
+  repaymentTerm: "36",
+  purpose: "Test av API integration",
+};
+
 describe("WizardPage API integration", () => {
+  beforeEach(() => {
+    mockedCreateApplication.mockReset();
+    localStorage.clear();
+  });
+
+  // Keep all three existing tests below.
   it("renders the new wizard for an authenticated company", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: {
@@ -61,104 +95,120 @@ describe("WizardPage API integration", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Nästa" })).toBeInTheDocument();
-    expect(mockedCreateApplication).not.toHaveBeenCalled()
+    expect(mockedCreateApplication).not.toHaveBeenCalled();
   });
 
+  it("submits a completed application through the Java API client", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const user = userEvent.setup();
 
-it('submits a completed application through the Java API client', async () => {
-  Element.prototype.scrollIntoView = vi.fn()
-  const user = userEvent.setup()
+    localStorage.clear();
 
-  const data: CreditApplicationData = {
-    orgNumber: '556000-1234',
-    companyName: 'Göteborg Handel AB',
-    authorizedSignatory: 'Anna Andersson',
-    financialYear: '2025',
-    industry: 'HANDEL',
-    equity: '300000',
-    totalCapital: '1000000',
-    currentAssets: '500000',
-    shortTermLiabilities: '200000',
-    longTermLiabilities: '100000',
-    operatingProfit: '-5000',
-    netSales: '2000000',
-    operatingCashFlow: '30000',
-    investingCashFlow: '0',
-    noCashFlowStatement: '',
-    interestExpenses: '0',
-    requestedAmount: '250000',
-    repaymentTerm: '36',
-    purpose: 'Test av API integration',
-  }
+    vi.mocked(useAuth).mockReturnValue({
+      user: {
+        role: "client",
+        id: "wizard-api-test",
+        orgNumber: "556000-1234",
+        companyName: "Göteborg Handel AB",
+        authorizedSignatory: "Anna Andersson",
+      },
+      isAuthenticated: true,
+      loginAsClient: vi.fn(),
+      loginAsAdmin: vi.fn(),
+      logout: vi.fn(),
+    });
 
-  localStorage.clear()
+    saveApplicationDraft({
+      userId: "wizard-api-test",
+      step: 1,
+      maxStep: 1,
+      data,
+    });
 
-  vi.mocked(useAuth).mockReturnValue({
-    user: {
-      role: 'client',
-      id: 'wizard-api-test',
-      orgNumber: '556000-1234',
-      companyName: 'Göteborg Handel AB',
-      authorizedSignatory: 'Anna Andersson',
-    },
-    isAuthenticated: true,
-    loginAsClient: vi.fn(),
-    loginAsAdmin: vi.fn(),
-    logout: vi.fn(),
-  })
+    let releaseRequest!: () => void;
 
-  saveApplicationDraft({
-    userId: 'wizard-api-test',
-    step: 1,
-    maxStep: 1,
-    data,
-  })
+    mockedCreateApplication.mockReset();
+    mockedCreateApplication.mockImplementation(
+      () =>
+        new Promise<Awaited<ReturnType<typeof createApplication>>>(
+          (resolve) => {
+            releaseRequest = () =>
+              resolve({
+                applicationId: 42,
+                status: "UNDER_REVIEW",
+                decision: "REVIEW",
+                decisionReason: "Backend test reason",
+                flagCount: 2,
+                creditScore: 103,
+              });
+          },
+        ),
+    );
 
-  mockedCreateApplication.mockReset()
-  mockedCreateApplication.mockResolvedValue({
-    applicationId: 42,
-    status: 'UNDER_REVIEW',
-    decision: 'REVIEW',
-    decisionReason: 'Backend test reason',
-    flagCount: 2,
-    creditScore: 103,
-  })
+    render(
+      <MemoryRouter initialEntries={["/kreditansokan"]}>
+        <CasesProvider>
+          <Routes>
+            <Route path="/kreditansokan" element={<WizardPage />} />
+            <Route path="/kreditansokan/:steg" element={<WizardPage />} />
+            <Route
+              path="/ansokan/42"
+              element={<div>Backend application 42</div>}
+            />
+          </Routes>
+        </CasesProvider>
+      </MemoryRouter>,
+    );
 
-  render(
-    <MemoryRouter initialEntries={['/kreditansokan']}>
-      <CasesProvider>
-        <Routes>
-          <Route path="/kreditansokan" element={<WizardPage />} />
-          <Route path="/kreditansokan/:steg" element={<WizardPage />} />
-          <Route path="/ansokan/42" element={<div>Backend application 42</div>} />
-        </Routes>
-      </CasesProvider>
-    </MemoryRouter>,
-  )
+    // Wait for the mock company-register check to finish.
+    await screen.findByText("Aktivt");
 
-  // Wait for the mock company-register check to finish.
-  await screen.findByText('Aktivt')
+    // Move through the four wizard steps.
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
 
-  // Move through the four wizard steps.
-  await user.click(screen.getByRole('button', { name: 'Nästa' }))
-  await user.click(screen.getByRole('button', { name: 'Nästa' }))
-  await user.click(screen.getByRole('button', { name: 'Nästa' }))
+    await user.click(
+      screen.getByRole("button", { name: "Signera med BankID" }),
+    );
 
-  await user.click(screen.getByRole('button', { name: 'Signera med BankID' }))
+    // The existing BankID signing flow is simulated.
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(
+      screen.getByRole("button", { name: /BankID på den här enheten/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Jag har signerat" }));
 
-  // The existing BankID signing flow is simulated.
-  await user.click(screen.getByRole('checkbox'))
-  await user.click(screen.getByRole('button', { name: /BankID på den här enheten/ }))
-  await user.click(screen.getByRole('button', { name: 'Jag har signerat' }))
+    await waitFor(
+      () => {
+        expect(mockedCreateApplication).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 2000 },
+    );
 
-  await waitFor(() => {
-    expect(mockedCreateApplication).toHaveBeenCalledTimes(1)
-  }, { timeout: 2000 })
+    const confirmButton = screen.getByRole("button", {
+      name: "Jag har signerat",
+    });
+
+    // The user must not be able to submit again while Java is responding.
+    expect(confirmButton).toBeDisabled();
+
+    await user.click(confirmButton);
+
+    expect(mockedCreateApplication).toHaveBeenCalledTimes(1);
+
+    // The status page must wait until Java confirms creation.
+    expect(
+      screen.queryByText("Backend application 42"),
+    ).not.toBeInTheDocument();
+
+    // Simulate the backend finally responding.
+    releaseRequest();
 
     expect(mockedCreateApplication).toHaveBeenCalledWith({
-      orgNumber: '556000-1234',
-      companyName: 'Göteborg Handel AB',
-      authorizedSignatory: 'Anna Andersson',
+      orgNumber: "556000-1234",
+      companyName: "Göteborg Handel AB",
+      authorizedSignatory: "Anna Andersson",
       egetKapital: 300000,
       totaltKapital: 1000000,
       omsattningstillgangar: 500000,
@@ -169,14 +219,122 @@ it('submits a completed application through the Java API client', async () => {
       operativtKassaflode: 30000,
       investeringsKassaflode: 0,
       ranteKostnader: 0,
-      bransch: 'HANDEL',
+      bransch: "HANDEL",
       requestedAmount: 250000,
-      purpose: 'Test av API integration',
-})
+      purpose: "Test av API integration",
+    });
 
     expect(
-    await screen.findByText('Backend application 42'),
-     ).toBeInTheDocument()
-})
+      await screen.findByText("Backend application 42"),
+    ).toBeInTheDocument();
+  });
 
+  it("preserves the draft after an API error and allows a successful retry", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const user = userEvent.setup();
+
+    localStorage.clear();
+
+    vi.mocked(useAuth).mockReturnValue({
+      user: {
+        role: "client",
+        id: "wizard-api-test",
+        orgNumber: "556000-1234",
+        companyName: "Göteborg Handel AB",
+        authorizedSignatory: "Anna Andersson",
+      },
+      isAuthenticated: true,
+      loginAsClient: vi.fn(),
+      loginAsAdmin: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    saveApplicationDraft({
+      userId: "wizard-api-test",
+      step: 1,
+      maxStep: 1,
+      data,
+    });
+
+    mockedCreateApplication.mockReset();
+    mockedCreateApplication.mockRejectedValueOnce(
+      new ApplicationApiError(500, "Ansökan kunde inte skickas. Försök igen."),
+    );
+
+    mockedCreateApplication.mockResolvedValueOnce({
+      applicationId: 42,
+      status: "UNDER_REVIEW",
+      decision: "REVIEW",
+      decisionReason: "Backend test reason",
+      flagCount: 2,
+      creditScore: 103,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/kreditansokan"]}>
+        <CasesProvider>
+          <Routes>
+            <Route path="/kreditansokan" element={<WizardPage />} />
+            <Route path="/kreditansokan/:steg" element={<WizardPage />} />
+            <Route path="/ansokan/:id" element={<div>Status page</div>} />
+          </Routes>
+        </CasesProvider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Aktivt");
+
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
+    await user.click(screen.getByRole("button", { name: "Nästa" }));
+
+    await user.click(
+      screen.getByRole("button", { name: "Signera med BankID" }),
+    );
+
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(
+      screen.getByRole("button", { name: /BankID på den här enheten/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Jag har signerat" }));
+
+    expect(
+      await screen.findByText(
+        "Ansökan kunde inte skickas. Försök igen.",
+        {},
+        { timeout: 4000 },
+      ),
+    ).toBeInTheDocument();
+
+    expect(mockedCreateApplication).toHaveBeenCalledTimes(1);
+
+    expect(loadApplicationDraft("wizard-api-test", data)).not.toBeNull();
+
+    expect(screen.queryByText("Status page")).not.toBeInTheDocument();
+    // Retry after the API error.
+    await user.click(
+      screen.getByRole("button", { name: "Signera med BankID" }),
+    );
+
+    // The applicant's previous attestation should remain checked.
+    expect(screen.getByRole("checkbox")).toBeChecked();
+
+    await user.click(
+      screen.getByRole("button", { name: /BankID på den här enheten/ }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Jag har signerat" }));
+
+    await waitFor(
+      () => {
+        expect(mockedCreateApplication).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 2000 },
+    );
+
+    expect(await screen.findByText("Status page")).toBeInTheDocument();
+
+    // The draft should only be removed after successful submission.
+    expect(loadApplicationDraft("wizard-api-test", data)).toBeNull();
+  });
 });
