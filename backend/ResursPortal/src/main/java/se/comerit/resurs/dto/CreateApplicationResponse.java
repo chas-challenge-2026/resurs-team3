@@ -3,6 +3,7 @@ package se.comerit.resurs.dto;
 public class CreateApplicationResponse {
 
     private final Long applicationId;
+    private final String caseNumber;
     private final String status;
     private final String decision;
     private final String decisionReason;
@@ -11,11 +12,13 @@ public class CreateApplicationResponse {
 
     public CreateApplicationResponse(
             Long applicationId,
+            String caseNumber,
             String status,
             String decision,
             String decisionReason,
             int flagCount,
             int creditScore) {
+
 
         this.applicationId = applicationId;
         this.status = status;
@@ -23,6 +26,7 @@ public class CreateApplicationResponse {
         this.decisionReason = decisionReason;
         this.flagCount = flagCount;
         this.creditScore = creditScore;
+        this.caseNumber = caseNumber;
     }
 
     public Long getApplicationId() {
@@ -47,5 +51,8 @@ public class CreateApplicationResponse {
 
     public int getCreditScore() {
         return creditScore;
+    }
+
+    public String getCaseNumber() { return caseNumber;
     }
 }

@@ -62,9 +62,11 @@ public class ApplicationRestController {
                 scoringResult.getScoringLog(),
                 initialAuditLog
         );
+        String caseNumber = applicationService.getCaseNumber(applicationId);
 
         return new CreateApplicationResponse(
                 applicationId,
+                caseNumber,
                 scoringResult.getStatus(),
                 scoringResult.getDecision(),
                 scoringResult.getDecisionReason(),

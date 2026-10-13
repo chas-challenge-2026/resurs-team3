@@ -66,6 +66,12 @@ public class ApplicationService {
                 .orElse(null);
     }
 
+    public String getCaseNumber(Long applicationId) {
+        return applicationRepository.findById(applicationId)
+                .map(Application::getCaseNumber)
+                .orElse(null);
+    }
+
     public void updateAuditLog(Long applicationId, String updatedAuditLog) {
         applicationRepository.findById(applicationId).ifPresent(app -> {
             app.setAuditLog(updatedAuditLog);
