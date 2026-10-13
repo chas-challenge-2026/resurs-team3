@@ -135,7 +135,7 @@ export function BankIdLoginForm() {
       >
         <div className={styles.spinner} aria-hidden="true" />
         <p className={styles.pendingText}>
-          Öppna BankID-appen på din telefon och bekräfta inloggningen för{' '}
+          Öppna BankID-appen på telefonen och bekräfta inloggningen för{' '}
           <span className={styles.pendingCompany}>{pendingCompany.companyName}</span>.
         </p>
         {import.meta.env.DEV ? (

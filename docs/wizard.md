@@ -8,10 +8,9 @@ changes behavior for anything that was already working — it's entirely
 
 ## Status
 
-**All fixed, not committed.** Everything below is sitting as uncommitted
-working-tree state on `feature/application-wizard`, alongside the rest of
-last week's wizard/backoffice work. `tsc -p tsconfig.app.json`, `eslint`,
-and the full `vitest` suite are all clean as of this write-up.
+Fixed and pushed. Same commits as the migration below — see that section
+for the full list. Lint, vitest, and the build are all clean on
+`feature/application-wizard`.
 
 ## Bug 1 — WizardPage.tsx imported a validation module that doesn't exist
 
@@ -139,16 +138,38 @@ second time. Worth remembering: re-verify `WizardPage.tsx`'s import block
 specifically after any branch switch, before assuming a fix made earlier
 in the session is still there.
 
+## Migration from sandbox
+
+Ported the new wizard/overview/documents/status pages from the sandbox
+repo (`wizard/frontend`) into this one, pushed straight to
+`feature/application-wizard`. Kept every push under 600 lines so nothing
+was a huge review — `WizardPage.tsx`'s rewrite was the one file too big
+for one push, split across two with `git add -p`.
+
+Commits, in order:
+
+- foundation: Swedish URLs, focus handling, flat layout shell, skip
+  link, company step
+- credit step, Ekonomi step
+- overview page + flat layout styles
+- documents page + flat layout styles
+- status page styles (D1)
+- cases context: removed document requests, decision texts
+- scoring parity with ScoringService, types
+- validation, amount field, drafts
+- step tabs (one progress bar component)
+- signing card
+- WizardPage rewrite (1/2 and 2/2) — URL per step, draft restore,
+  company-register validation, signing flow, review/commitment UI
+- status page: decision reasons, rejection actions, receipt (D2)
+- auth restructuring (moved into `src/auth/`), Icon/Button updates,
+  logo assets
+
+All pushed to `origin/feature/application-wizard`. Lint, vitest (47
+tests), and the build are all clean.
+
 ## What's still open
 
-- Nothing here is committed yet. It's uncommitted working-tree state on
-  `feature/application-wizard`, same as the rest of last week's wizard/
-  backoffice work — it'll need its own commit(s) once that group is
-  scoped out.
-- Several other backoffice files showed as modified in `git status`
-  (`BackofficeTopBar`, `DashboardView`, `QueueTable`, `DecisionLog`,
-  `OverviewPage`, `DocumentsPage`) but weren't touched by any of the fixes
-  above. The whole project typechecks and lints clean right now, which is
-  a good sign, but given Bug 1's recurrence, it's worth a second look at
-  those files' actual on-disk content before committing, rather than
-  assuming they're untouched.
+- `.DS_Store` keeps showing up in `git status` at a few folder levels —
+  not gitignored yet
+- branch's ready to merge into `dev`

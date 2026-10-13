@@ -36,9 +36,9 @@ describe('clearMockSession', () => {
   })
 })
 
-// loadMockSession must not trust sessionStorage blindly — a
-// previous app version, a manual devtools edit, or a future storage-format
-// change could all leave something else under this key.
+// Don’t assume sessionStorage contains valid session data.
+// It could be left over from an older app version, changed in DevTools,
+// or use a different format after a future update.
 describe('loadMockSession — malformed data', () => {
   it('treats invalid JSON as no session', () => {
     sessionStorage.setItem(STORAGE_KEY, '{not json')
