@@ -51,12 +51,24 @@ public class ApplicationService {
         app.setDecisionReason(decisionReason);
         app.setScoringResult(scoringLog);
         app.setAuditLog(initialAuditLog);
+        int year = java.time.Year.now().getValue();
+        long count = applicationRepository.countByCaseNumberStartingWith("RES-" + year + "-");
+        app.setCaseNumber(generateCaseNumber(year, count + 1));
         return applicationRepository.save(app).getId();
+    }
+    public String generateCaseNumber(int year, long sequenceNumber) {
+        return String.format("RES-%d-%04d", year, sequenceNumber);
     }
 
     public String getAuditLog(Long applicationId) {
         return applicationRepository.findById(applicationId)
                 .map(Application::getAuditLog)
+                .orElse(null);
+    }
+
+    public String getCaseNumber(Long applicationId) {
+        return applicationRepository.findById(applicationId)
+                .map(Application::getCaseNumber)
                 .orElse(null);
     }
 
