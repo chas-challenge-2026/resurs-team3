@@ -11,6 +11,8 @@ import se.comerit.resurs.service.ScoringResult;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.validation.Valid;
+import se.comerit.resurs.model.Company;
+
 @RestController
 public class ApplicationRestController {
 
@@ -63,6 +65,8 @@ public class ApplicationRestController {
                 initialAuditLog
         );
         String caseNumber = applicationService.getCaseNumber(applicationId);
+        Company company = applicationService.getCompanyById(companyId)
+                .orElseThrow(() -> new IllegalStateException("Company not found"));
 
         return new CreateApplicationResponse(
                 applicationId,
@@ -71,6 +75,9 @@ public class ApplicationRestController {
                 scoringResult.getDecision(),
                 scoringResult.getDecisionReason(),
                 scoringResult.getFlagCount(),
+                company.getCompanyName(),
+                company.getOrgNumber(),
+                company.getAuthorizedSignatory(),
                 scoringResult.getCreditScore()
         );
     }

@@ -9,6 +9,10 @@ public class CreateApplicationResponse {
     private final String decisionReason;
     private final int flagCount;
     private final int creditScore;
+    private final String companyName;
+    private final String orgNumber;
+    private final String authorizedSignatory;
+
 
     public CreateApplicationResponse(
             Long applicationId,
@@ -17,6 +21,9 @@ public class CreateApplicationResponse {
             String decision,
             String decisionReason,
             int flagCount,
+            String companyName,
+            String orgNumber,
+            String authorizedSignatory,
             int creditScore) {
 
 
@@ -27,6 +34,9 @@ public class CreateApplicationResponse {
         this.flagCount = flagCount;
         this.creditScore = creditScore;
         this.caseNumber = caseNumber;
+        this.companyName = companyName;
+        this.orgNumber = orgNumber;
+        this.authorizedSignatory = authorizedSignatory;
     }
 
     public Long getApplicationId() {
@@ -54,5 +64,16 @@ public class CreateApplicationResponse {
     }
 
     public String getCaseNumber() { return caseNumber;
+    }
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public String getOrgNumber() {
+        return orgNumber;
+    }
+
+    public String getAuthorizedSignatory() {
+        return authorizedSignatory;
     }
 }
