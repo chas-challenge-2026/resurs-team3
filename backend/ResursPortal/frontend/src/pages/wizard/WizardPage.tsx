@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { Icon } from '../../components/Icon'
-import { useCases } from '../../context/useCases'
-import type { CreditCase, ApplicationStatus } from '../../types/case'
 import {
   validateFinancialMetrics,
   type FinancialMetricsErrors,
@@ -19,7 +17,6 @@ import {
   validateCreditDetails,
   type CreditDetailsErrors,
 } from '../../features/credit-application/creditDetails.validation'
-import { toCaseSubmission } from '../../features/credit-application/creditApplication.mapper'
 import { WizardTopBar } from './WizardTopBar'
 import { StepTabs } from './StepTabs'
 import {
@@ -32,6 +29,14 @@ import {
 } from '../../components/ui/Dialog'
 import { joinClassNames } from '../../lib/joinClassNames'
 import styles from './WizardPage.module.css'
+import {
+  ApplicationApiError,
+  createApplication,
+  toCreateApplicationRequest,
+  type ApplicationValidationErrors,
+  type CreateApplicationResponse,
+} from '../../features/credit-application/creditApplication.api'
+
 
 const TOTAL_STEPS = 3
 
@@ -50,11 +55,12 @@ const initialApplicationData: CreditApplicationData = {
   purpose: '',
 }
 
-// Same outcome copy the other project's Step4Confirmation shows — the case
-// is scored synchronously by useCases().addCase (utils/scoring.ts), so the
-// confirmation screen can show the real decision instead of a generic
-// "we'll review it" message.
-const OUTCOME_COPY: Record<ApplicationStatus, { heading: string; body: string }> = {
+// POST /api/applications currently returns only these scoring outcomes.
+// PENDING_DOCS belongs to the wider application lifecycle handled separately.
+const OUTCOME_COPY: Record<
+  CreateApplicationResponse['status'],
+  { heading: string; body: string }
+> = {
   APPROVED: {
     heading: 'Ansökan godkänd',
     body: 'Grattis! Er kreditansökan har godkänts automatiskt baserat på era finansiella nyckeltal. Beslutet är slutgiltigt och kräver ingen ytterligare handläggning.',
@@ -67,32 +73,59 @@ const OUTCOME_COPY: Record<ApplicationStatus, { heading: string; body: string }>
     heading: 'Ansökan under granskning',
     body: 'Er ansökan kräver manuell granskning av en handläggare innan ett slutgiltigt beslut kan fattas. Ni meddelas när beslut har fattats.',
   },
-  PENDING_DOCS: {
-    heading: 'Ansökan mottagen',
-    body: 'Er ansökan har tagits emot och väntar på komplettering.',
-  },
 }
 
-const STATUS_BADGE_CLASS: Record<ApplicationStatus, string> = {
+const STATUS_BADGE_CLASS: Record<CreateApplicationResponse['status'], string> = {
   APPROVED: styles.statusApproved,
   REJECTED: styles.statusRejected,
   UNDER_REVIEW: styles.statusUnderReview,
-  PENDING_DOCS: styles.statusPendingDocs,
 }
 
 /**
- * The applicant-facing credit application flow. The step chrome (top bar,
- * step tabs, panel) is carried over from the resurs-direkt-app wireframes;
- * the field logic underneath is unchanged from features/credit-application —
- * one flat useState instead of that project's ApplicationContext/reducer.
+ * Maps Java API field names back to the React form field names.
  *
- * Submitting now mirrors the other project's wiring too: addCase() (from
- * CasesContext) runs the same ScoringService the backoffice queue trusts
- * and drops the resulting case straight into it, so a submitted application
- * shows up in the caseworker dashboard exactly like a real POST /apply would.
+ * The backend uses Swedish financial property names while the React form uses
+ * English names, so validation errors need translating before they can be
+ * shown beside the correct input.
  */
+function mapBackendValidationErrors(errors: ApplicationValidationErrors) {
+  const companyErrors: CompanyDetailsErrors = {}
+  const financialErrors: FinancialMetricsErrors = {}
+  const creditErrors: CreditDetailsErrors = {}
+
+  if (errors.orgNumber) companyErrors.orgNumber = errors.orgNumber
+  if (errors.companyName) companyErrors.companyName = errors.companyName
+  if (errors.authorizedSignatory) {
+    companyErrors.authorizedSignatory = errors.authorizedSignatory
+  }
+
+  if (errors.egetKapital) financialErrors.equity = errors.egetKapital
+  if (errors.totaltKapital) financialErrors.totalCapital = errors.totaltKapital
+  if (errors.omsattningstillgangar) {
+    financialErrors.currentAssets = errors.omsattningstillgangar
+  }
+  if (errors.kortfristigaSkulder) {
+    financialErrors.shortTermLiabilities = errors.kortfristigaSkulder
+  }
+  if (errors.totalaSkulder) financialErrors.totalDebt = errors.totalaSkulder
+  if (errors.rorelseresultat) {
+    financialErrors.operatingProfit = errors.rorelseresultat
+  }
+  if (errors.nettoomsattning) financialErrors.netSales = errors.nettoomsattning
+
+  if (errors.requestedAmount) {
+    creditErrors.requestedAmount = errors.requestedAmount
+  }
+  if (errors.purpose) creditErrors.purpose = errors.purpose
+
+  return {
+    companyErrors,
+    financialErrors,
+    creditErrors,
+  }
+}
+
 export function WizardPage() {
-  const { addCase } = useCases()
   const [currentStep, setCurrentStep] = useState(1)
   const [applicationData, setApplicationData] = useState<CreditApplicationData>(initialApplicationData)
   const [companyDetailsErrors, setCompanyDetailsErrors] =
@@ -109,7 +142,12 @@ const [financialValidationActive, setFinancialValidationActive] =
 
 const [creditValidationActive, setCreditValidationActive] =
   useState(false)
-  const [submittedCase, setSubmittedCase] = useState<CreditCase | null>(null)
+  const [submittedCase, setSubmittedCase] =
+  useState<CreateApplicationResponse | null>(null)
+
+const [isSubmitting, setIsSubmitting] = useState(false)
+const [submitError, setSubmitError] = useState<string | null>(null)
+
   const [confirmOpen, setConfirmOpen] = useState(false)
 
 function handleChange(field: keyof CreditApplicationData, value: string) {
@@ -177,21 +215,68 @@ function goToNextStep() {
     return
   }
 
+  setSubmitError(null)
   setConfirmOpen(true)
 }
 
-  function handleSubmit() {
-    const { companyInfo, financials, creditRequest } = toCaseSubmission(applicationData)
-    const createdCase = addCase(companyInfo, financials, creditRequest)
-    setSubmittedCase(createdCase)
-  }
+ async function handleConfirmSubmit() {
+  setIsSubmitting(true)
+  setSubmitError(null)
 
-  function handleConfirmSubmit() {
-    handleSubmit()
+  try {
+      // Convert the React form values to the JSON contract expected by the Java API.
+      const request = toCreateApplicationRequest(applicationData)
+      const result = await createApplication(request)
+
+    setSubmittedCase(result)
     setConfirmOpen(false)
+} catch (error) {
+  if (error instanceof ApplicationApiError) {
+    const {
+      companyErrors,
+      financialErrors,
+      creditErrors,
+    } = mapBackendValidationErrors(error.errors)
+
+    const hasCompanyErrors = Object.keys(companyErrors).length > 0
+    const hasFinancialErrors = Object.keys(financialErrors).length > 0
+    const hasCreditErrors = Object.keys(creditErrors).length > 0
+
+    setCompanyDetailsErrors(companyErrors)
+    setFinancialMetricsErrors(financialErrors)
+    setCreditDetailsErrors(creditErrors)
+
+    // If Java returned field-specific validation errors, return the applicant
+    // to the earliest wizard step containing an error.
+    if (hasCompanyErrors) {
+      setCompanyValidationActive(true)
+      setCurrentStep(1)
+      setConfirmOpen(false)
+      setSubmitError(null)
+    } else if (hasFinancialErrors) {
+      setFinancialValidationActive(true)
+      setCurrentStep(2)
+      setConfirmOpen(false)
+      setSubmitError(null)
+    } else if (hasCreditErrors) {
+      setCreditValidationActive(true)
+      setCurrentStep(3)
+      setConfirmOpen(false)
+      setSubmitError(null)
+    } else {
+      // Keep the dialog open for API errors that cannot be mapped to a field.
+      setSubmitError(error.message)
+    }
+  } else {
+    setSubmitError('Ansökan kunde inte skickas. Försök igen.')
   }
+} finally {
+    setIsSubmitting(false)
+  }
+}
 
   function handleRestart() {
+    setSubmitError(null)
     setApplicationData(initialApplicationData)
     setCurrentStep(1)
     setSubmittedCase(null)
@@ -229,7 +314,7 @@ function goToNextStep() {
 
             <div className={styles.reasonPanel}>
               <p className={styles.reasonLabel}>Motivering från kreditbedömningen</p>
-              <p className={styles.reasonText}>{submittedCase.scoringResult.decisionReason}</p>
+              <p className={styles.reasonText}>{submittedCase.decisionReason}</p>
             </div>
 
             <div className={styles.restartWrap}>
@@ -309,13 +394,23 @@ function goToNextStep() {
             </div>
           </dl>
 
+          {submitError ? (
+             <p role="alert">
+                {submitError}
+             </p>
+          ) : null}
+
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => setConfirmOpen(false)}>
               Avbryt
             </Button>
-            <Button type="button" onClick={handleConfirmSubmit}>
-              Skicka in ansökan
-            </Button>
+            <Button
+                type="button"
+                onClick={handleConfirmSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Skickar...' : 'Skicka in ansökan'}
+              </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -2,3 +2,4 @@
 *.so
 *.a
 tests/test_resurs_crypto
+tests/test_resurs_audit
