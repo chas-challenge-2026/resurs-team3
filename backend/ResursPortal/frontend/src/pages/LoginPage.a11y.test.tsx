@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../auth/AuthContext'
 import { LoginPage } from './LoginPage'
 
@@ -16,11 +17,12 @@ import { LoginPage } from './LoginPage'
 async function renderLoginPage() {
   const user = userEvent.setup()
   render(
-    <AuthProvider>
-      <LoginPage />
-    </AuthProvider>,
+    <MemoryRouter initialEntries={['/logga-in']}>
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>
+    </MemoryRouter>,
   )
-  await user.click(screen.getByRole('button', { name: 'Kom igång' }))
   return user
 }
 
