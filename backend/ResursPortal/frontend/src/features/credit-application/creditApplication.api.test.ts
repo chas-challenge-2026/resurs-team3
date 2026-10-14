@@ -118,6 +118,7 @@ describe("createApplication", () => {
   it("posts the application to the Java REST API and returns the response", async () => {
     const backendResponse = {
       applicationId: 42,
+      caseNumber: "RES-2026-0042",
       status: "UNDER_REVIEW",
       decision: "REVIEW",
       decisionReason: "Ansökan kräver manuell granskning.",

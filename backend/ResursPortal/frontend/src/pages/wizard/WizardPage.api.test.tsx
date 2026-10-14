@@ -135,6 +135,7 @@ describe("WizardPage API integration", () => {
             releaseRequest = () =>
               resolve({
                 applicationId: 42,
+                caseNumber: "RES-2026-0042",
                 status: "UNDER_REVIEW",
                 decision: "REVIEW",
                 decisionReason: "Backend test reason",
@@ -263,6 +264,7 @@ describe("WizardPage API integration", () => {
 
     mockedCreateApplication.mockResolvedValueOnce({
       applicationId: 42,
+      caseNumber: "RES-2026-0042",
       status: "UNDER_REVIEW",
       decision: "REVIEW",
       decisionReason: "Backend test reason",
