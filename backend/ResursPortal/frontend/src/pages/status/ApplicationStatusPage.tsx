@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon'
 import { STATUS_LABEL } from '../../features/credit-application/statusLabels'
 import { explainApproval, explainOutcome } from '../../features/credit-application/outcomeExplanation'
 import type { ApplicationStatus } from '../../types/case'
+import type { CreateApplicationResponse } from '../../features/credit-application/creditApplication.api'
 import { joinClassNames } from '../../lib/joinClassNames'
 import { buildApplicationProgress, documentsPath, manualDecisionComment } from './applicationProgress'
 import styles from './ApplicationStatusPage.module.css'
@@ -48,6 +49,49 @@ const dateTime = (iso?: string) => {
     : new Intl.DateTimeFormat('sv-SE', { dateStyle: 'medium', timeStyle: date.getUTCHours() || date.getUTCMinutes() ? 'short' : undefined }).format(date)
 }
 
+function isBackendReceipt(value: unknown): value is CreateApplicationResponse {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false
+  }
+
+  const data = value as Record<string, unknown>
+  return (
+    typeof data.applicationId === 'number' &&
+    Number.isSafeInteger(data.applicationId) &&
+    data.applicationId > 0 &&
+    typeof data.caseNumber === 'string' &&
+    data.caseNumber.trim().length > 0 &&
+    typeof data.companyName === 'string' &&
+    data.companyName.trim().length > 0 &&
+    typeof data.orgNumber === 'string' &&
+    data.orgNumber.trim().length > 0 &&
+    typeof data.authorizedSignatory === 'string' &&
+    data.authorizedSignatory.trim().length > 0 &&
+    (data.status === 'APPROVED' || data.status === 'REJECTED' || data.status === 'UNDER_REVIEW') &&
+    (data.decision === 'APPROVED' || data.decision === 'REJECTED' || data.decision === 'REVIEW') &&
+    typeof data.decisionReason === 'string' &&
+    typeof data.flagCount === 'number' &&
+    Number.isSafeInteger(data.flagCount) &&
+    data.flagCount >= 0 &&
+    typeof data.creditScore === 'number' &&
+    Number.isFinite(data.creditScore)
+  )
+}
+
+function readBackendReceipt(state: unknown, routeId: string): CreateApplicationResponse | null {
+  if (!state || typeof state !== 'object') return null
+  const navigation = state as Record<string, unknown>
+  const result = navigation.backendResult
+  if (
+    navigation.justSubmitted !== true ||
+    !isBackendReceipt(result) ||
+    String(result.applicationId) !== routeId
+  ) {
+    return null
+  }
+  return result
+}
+
 /**
  * Status portal: the applicant's view of one submitted application — where
  * it is, what happened so far, and what (if anything) they can do. State
@@ -56,6 +100,10 @@ const dateTime = (iso?: string) => {
  */
 export function ApplicationStatusPage() {
   const { id = '' } = useParams()
+  return <ApplicationStatusPageContent key={id} id={id} />
+}
+
+function ApplicationStatusPageContent({ id }: { id: string }) {
   const { user } = useAuth()
   const { cases, applicantMessages, markMessagesRead } = useCases()
   const navigate = useNavigate()
@@ -64,12 +112,29 @@ export function ApplicationStatusPage() {
   // of the application flow and opens with a confirmation. Read once, then
   // dropped from history so a reload shows the ordinary status view.
   const [justSubmitted] = useState(() => Boolean((location.state as { justSubmitted?: boolean } | null)?.justSubmitted))
+  const [submittedResult] = useState(() => readBackendReceipt(location.state, id))
   const statusHeadingRef = useRef<HTMLHeadingElement>(null)
   const company = user?.role === 'client' ? user : null
+  const navigationState = location.state as { justSubmitted?: boolean; receiptActiveFor?: string } | null
+  const isReceiptNavigation = navigationState?.justSubmitted === true || navigationState?.receiptActiveFor === id
+  const backendReceipt =
+    isReceiptNavigation &&
+    company &&
+    submittedResult &&
+    String(submittedResult.applicationId) === id &&
+    company.orgNumber === submittedResult.orgNumber
+      ? submittedResult
+      : null
   const creditCase = cases.find(
     (item) => item.id === id && company && (item.orgNumber === company.orgNumber || item.companyName === company.companyName),
   )
-  useDocumentTitle(creditCase ? `Ansökan ${creditCase.id.toUpperCase()}: ${STATUS_LABEL[creditCase.status]}` : 'Ansökan hittades inte')
+  useDocumentTitle(
+    backendReceipt
+      ? 'Ansökan mottagen'
+      : creditCase
+        ? `Ansökan ${creditCase.id.toUpperCase()}: ${STATUS_LABEL[creditCase.status]}`
+        : 'Ansökan hittades inte'
+  )
   const caseMessages = creditCase ? applicantMessages.filter((message) => message.caseId === creditCase.id) : []
   const unreadIds = caseMessages.filter((message) => !message.read).map((message) => message.id).join(',')
 
@@ -80,11 +145,37 @@ export function ApplicationStatusPage() {
 
   useEffect(() => {
     if (!justSubmitted) return
-    navigate(location.pathname, { replace: true, state: null })
+    navigate(location.pathname, { replace: true, state: { receiptActiveFor: id } })
     statusHeadingRef.current?.focus()
     // Runs once on arrival; location/navigate are stable enough for that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [justSubmitted])
+
+  if (backendReceipt) {
+    return (
+      <div className={styles.page}>
+        <nav className={styles.breadcrumb} aria-label="Brödsmulor">
+          <Link to={ROUTES.overview}>Översikt</Link>
+        </nav>
+        <section className={styles.panel}>
+          <h1 ref={statusHeadingRef} tabIndex={-1} className={styles.title}>Ansökan mottagen</h1>
+          <p className={styles.body}>
+            Er kreditansökan har registrerats. Här är bekräftelsen från systemet.
+          </p>
+          <dl className={styles.summary}>
+            <div><dt>Ärendenummer</dt><dd>{backendReceipt.caseNumber}</dd></div>
+            <div><dt>Status vid inskickning</dt><dd>{STATUS_LABEL[backendReceipt.status]}</dd></div>
+            <div><dt>Företag</dt><dd>{backendReceipt.companyName}</dd></div>
+            <div><dt>Firmatecknare</dt><dd>{backendReceipt.authorizedSignatory}</dd></div>
+          </dl>
+          <p className={styles.body}>
+            Detta är en bekräftelse från inskickningen, inte en uppdaterad ärendestatus.
+            Möjligheten att hämta ärendet igen är ännu inte ansluten till backend.
+          </p>
+        </section>
+      </div>
+    )
+  }
 
   if (!creditCase) {
     return (
