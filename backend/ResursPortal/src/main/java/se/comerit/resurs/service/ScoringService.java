@@ -6,7 +6,10 @@ import java.math.BigDecimal;
 
 @Service
 public class ScoringService {
-
+private final ScoringThresholds scoringThresholds;
+public ScoringService(ScoringThresholds scoringThresholds) {
+    this.scoringThresholds = scoringThresholds;
+}
     public ScoringResult evaluate(
             double egetKapital, double totaltKapital, double omsattningstillgangar,
             double kortfristigaSkulder, double totalaSkulder, double rorelseresultat,
@@ -38,17 +41,19 @@ public class ScoringService {
 
     private double evaluateSoliditetRule(double egetKapital, double totaltKapital, ScoringContext context) {
         double soliditet = calculateSoliditet(egetKapital, totaltKapital);
+        double rejectThreshold = scoringThresholds.getSolidityRejectThreshold();
+        double warningThreshold = scoringThresholds.getSolidityWarningThreshold();
         context.scoringLog.append("soliditet=").append(String.format("%.2f", soliditet));
 
-        if (soliditet < 0.20) {
+        if (soliditet < rejectThreshold) {
             context.hardReject = true;
             context.creditScore -= 40;
-            context.decisionReason.append(String.format("AVSLAG: Soliditet %.2f. Miniminivå: 0.20. ", soliditet));
+            context.decisionReason.append(String.format("AVSLAG: Soliditet %.2f. Miniminivå: %.2f. ", soliditet, rejectThreshold));
             context.scoringLog.append(" [REJECT]");
-        } else if (soliditet < 0.25) {
+        } else if (soliditet < warningThreshold) {
             context.flagCount++;
             context.creditScore -= 20;
-            context.decisionReason.append(String.format("VARNING: Soliditet %.2f. Rekommenderad nivå: minst 0.25. ", soliditet));
+            context.decisionReason.append(String.format("VARNING: Soliditet %.2f. Rekommenderad nivå: minst %.2f. ", soliditet, warningThreshold));
             context.scoringLog.append(" [FLAGGED]");
         } else {
             context.creditScore += 5;
@@ -123,6 +128,7 @@ public class ScoringService {
     private void evaluateGeneralRiskRules(double egetKapital, double rorelseresultat, double nettoomsattning,
                                           BigDecimal requestedAmount, double soliditet, double likviditetsgrad,
                                           double totalaSkulder, ScoringContext context) {
+    double warningThreshold = scoringThresholds.getSolidityWarningThreshold();
         if (egetKapital < 0) {
             context.hardReject = true;
             context.creditScore -= 50;
@@ -147,10 +153,10 @@ public class ScoringService {
             context.decisionReason.append("VARNING: Negativt rörelseresultat. ");
             context.scoringLog.append(", negativt_rörelseresultat [FLAGGED]");
         }
-        if (soliditet < 0.30 && requestedAmount.compareTo(new BigDecimal("1000000")) > 0) {
+        if (soliditet < warningThreshold && requestedAmount.compareTo(new BigDecimal("1000000")) > 0) {
             context.flagCount++;
             context.creditScore -= 12;
-            context.decisionReason.append("VARNING: Kreditbelopp över 1 000 000 kr med soliditet under 0.30. ");
+            context.decisionReason.append(String.format("VARNING: Kreditbelopp över 1 000 000 kr med soliditet under %.2f. ", warningThreshold));
             context.scoringLog.append(", storkredit_soliditet [FLAGGED]");
         }
         if (likviditetsgrad < 1.2 && likviditetsgrad >= 1.0) {
@@ -169,7 +175,8 @@ public class ScoringService {
 
     private void evaluateIndustryRule(double soliditet, String bransch, ScoringContext context) {
         double branschFaktor = getBranschFaktor(bransch);
-        double branschJusteradSoliditetGrans = 0.20 * branschFaktor;
+        double warningThreshold = scoringThresholds.getSolidityWarningThreshold();
+        double branschJusteradSoliditetGrans = warningThreshold * branschFaktor;
 
         context.scoringLog.append(", bransch=")
                 .append(bransch == null || bransch.isEmpty() ? "OKÄND" : bransch)
@@ -247,7 +254,8 @@ public class ScoringService {
     private void evaluateCombinationRisks(double soliditet, double likviditetsgrad, double skuldsattningsgrad,
                                           double rorelseresultat, double kassaflodeKvot, double egetKapital,
                                           double nettoomsattning, BigDecimal requestedAmount, ScoringContext context) {
-        if (soliditet < 0.25 && skuldsattningsgrad > 2.5) {
+    double warningThreshold = scoringThresholds.getSolidityWarningThreshold();
+        if (soliditet < warningThreshold && skuldsattningsgrad > 2.5) {
             context.flagCount++;
             context.creditScore -= 18;
             context.decisionReason.append("VARNING: Kombination av låg soliditet och hög skuldsättning. ");
