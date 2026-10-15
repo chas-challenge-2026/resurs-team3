@@ -14,8 +14,8 @@ type RegistryEntry = Omit<CompanyValidationResult, 'orgNumber' | 'validatedAt'>
 
 // Mock register. Covers the BankID test logins and the seed cases.
 const REGISTRY: Record<string, RegistryEntry> = {
-  '556000-1234': { companyName: 'Göteborg Handel AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Anna Andersson', 'Johan Berg'] },
-  '556000-5678': { companyName: 'Malmö Fastigheter AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Sara Nilsson', 'Anna Andersson'] },
+  '556000-1234': { companyName: 'Malmö Fastigheter AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Anders Karlsson'] },
+  '556000-5678': { companyName: 'Göteborg Handel AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Maria Svensson'] },
   '556012-3344': { companyName: 'Stockholm Tech AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Johan Berg'] },
   '556098-7621': { companyName: 'Norrland Logistik AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Erik Lindqvist'] },
   '559034-1122': { companyName: 'Västkust Design AB', registrationStatus: 'ACTIVE', vatRegistered: true, fSkattRegistered: true, authorizedSignatories: ['Maria Ström'] },
