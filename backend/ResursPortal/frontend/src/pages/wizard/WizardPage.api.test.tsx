@@ -136,6 +136,9 @@ describe("WizardPage API integration", () => {
               resolve({
                 applicationId: 42,
                 caseNumber: "RES-2026-0042",
+                companyName: "Göteborg Handel AB",
+                orgNumber: "556000-1234",
+                authorizedSignatory: "Anna Andersson",
                 status: "UNDER_REVIEW",
                 decision: "REVIEW",
                 decisionReason: "Backend test reason",
@@ -265,6 +268,9 @@ describe("WizardPage API integration", () => {
     mockedCreateApplication.mockResolvedValueOnce({
       applicationId: 42,
       caseNumber: "RES-2026-0042",
+      companyName: "Göteborg Handel AB",
+      orgNumber: "556000-1234",
+      authorizedSignatory: "Anna Andersson",
       status: "UNDER_REVIEW",
       decision: "REVIEW",
       decisionReason: "Backend test reason",

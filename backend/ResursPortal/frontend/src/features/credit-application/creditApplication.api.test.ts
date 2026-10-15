@@ -119,6 +119,9 @@ describe("createApplication", () => {
     const backendResponse = {
       applicationId: 42,
       caseNumber: "RES-2026-0042",
+      companyName: "Testbolaget AB",
+      orgNumber: "556000-1234",
+      authorizedSignatory: "Anna Andersson",
       status: "UNDER_REVIEW",
       decision: "REVIEW",
       decisionReason: "Ansökan kräver manuell granskning.",

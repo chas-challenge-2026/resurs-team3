@@ -46,6 +46,9 @@ export type CreateApplicationResponse = {
   decisionReason: string;
   flagCount: number;
   creditScore: number;
+  companyName: string;
+  orgNumber: string;
+  authorizedSignatory: string;
 };
 
 /**

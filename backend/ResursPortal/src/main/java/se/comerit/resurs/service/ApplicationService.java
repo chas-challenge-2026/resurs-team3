@@ -90,6 +90,9 @@ public class ApplicationService {
     public Long findCompanyIdByOrgNumber(String orgNumber) {
         return companyRepository.findByOrgNumber(orgNumber).map(Company::getId).orElse(null);
     }
+    public Optional<Company> getCompanyById(Long companyId) {
+        return companyRepository.findById(companyId);
+    }
 
     public List<Document> getDocuments(Long applicationId) {
         return documentRepository.findByApplicationIdOrderByUploadedAtDesc(applicationId);
