@@ -89,7 +89,7 @@ class ApplicationRestControllerTest {
                 () -> controller.createApplication(request)
         );
 
-        assertEquals(400, exception.getStatus().value());
+        assertEquals(400, exception.getStatusCode().value());
 
         verifyNoInteractions(scoringService, applicationService);
     }
