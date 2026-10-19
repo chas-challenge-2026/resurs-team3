@@ -4,7 +4,7 @@ package se.comerit.resurs.dto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CreateApplicationRequestTest {
 
@@ -20,4 +20,27 @@ class CreateApplicationRequestTest {
 
         assertEquals(-5000.0, request.getRorelseresultat());
     }
+
+
+    @Test
+    void shouldReadNoCashFlowStatementFromJson() throws Exception {
+        String json = "{\"noCashFlowStatement\": true}";
+
+        CreateApplicationRequest request =
+                objectMapper.readValue(json, CreateApplicationRequest.class);
+
+        assertTrue(request.isNoCashFlowStatement());
+    }
+
+    @Test
+    void shouldAllowMissingCashFlowValuesWhenNoStatement() throws Exception {
+        String json = "{\"noCashFlowStatement\": true}";
+
+        CreateApplicationRequest request =
+                objectMapper.readValue(json, CreateApplicationRequest.class);
+
+        assertNull(request.getOperativtKassaflode());
+        assertNull(request.getInvesteringsKassaflode());
+    }
+
 }

@@ -13,4 +13,6 @@ export type CreditApplicationData = {
 
   requestedAmount: string
   purpose: string
+
+  noCashFlowStatement: boolean
 }
