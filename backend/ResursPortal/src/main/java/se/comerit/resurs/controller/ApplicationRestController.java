@@ -14,6 +14,12 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.comerit.resurs.model.Company;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
+import se.comerit.resurs.model.Application;
+import se.comerit.resurs.dto.ApplicationResponse;
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 public class ApplicationRestController {
@@ -104,5 +110,91 @@ public class ApplicationRestController {
                 scoringResult.getCreditScore()
         );
     }
+
+    @GetMapping("/api/applications")
+    public List<ApplicationResponse> getApplications(HttpSession session) {
+        Long companyId = requireCompanyId(session);
+
+        Company company = applicationService.getCompanyById(companyId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Företaget kunde inte identifieras."
+                ));
+
+        return applicationService.getApplicationsForCompany(companyId)
+                .stream()
+                .map(application -> toApplicationResponse(
+                        application, company.getCompanyName()))
+                .toList();
+    }
+
+    @GetMapping("/api/applications/{id}")
+    public ApplicationResponse getApplication(
+            @PathVariable Long id,
+            HttpSession session) {
+
+        Long companyId = requireCompanyId(session);
+
+        Application application = applicationService
+                .getApplicationForCompany(id, companyId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Ansökan hittades inte."
+                ));
+
+        Company company = applicationService.getCompanyById(companyId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Företaget kunde inte identifieras."
+                ));
+
+        return toApplicationResponse(
+                application, company.getCompanyName());
+    }
+
+    private Long requireCompanyId(HttpSession session) {
+        if (session.getAttribute("userId") == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Du måste vara inloggad."
+            );
+        }
+
+        if (!"company".equals(session.getAttribute("role"))) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Endast företag kan se dessa ansökningar."
+            );
+        }
+
+        Object companyId = session.getAttribute("companyId");
+
+        if (!(companyId instanceof Long)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Företagets inloggning kunde inte identifieras."
+            );
+        }
+
+        return (Long) companyId;
+    }
+
+    private ApplicationResponse toApplicationResponse(
+            Application application,
+            String companyName) {
+
+        return new ApplicationResponse(
+                application.getId(),
+                application.getCaseNumber(),
+                application.getRequestedAmount(),
+                application.getPurpose(),
+                application.getStatus(),
+                application.getDecision(),
+                application.getDecisionReason(),
+                application.getCreatedAt(),
+                companyName
+        );
+    }
+
 
 }

@@ -15,6 +15,9 @@ import se.comerit.resurs.dto.CreateApplicationResponse;
 import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.ScoringService;
 
+import java.util.Optional;
+import se.comerit.resurs.model.Company;
+
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -61,6 +64,12 @@ class ApplicationRestControllerTest {
 
         when(applicationService.getCaseNumber(10L))
                 .thenReturn("RES-2026-0001");
+        Company company = new Company();
+        company.setCompanyName("Testbolag AB");
+        company.setOrgNumber("5561234567");
+
+        when(applicationService.getCompanyById(1L))
+                .thenReturn(Optional.of(company));
 
         CreateApplicationResponse response =
                 controller.createApplication(request);
