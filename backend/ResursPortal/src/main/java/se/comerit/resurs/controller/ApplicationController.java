@@ -22,9 +22,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Optional;
 
+
 /**
  * ApplicationController – Hanterar kreditansökningar.
- *
+ * <p>
  * Scoring-logiken ligger i ScoringService, databaslogiken i ApplicationService.
  */
 @Controller
@@ -274,5 +275,8 @@ public class ApplicationController {
         } catch (NumberFormatException e) {
             return 0.0;
         }
+
+
     }
+
 }

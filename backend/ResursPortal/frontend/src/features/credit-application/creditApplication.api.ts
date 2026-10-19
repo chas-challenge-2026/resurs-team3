@@ -36,6 +36,7 @@ export type CreateApplicationRequest = {
   investeringsKassaflode?: number;
   ranteKostnader?: number;
   bransch?: string;
+  noCashFlowStatement?: boolean;
 };
 
 /**
@@ -105,7 +106,9 @@ export function toCreateApplicationRequest(
 
     requestedAmount: Number(data.requestedAmount),
     purpose: data.purpose.trim(),
+    noCashFlowStatement: data.noCashFlowStatement,
   };
+
 }
 
 

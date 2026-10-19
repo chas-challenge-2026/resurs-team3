@@ -46,11 +46,10 @@ public class CreateApplicationRequest {
     @NotBlank(message = "Syfte krävs")
     private String purpose;
 
-    @NotNull(message = "Operativt kassaflöde krävs")
     private Double operativtKassaflode;
 
-    @NotNull(message = "Investeringskassaflöde krävs")
     private Double investeringsKassaflode;
+    private boolean noCashFlowStatement = false;
 
     @PositiveOrZero(message = "Räntekostnader får inte vara negativa")
     private double ranteKostnader;
@@ -183,5 +182,13 @@ public class CreateApplicationRequest {
 
     public void setBransch(String bransch) {
         this.bransch = bransch;
+    }
+
+    public boolean isNoCashFlowStatement() {
+        return noCashFlowStatement;
+    }
+
+    public void setNoCashFlowStatement(boolean noCashFlowStatement) {
+        this.noCashFlowStatement = noCashFlowStatement;
     }
 }

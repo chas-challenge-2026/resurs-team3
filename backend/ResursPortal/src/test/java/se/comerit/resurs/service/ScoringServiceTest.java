@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ScoringServiceTest {
 
-    private final ScoringService scoringService = new ScoringService();
+    private final ScoringService scoringService = new ScoringService(new ScoringThresholds(0.20, 0.25));
 
     @Test
     void shouldApproveWhenFinancialValuesAreHealthy() {

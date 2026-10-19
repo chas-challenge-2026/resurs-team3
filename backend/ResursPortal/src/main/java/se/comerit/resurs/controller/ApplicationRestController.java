@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.comerit.resurs.model.Company;
+
 @RestController
 public class ApplicationRestController {
 
@@ -29,20 +30,41 @@ public class ApplicationRestController {
     public CreateApplicationResponse createApplication(
             @Valid @RequestBody CreateApplicationRequest request) {
 
-        ScoringResult scoringResult = scoringService.evaluate(
-                request.getEgetKapital(),
-                request.getTotaltKapital(),
-                request.getOmsattningstillgangar(),
-                request.getKortfristigaSkulder(),
-                request.getTotalaSkulder(),
-                request.getRorelseresultat(),
-                request.getNettoomsattning(),
-                request.getRequestedAmount(),
-                request.getOperativtKassaflode(),
-                request.getInvesteringsKassaflode(),
-                request.getRanteKostnader(),
-                request.getBransch()
-        );
+        if (!request.isNoCashFlowStatement()
+                && (request.getOperativtKassaflode() == null
+                || request.getInvesteringsKassaflode() == null)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Båda kassaflödesvärdena krävs när företaget har en kassaflödesanalys."
+            );
+        }
+        ScoringResult scoringResult;
+
+        if (request.isNoCashFlowStatement()) {
+            scoringResult = new ScoringResult(
+                    "REVIEW",
+                    "UNDER_REVIEW",
+                    "Företaget saknar kassaflödesanalys. Manuell granskning krävs.",
+                    "Automatisk kreditbedömning har inte utförts eftersom kassaflödesanalys saknas.",
+                    0,
+                    0
+            );
+        } else {
+            scoringResult = scoringService.evaluate(
+                    request.getEgetKapital(),
+                    request.getTotaltKapital(),
+                    request.getOmsattningstillgangar(),
+                    request.getKortfristigaSkulder(),
+                    request.getTotalaSkulder(),
+                    request.getRorelseresultat(),
+                    request.getNettoomsattning(),
+                    request.getRequestedAmount(),
+                    request.getOperativtKassaflode(),
+                    request.getInvesteringsKassaflode(),
+                    request.getRanteKostnader(),
+                    request.getBransch()
+            );
+        }
         String initialAuditLog = "[{\"ts\":\""
                 + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\""
@@ -66,6 +88,8 @@ public class ApplicationRestController {
                 initialAuditLog
         );
         String caseNumber = applicationService.getCaseNumber(applicationId);
+        Company company = applicationService.getCompanyById(companyId)
+                .orElseThrow(() -> new IllegalStateException("Company not found"));
 
         return new CreateApplicationResponse(
                 applicationId,
@@ -74,6 +98,9 @@ public class ApplicationRestController {
                 scoringResult.getDecision(),
                 scoringResult.getDecisionReason(),
                 scoringResult.getFlagCount(),
+                company.getCompanyName(),
+                company.getOrgNumber(),
+                company.getAuthorizedSignatory(),
                 scoringResult.getCreditScore()
         );
     }
