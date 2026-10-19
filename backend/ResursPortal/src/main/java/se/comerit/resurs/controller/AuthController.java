@@ -11,7 +11,7 @@ import se.comerit.resurs.model.Company;
 import se.comerit.resurs.service.AuthService;
 import se.comerit.resurs.service.BankIdService;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
 
 @Controller

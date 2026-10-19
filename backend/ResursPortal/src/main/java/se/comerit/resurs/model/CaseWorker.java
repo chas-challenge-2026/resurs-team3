@@ -1,6 +1,6 @@
 package se.comerit.resurs.model;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "case_workers")
