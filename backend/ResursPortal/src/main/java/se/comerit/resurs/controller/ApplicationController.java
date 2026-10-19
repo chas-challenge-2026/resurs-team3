@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Optional;
 
+
 /**
  * ApplicationController – Hanterar kreditansökningar.
  * <p>
