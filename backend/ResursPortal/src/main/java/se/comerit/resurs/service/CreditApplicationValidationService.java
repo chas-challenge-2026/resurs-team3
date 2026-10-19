@@ -34,9 +34,9 @@ public class CreditApplicationValidationService {
         } else if (requestedAmount.compareTo(BigDecimal.ZERO) <= 0) {
             errors.add("Önskat kreditbelopp måste vara större än 0.");
         }
-        if (annualTurnover == null) {
+        if (nettoomsattning == null) {
             errors.add("Årsomsättning måste anges.");
-        } else if (annualTurnover.compareTo(BigDecimal.ZERO) < 0) {
+        } else if (nettoomsattning.compareTo(BigDecimal.ZERO) < 0) {
             errors.add("Årsomsättning kan inte vara negativ.");
         }
         return errors;
