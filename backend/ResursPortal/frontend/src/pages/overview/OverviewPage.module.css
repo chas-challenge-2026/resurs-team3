@@ -1,0 +1,95 @@
+.overview {
+  --ink: #0a2422;
+  --muted: #4a6560;
+  --line: rgb(10 36 34 / 10%);
+  --input: #f2f3f3;
+  max-width: 1440px;
+  margin: 0 auto;
+  color: var(--ink);
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pageHeading { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.5rem; }
+.breadcrumb { margin: 0 0 .4rem; color: var(--muted); font-size: .75rem; }
+.pageHeading h1 { margin: 0; font-size: 22px; line-height: 1.25; font-weight: 600; letter-spacing: -.03em; }
+.intro { margin: .4rem 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+.primaryLink, .secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 2.65rem;
+  padding: 0 1.1rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-size: .82rem;
+  font-weight: 600;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.primaryLink { background: #dd7e22; color: #0a2422; }
+.primaryLink:hover { background: #c87f22; }
+.primaryLink:focus-visible, .secondaryLink:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.secondaryLink { border: 1px solid rgb(10 36 34 / 20%); background: #fff; color: var(--ink); }
+.secondaryLink:hover { background: var(--input); }
+
+/* Flat: figures in a row between hairlines, no card frames. */
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-bottom: 2rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.metricCard { min-height: 120px; padding: 1.25rem 1.5rem 1.25rem 0; }
+.metricCard + .metricCard { padding-left: 1.5rem; border-left: 1px solid var(--line); }
+.metricCard p { margin: 0; color: var(--muted); font-size: .78rem; }
+.metricCard strong { display: block; margin: .55rem 0 .35rem; font-size: 1.8rem; line-height: 1.2; font-weight: 600; letter-spacing: -.03em; }
+.metricCard > span { display: block; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.metricCard .latestValue { font-size: 1.15rem; }
+
+.applicationsSection { padding: 0; }
+.sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.sectionHeading h2, .helpCard h2 { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: -.02em; }
+.sectionHeading p { margin: .3rem 0 0; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.count { color: var(--muted); font-size: .72rem; white-space: nowrap; }
+.applicationList { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.applicationCard { padding: 1rem 0; border-bottom: 1px solid var(--line); }
+.applicationHeading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.applicationHeading h3 { margin: 0; font-size: .84rem; font-weight: 600; }
+.purpose { margin: .4rem 0 .65rem; color: var(--muted); font-size: .78rem; }
+.applicationMeta { display: flex; flex-wrap: wrap; gap: 1.2rem; color: var(--muted); font-size: .72rem; }
+.statusBadge { display: inline-block; padding: .28rem .65rem; border-radius: 9999px; font-size: .68rem; font-weight: 600; white-space: nowrap; }
+.approved { color: #176b50; background: #e6f4ed; }
+.rejected { color: #a52822; background: #fdeceb; }
+.review { color: #77520b; background: #fff4df; }
+.pending { color: #0a2422; background: #edf1f6; }
+.details { margin-top: .75rem; padding-top: .65rem; border-top: 1px solid var(--line); color: var(--ink); font-size: .73rem; }
+.details summary { cursor: pointer; font-weight: 600; }
+.details summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; border-radius: 3px; }
+.details p { margin: .55rem 0 0; color: var(--muted); line-height: 1.55; white-space: pre-wrap; }
+.emptyState { display: grid; justify-items: center; padding: 2.5rem 1rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
+.emptyIcon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #e7f0ee; color: #0e332f; font-size: 1.15rem; }
+.emptyState h3 { margin: .7rem 0 .25rem; font-size: .9rem; font-weight: 600; }
+.emptyState p { max-width: 25rem; margin: 0 0 .9rem; color: var(--muted); font-size: .76rem; line-height: 1.5; }
+.helpCard { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding: 1.25rem 0; border-top: 1px solid var(--line); color: var(--ink); }
+.helpCard p { margin: .3rem 0 0; color: var(--muted); font-size: .75rem; }
+.helpCard > span { color: var(--ink); font-size: .75rem; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 0; }
+  .metricCard, .metricCard + .metricCard { padding: 1rem 1rem 1rem 0; border-left: 0; border-bottom: 1px solid var(--line); }
+  .pageHeading { align-items: start; flex-direction: column; }
+}
+@media (max-width: 520px) {
+  .metrics { grid-template-columns: 1fr; }
+  .sectionHeading { align-items: start; flex-direction: column; }
+  .applicationHeading { align-items: start; flex-direction: column; gap: .5rem; }
+  .helpCard { align-items: start; flex-direction: column; }
+}
+
+.applicationLink { color: inherit; text-decoration: underline; text-decoration-color: rgb(10 36 34 / 30%); text-underline-offset: 3px; }
+.applicationLink:hover { text-decoration-color: currentColor; }
+.applicationLink:focus-visible { outline: none; border-radius: 6px; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-focus); }
+
+.messagesSection { margin-bottom: 2rem; padding: 0 0 1.5rem; border-bottom: 1px solid var(--line); }
+.messagesSection h2 { margin: 0 0 .75rem; font-size: 1rem; line-height: 1.35; font-weight: 600; letter-spacing: -.02em; }
+.messageList { display: grid; gap: .25rem; margin: 0; padding: 0; list-style: none; }
+.messageList li { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; min-height: 44px; font-size: .875rem; }
+.unread { font-weight: 600; }
+.newTag { padding: .125rem .5rem; border-radius: 9999px; background: var(--color-review-bg); color: var(--color-review-ink); font-size: .75rem; font-weight: 600; }
+.messageDate { margin-left: auto; color: var(--muted); font-size: .75rem; }

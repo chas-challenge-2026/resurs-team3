@@ -45,7 +45,7 @@ describe('BankIdLoginForm', () => {
     await user.click(screen.getByRole('button', { name: 'Logga in med BankID' }))
 
     const panel = await screen.findByRole('status')
-    expect(panel).toHaveTextContent('Göteborg Handel AB')
+    expect(panel).toHaveTextContent('Malmö Fastigheter AB')
     // Phase 5 (a11y): focus should land on the panel, not stay on a submit
     // button that no longer exists in the DOM.
     expect(panel).toHaveFocus()

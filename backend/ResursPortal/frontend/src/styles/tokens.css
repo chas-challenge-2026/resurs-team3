@@ -24,12 +24,33 @@
   --color-resurs-cream: #f0e6e0;
   --color-resurs-muted: #9fb8b3;
 
+  /* Paper (light) surfaces — see DESIGN.md. Light work surfaces use these
+     instead of repeating hex values per module. */
+  --color-paper: #ffffff;
+  --color-mist: #f2f3f3;
+  --color-ink-muted: #4a6560;
+  --color-ink-deep: #051614;
+  /* Keyboard focus: the brand's deep orange (the logo's #c85f00), 4.1:1 on
+     paper and 3.9:1 on forest, so one ring works on both surfaces. */
+  --color-focus: #c85f00;
+  --color-error-ink: #b91c1c;
+  --shadow-paper-ring: 0 0 0 1px #1717170d, 0 1px 3px #0000001a, 0 1px 2px -1px #0000001a;
+
+  /* Application status — ink on tinted background, always with a label */
+  --color-approved-ink: #176b50;
+  --color-approved-bg: #e6f4ed;
+  --color-review-ink: #8a5700;
+  --color-review-bg: #fff4df;
+  --color-rejected-ink: #a52822;
+  --color-rejected-bg: #fdeceb;
+  --color-pending-bg: #edf1f6;
+
   /* Corner radius — one unified 10px radius across rounded/rounded-md/rounded-lg */
   --radius-md: 10px;
   --radius-lg: 10px;
 
   /* Type */
-  --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Sidebar-specific tokens — the sidebar sits on its own darker panel
      (resurs-sidebar) rather than the page background/card colors, so it

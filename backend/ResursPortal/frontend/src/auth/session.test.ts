@@ -36,9 +36,10 @@ describe('clearMockSession', () => {
   })
 })
 
-// Phase 4 hardening: sessionStorage can hold anything (a stale format, a
-// manual edit) — loadMockSession must not trust it blindly.
-describe('loadMockSession — malformed data (Phase 4 hardening)', () => {
+// loadMockSession must not trust sessionStorage blindly — a
+// previous app version, a manual devtools edit, or a future storage-format
+// change could all leave something else under this key.
+describe('loadMockSession — malformed data', () => {
   it('treats invalid JSON as no session', () => {
     sessionStorage.setItem(STORAGE_KEY, '{not json')
     expect(loadMockSession()).toBeNull()

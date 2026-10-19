@@ -16,7 +16,7 @@ export function BankIdMark({ height = 64, decorative = false }: BankIdMarkProps)
   return (
     <div className={styles.wrap}>
       <img
-        src="/logos/bankid-logo-white.svg"
+        src={`${import.meta.env.BASE_URL}logos/bankid-logo-white.svg`}
         alt={decorative ? '' : 'BankID'}
         style={{ height, width: 'auto' }}
       />

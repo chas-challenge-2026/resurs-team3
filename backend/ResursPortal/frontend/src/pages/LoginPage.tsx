@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
-import { Logo } from '../components/Logo'
-import { BankIdMark } from '../components/BankIdMark'
 import { Icon } from '../components/Icon'
-import { Button } from '../components/ui/Button'
 import { AdminLoginForm } from './AdminLoginForm'
 import { BankIdLoginForm } from './BankIdLoginForm'
 import { joinClassNames } from '../lib/joinClassNames'
+import { SCORING_THRESHOLDS } from '../utils/scoring'
 import styles from './LoginPage.module.css'
+import { useDocumentTitle } from '../lib/useDocumentTitle'
+import { Logo } from '../components/Logo'
 
 type LoginTab = 'bankid' | 'handlaggare'
 
@@ -16,57 +16,54 @@ const TABS: Array<{ id: LoginTab; label: string }> = [
   { id: 'handlaggare', label: 'Handläggare' },
 ]
 
-/**
- * The headline/description/feature-checklist copy — identical on the intro
- * screen (paired with the CTA) and the login screen (paired with the
- * smaller logo + footer), so it's factored out rather than duplicated.
- */
-function HeroCopy() {
+// Short, checkable promises; each one is confirmed by the team or follows
+// from the app's own rules (scoring, validation range).
+const PROMISES = [
+  'Kostnadsfri ansökan',
+  'Tar under 10 minuter',
+  'Oftast beslut direkt efter signeringen',
+  'Beslutet kommer med motivering',
+]
+
+const pct = (value: number) => `${Math.round(value * 100)} %`
+const dec = (value: number) => value.toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+// An example of what the applicant gets back: the decision and the ratios
+// behind it, worded like the status page (explainApproval). The company's
+// values are invented and the card says so; the limits are the real ones.
+const EXAMPLE_REASONS = [
+  `Soliditet 38 %, kravet är minst ${pct(SCORING_THRESHOLDS.soliditet.reject)}.`,
+  `Räntetäckningsgrad 6,2, kravet är minst ${dec(SCORING_THRESHOLDS.rantetackningsgrad.reject)}.`,
+  `Skuldsättningsgrad 1,1, får vara högst ${dec(SCORING_THRESHOLDS.skuldsattningsgrad.reject)}.`,
+]
+
+function DecisionExample() {
   return (
-    <>
-      <h2 className={styles.heroHeadline}>Din ansökan, på ett och samma ställe.</h2>
-      <p className={styles.heroDescription}>
-        Logga in för att fortsätta med din kreditansökan. Identifiera dig enkelt med BankID.
-      </p>
-      <ul className={styles.heroFeatures}>
-        <li className={styles.heroFeatureItem}>
-          <Icon name="check" className={styles.heroFeatureIcon} />
-          Enkel ansökningsprocess
-        </li>
-        <li className={styles.heroFeatureItem}>
-          <Icon name="check" className={styles.heroFeatureIcon} />
-          Snabba svarstider
-        </li>
-        <li className={styles.heroFeatureItem}>
-          <Icon name="check" className={styles.heroFeatureIcon} />
-          Kundsupport vid frågor
-        </li>
-      </ul>
-    </>
+    <figure className={styles.example}>
+      <figcaption className={styles.exampleCaption}>Exempel på ett beslut</figcaption>
+      <div className={styles.exampleCard}>
+        <span className={styles.exampleBadge}>Beviljad</span>
+        <p className={styles.exampleTitle}>Ansökan är beviljad</p>
+        <p className={styles.exampleMeta}>500 000 SEK · 36 månader</p>
+        <p className={styles.exampleReasonsTitle}>Därför beviljades ansökan</p>
+        <ul className={styles.exampleReasons}>
+          {EXAMPLE_REASONS.map((reason) => (
+            <li key={reason}><Icon name="check" className={styles.exampleCheck} />{reason}</li>
+          ))}
+        </ul>
+      </div>
+    </figure>
   )
 }
 
+/**
+ * Start page: one big promise on the dark side, the brand and the login on
+ * the white side, joined by a curved seam. Phones get the white side only.
+ */
 export function LoginPage() {
-  // Gates the login layout behind an intro/landing step — left panel is
-  // just the (huge) logo, right panel is the pitch copy + a CTA. Clicking
-  // the CTA swaps straight to the login layout (no animation — an instant
-  // state swap, matching the rest of this page's already-large unverified
-  // change set rather than adding an animated transition on top of it).
-  const [started, setStarted] = useState(false)
+  useDocumentTitle('Logga in')
   const [activeTab, setActiveTab] = useState<LoginTab>('bankid')
   const tabRefs = useRef<Partial<Record<LoginTab, HTMLButtonElement | null>>>({})
-  const loginTitleRef = useRef<HTMLHeadingElement>(null)
-
-  // Same reasoning as BankIdLoginForm's pendingPanel focus effect: `started`
-  // swaps out the entire intro section for the login section (a full DOM
-  // replacement, not a content update), so without this a keyboard/screen-
-  // reader user who clicks "Kom igång" loses focus into the void instead of
-  // landing on the new "Resurs kreditansökan" heading.
-  useEffect(() => {
-    if (started) {
-      loginTitleRef.current?.focus()
-    }
-  }, [started])
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     const currentIndex = TABS.findIndex((tab) => tab.id === activeTab)
@@ -84,52 +81,39 @@ export function LoginPage() {
     tabRefs.current[nextTab]?.focus()
   }
 
-  if (!started) {
-    return (
-      <div className={styles.page}>
-        <main className={styles.splitCard}>
-          <section className={styles.introLogoPanel} aria-label="Resurs Direkt">
-            <Logo width="70%" height="auto" />
-          </section>
-
-          <aside className={styles.heroPanel} aria-label="Information">
-            <div className={styles.heroContent}>
-              <HeroCopy />
-              <Button type="button" className={styles.ctaButton} onClick={() => setStarted(true)}>
-                Kom igång
-              </Button>
-            </div>
-          </aside>
-        </main>
-      </div>
-    )
-  }
-
   return (
-    <div className={styles.page}>
-      <main className={styles.splitCard}>
-        <aside className={styles.heroPanel} aria-label="Information">
-          <div className={styles.heroContent}>
-            <div className={styles.brandLogo}><Logo height={112} /></div>
-            <HeroCopy />
-          </div>
-          <footer className={styles.rightFooter}>
-            <div className={styles.trustBadges}>
-              <span className={styles.trustBadge}>
-                <BankIdMark height={24} decorative />
-                BankID-ansluten
-              </span>
-            </div>
-            <a className={styles.helpLink} href="#hjalp">Hjälp &amp; FAQ</a>
-          </footer>
-        </aside>
+    <main className={styles.page}>
+      <aside className={styles.marketing} aria-label="Om ansökan">
+        <div className={styles.pitch}>
+          <h2 className={styles.headline}>
+            Företagskredit upp till 10&nbsp;000&nbsp;000&nbsp;SEK.
+          </h2>
+          <p className={styles.tagline}>
+            Från 250&nbsp;000&nbsp;SEK, 12–60 månader. Ansök med siffrorna från årsredovisningen och signera med BankID.
+          </p>
 
-        <section className={styles.formPanel} aria-labelledby="login-title">
-          <div className={styles.formContainer}>
-            <header className={styles.cardHeader}>
-              <h1 className={styles.title} id="login-title" ref={loginTitleRef} tabIndex={-1}>Resurs kreditansökan</h1>
-              <p className={styles.subtitle}>Logga in för att fortsätta.</p>
-            </header>
+          <ul className={styles.promises}>
+            {PROMISES.map((promise) => (
+              <li key={promise}><Icon name="check" className={styles.promiseIcon} />{promise}</li>
+            ))}
+          </ul>
+          {/* Said plainly where the applicant decides to start, not in fine print. */}
+          <p className={styles.ucNote}>En kreditupplysning (UC) tas på företaget.</p>
+        </div>
+        {/* The product shown, not described: what a decision looks like. */}
+        <DecisionExample />
+      </aside>
+
+      <section className={styles.content} aria-labelledby="login-title">
+        <header className={styles.contentHeader}>
+          <Logo className={styles.logo} />
+        </header>
+
+        <div className={styles.card}>
+          <h1 className={styles.title} id="login-title">Logga in</h1>
+          <p className={styles.description}>
+            Ansök om kredit eller fortsätt en påbörjad ansökan.
+          </p>
 
           <div className={styles.tabContainer} role="tablist" aria-label="Inloggningsmetod">
             {TABS.map((tab) => (
@@ -151,7 +135,6 @@ export function LoginPage() {
             ))}
           </div>
 
-
           <div
             key={activeTab}
             role="tabpanel"
@@ -161,18 +144,12 @@ export function LoginPage() {
           >
             {activeTab === 'bankid' ? <BankIdLoginForm /> : <AdminLoginForm />}
           </div>
-          </div>
+        </div>
 
-          <footer className={styles.leftFooter}>
-            <span>© 2026 Resurs Direkt AB</span>
-            <nav className={styles.footerNav} aria-label="Juridisk information">
-              <a href="#integritet">Integritetspolicy</a>
-              <span aria-hidden="true">·</span>
-              <a href="#villkor">Användarvillkor</a>
-            </nav>
-          </footer>
-        </section>
-      </main>
-    </div>
+        <footer className={styles.contentFooter}>
+          <span>© 2026 Resurs Direkt AB</span>
+        </footer>
+      </section>
+    </main>
   )
 }

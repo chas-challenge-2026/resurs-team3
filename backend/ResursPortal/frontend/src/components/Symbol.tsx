@@ -20,7 +20,7 @@ export function Symbol({ size = 48, width, height, className = '', style }: Symb
 
   return (
     <img
-      src="/logos/resurs-symbol.png"
+      src={`${import.meta.env.BASE_URL}logos/resurs-symbol.png`}
       alt=""
       aria-hidden="true"
       style={{ ...dims, ...style }}

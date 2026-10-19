@@ -1,9 +1,7 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
 import viteConfig from './vite.config.ts'
 
-// Reuses vite.config.ts (React plugin, "@" alias) so tests resolve imports
-// the same way the app does, and layers on the vitest-specific `test`
-// block rather than duplicating the plugin/alias setup.
+// Reuse the app's Vite config so tests share its React plugin and "@" alias.
 export default mergeConfig(
   viteConfig,
   defineConfig({

@@ -1,3 +1,5 @@
+/* Start page: pitch on the left (dark), login on the right (paper).
+   Phones: logo + login only. */
 .page {
   --resurs-bg: var(--color-resurs-bg, #0a2422);
   --resurs-panel: var(--color-resurs-panel, #0e332f);
@@ -5,91 +7,71 @@
   --resurs-muted: var(--color-resurs-muted, #9fb8b3);
   --resurs-orange: var(--color-resurs-orange, #dd7e22);
   --resurs-on-orange: var(--color-resurs-on-orange, #0a2422);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 32px 24px;
-  background: var(--resurs-bg);
-  color: #fff;
-  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.splitCard {
-  width: 100%;
-  max-width: 980px;
-  min-height: 600px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  overflow: hidden;
-  background: var(--resurs-panel);
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 24px;
-  box-shadow: 0 0 0 1px #1717170d, 0 1px 3px #0000001a, 0 1px 2px -1px #0000001a;
-  /* Plays on every mount — the intro screen on first load, and again when
-     started flips and React mounts the login layout in its place — so the
-     intro→login swap reads as a soft transition rather than a hard cut. */
-  animation: splitCardIn 350ms ease-out;
-}
-
-@keyframes splitCardIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .splitCard { animation: none; }
-}
-
-.formPanel, .heroPanel, .introLogoPanel {
-  min-width: 0;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.introLogoPanel {
-  background: #fff;
-  align-items: center;
-  justify-content: center;
-}
-.formPanel {
-  background: #fff;
-  /* Light-panel overrides — scoped to .formPanel only so the dark-panel
-     defaults (--resurs-muted, and TextField's own defaults) still apply
-     everywhere else in the app, including .heroPanel on this same page. */
   --resurs-ink: #0a2422;
   --resurs-ink-muted: #4a6560;
   --tf-label-color: var(--resurs-ink);
   --tf-hint-color: var(--resurs-ink-muted);
   --tf-error-color: #b91c1c;
   --tf-input-bg: #F2F3F3;
-  /* .heroPanel is first in DOM order (physically left), .formPanel second
-     (physically right) — see LoginPage.tsx. This divider sits on
-     .formPanel's left edge, the shared boundary between the two. */
-  border-left: 1px solid rgb(10 36 34 / 10%);
-}
-.heroPanel { background: var(--resurs-panel); }
-
-.brandLogo { margin-bottom: 20px; }
-.securityBadge {
-  padding: 4px 10px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 18px;
-  background: rgb(0 0 0 / 20%);
-  color: var(--resurs-muted);
-  font-size: 11px;
-  font-weight: 500;
+  --tf-focus-ring: var(--color-focus);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--resurs-bg);
+  color: var(--resurs-ink);
+  font-family: var(--font-sans);
 }
 
-.formContainer { width: 100%; max-width: 380px; margin: auto; display: flex; flex-direction: column; }
-.cardHeader { margin-bottom: 24px; }
-.title { margin: 0 0 6px; color: var(--resurs-ink); font-size: 22px; font-weight: 600; letter-spacing: -.03em; }
-.subtitle { margin: 0; color: var(--resurs-ink-muted); font-size: 13px; }
+/* ---- Left: one big promise ---- */
+.marketing { display: grid; grid-template-rows: 1fr auto; align-items: center; gap: 2.5rem; overflow: hidden; padding: clamp(2rem, 5vw, 4.5rem) clamp(2rem, 5vw, 4.5rem) 0; color: #fff; }
+.pitch { max-width: 34rem; }
+.headline { margin: 0; font-size: clamp(2.5rem, 4.6vw, 4rem); line-height: 1.02; font-weight: 600; letter-spacing: -.045em; text-wrap: balance; }
+.tagline { max-width: 40ch; margin: 1.5rem 0 0; color: var(--resurs-muted); font-size: 1rem; line-height: 1.6; }
+.promises { display: grid; gap: .5rem; margin: 2rem 0 0; padding: 0; list-style: none; font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.promises li { display: flex; align-items: center; gap: .625rem; }
+.promiseIcon { flex: 0 0 auto; width: 1.125rem; height: 1.125rem; color: var(--resurs-orange); }
+.ucNote { margin: .875rem 0 0; color: var(--resurs-muted); font-size: .75rem; line-height: 1.5; }
+
+/* Example decision: a paper card that rises from the bottom edge, cropped,
+   like a product shot. Only where there is room for it. */
+.example { align-self: end; max-width: 30rem; margin: 0; }
+.exampleCaption { margin-bottom: .625rem; color: var(--resurs-muted); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.exampleCard { padding: 1.5rem 1.5rem 2rem; border-radius: 24px 24px 0 0; background: #fff; color: var(--resurs-ink); box-shadow: 0 -12px 40px rgb(0 0 0 / 25%); }
+.exampleBadge { display: inline-block; padding: .375rem .75rem; border-radius: 18px; background: var(--color-approved-bg); color: var(--color-approved-ink); font-size: .75rem; font-weight: 600; }
+.exampleTitle { margin: .75rem 0 0; font-size: 1.25rem; line-height: 1.3; font-weight: 600; letter-spacing: -.02em; }
+.exampleMeta { margin: .25rem 0 0; color: var(--resurs-ink-muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.exampleReasonsTitle { margin: 1rem 0 .5rem; font-size: .875rem; font-weight: 600; }
+.exampleReasons { display: grid; gap: .375rem; margin: 0; padding: 0; list-style: none; font-size: .875rem; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.exampleReasons li { display: flex; align-items: flex-start; gap: .5rem; }
+.exampleCheck { flex: 0 0 auto; width: 1rem; height: 1rem; margin-top: .125rem; color: var(--color-approved-ink); }
+@media (max-height: 860px), (max-width: 1100px) {
+  .example { display: none; }
+  .marketing { grid-template-rows: 1fr; padding-bottom: clamp(2rem, 5vw, 4.5rem); }
+}
+
+/* ---- Right: brand + login. The white side is the card; its curved left
+   edge is the seam into the dark side. ---- */
+.content { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.5rem, 5vw, 4rem); border-radius: 40px 0 0 40px; background: #fff; }
+.contentHeader { display: flex; align-items: center; }
+.logo { display: block; height: 36px; width: auto; }
+.card { align-self: center; justify-self: center; width: 100%; max-width: 400px; padding: 2rem 0; animation: panelIn 350ms ease-out; }
+.title { margin: 0; color: var(--resurs-ink); font-size: 2rem; line-height: 1.1; font-weight: 600; letter-spacing: -.04em; }
+.description { margin: .5rem 0 1.75rem; color: var(--resurs-ink-muted); font-size: .875rem; line-height: 1.5; }
+.contentFooter { display: flex; justify-content: space-between; gap: 1rem; color: var(--resurs-ink-muted); font-size: .75rem; }
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card, .panel { animation: none; }
+}
+
 .tabContainer { display: flex; margin-bottom: 24px; padding: 3px; border-radius: 18px; background: rgb(10 36 34 / 6%); }
 .tabBtn {
   flex: 1;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: 15px;
@@ -101,7 +83,7 @@
   cursor: pointer;
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
-.tabBtn:focus-visible { outline: 2px solid var(--resurs-orange); outline-offset: 2px; }
+.tabBtn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .tabBtn:hover:not(.tabActive) { color: var(--resurs-ink); }
 /* Card/bordered active state rather than a solid accent fill — the accent
    color stays reserved for the primary CTA (submitButton below) so the two
@@ -115,9 +97,9 @@
 .panel {
   min-width: 0;
   /* key={activeTab} on this element (LoginPage.tsx) forces a real
-     remount on every tab switch, so this replays each time — same
-     technique/animation as .splitCard's intro→login swap. */
-  animation: splitCardIn 350ms ease-out;
+     remount on every tab switch, so this replays each time — short
+     fade-in (panelIn below). */
+  animation: panelIn 350ms ease-out;
 }
 
 /* Taller, more rounded field than the shared TextField default — scoped
@@ -165,7 +147,7 @@
   width: 100%;
   margin-top: 4px;
   /* Fuller pill shape than the app-wide 10px radius — this page already
-     departs from that standard (see splitCard/tabBtn above), and a round
+     departs from that standard (see tabBtn above), and a round
      CTA reads as the clear, inviting primary action. !important because
      Button's own .base sets border-radius too, at equal selector
      specificity — module bundling order isn't guaranteed to let this
@@ -186,69 +168,14 @@
   /* The inner ring is meant to match the surrounding page so the outer
      orange ring reads as offset — page is white now, so the gap ring
      needs to be white too instead of Button's dark-panel default. */
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--resurs-orange) !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-focus) !important;
 }
 
-.leftFooter, .rightFooter { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 24px; font-size: 11px; }
-.leftFooter { border-top: 1px solid rgb(10 36 34 / 10%); color: var(--resurs-ink-muted); }
-.footerNav { display: flex; flex-wrap: wrap; gap: 12px; }
-/* Underlined at rest, not just on hover — .leftFooter sets the same
-   ink-muted color on its plain copyright text, so without an underline
-   these links are distinguishable only by color, which fails for
-   colorblind users (see docs/ux.md §16). */
-.footerLink, .leftFooter a { color: var(--resurs-ink-muted); text-decoration: underline; }
-.footerLink:hover, .leftFooter a:hover { color: var(--resurs-ink); }
-.heroContent { max-width: 420px; margin: auto 0; }
-.heroHeadline { margin: 0 0 16px; color: #fff; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.03em; }
-.heroDescription { margin: 0; color: var(--resurs-muted); font-size: 14px; line-height: 1.6; }
 
-.heroFeatures {
-  list-style: none;
-  margin: 24px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.heroFeatureItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.heroFeatureIcon {
-  flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  color: var(--resurs-orange);
-}
-.rightFooter { border-top: 1px solid rgb(255 255 255 / 10%); color: var(--resurs-muted); }
-.trustBadges { display: flex; gap: 16px; align-items: center; }
-.trustBadge { display: flex; align-items: center; gap: 6px; color: var(--resurs-muted); font-size: 11px; }
-.helpLink { color: #fff; font-size: 12px; font-weight: 500; text-decoration: none; }
-.helpLink:hover { text-decoration: underline; }
-
-.ctaButton {
-  width: 100%;
-  margin-top: 24px;
-  border-radius: 9999px !important;
-}
-
-@media (max-width: 820px) {
-  .page { align-items: flex-start; }
-  .splitCard { grid-template-columns: 1fr; border-radius: 20px; }
-  .formPanel, .heroPanel, .introLogoPanel { min-height: 420px; padding: 32px; }
-  .heroPanel { min-height: 300px; gap: 32px; }
-  .formPanel { border-top: 1px solid rgb(10 36 34 / 10%); border-left: 0; }
-}
-@media (max-width: 480px) {
-  .page { padding: 12px; }
-  .splitCard { border-radius: 16px; }
-  .formPanel, .heroPanel, .introLogoPanel { min-height: 0; padding: 24px 20px; }
-  .formContainer { margin: 52px auto; }
-  .leftFooter { align-items: flex-start; flex-direction: column; }
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; background: #fff; }
+  .marketing { display: none; }
+  .content { border-radius: 0; padding: 1rem 1.25rem 1.5rem; }
+  .card { align-self: start; padding-top: 2.5rem; }
+  .logo { height: 30px; }
 }
