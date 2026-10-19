@@ -151,7 +151,7 @@ const SEED_CASES: SeedCase[] = [
 ]
 
 function buildCase(seed: SeedCase): CreditCase {
-  const scoringResult = computeScoringResult(seed.id, seed.financials)
+  const scoringResult = computeScoringResult(seed.id, seed.financials, { requestedAmount: seed.amount })
   const status = scoringResult.decision === 'REVIEW' ? 'UNDER_REVIEW' : scoringResult.decision
   return {
     id: seed.id,

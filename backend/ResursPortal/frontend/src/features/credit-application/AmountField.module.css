@@ -1,0 +1,32 @@
+/* Sign toggle for amounts that may be negative: touch screens only, where
+   the numeric keypad has no minus key. 44px tall hit area, compact look. */
+.signToggle {
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  margin: -12px 0;
+  padding: 0 .75rem;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--resurs-ink, var(--color-resurs-bg));
+  font: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.signToggle[aria-pressed='true'] {
+  color: var(--color-review-ink);
+}
+
+.signToggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .signToggle { display: inline-flex; }
+}

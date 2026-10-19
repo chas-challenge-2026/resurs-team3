@@ -7,8 +7,8 @@ export interface MockBankIdCompany {
 // a single hardcoded name — so the confirmation screen actually reflects
 // whichever org number was entered.
 const MOCK_COMPANIES: MockBankIdCompany[] = [
-  { orgNumber: '556000-1234', companyName: 'Göteborg Handel AB' },
-  { orgNumber: '556000-5678', companyName: 'Malmö Fastigheter AB' },
+  { orgNumber: '556000-1234', companyName: 'Malmö Fastigheter AB' },
+  { orgNumber: '556000-5678', companyName: 'Göteborg Handel AB' },
 ]
 
 const START_LATENCY_MS = 400

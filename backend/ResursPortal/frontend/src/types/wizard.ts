@@ -6,11 +6,14 @@ export interface CompanyInfo {
   orgNumber: string
   companyName: string
   signatory: string
+  /** ScoringService.java bransch code; '' = unknown (factor 1.0). */
+  industry?: import('./case').Industry | ''
   acceptedTerms: boolean
 }
 
 export interface CreditRequest {
   amount: string
+  termMonths?: number
   purpose: string
 }
 

@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/useAuth'
+import { useAuth } from '../../auth/useAuth'
 import { Icon } from '../../components/Icon'
 import { AccountBadge } from '../../components/AccountBadge'
 import styles from './BackofficeTopBar.module.css'
@@ -9,7 +9,8 @@ interface BackofficeTopBarProps {
 }
 
 export function BackofficeTopBar({ search, onSearchChange }: BackofficeTopBarProps) {
-  const { state, logout } = useAuth()
+  const { user, logout } = useAuth()
+  const displayName = user?.role === 'admin' ? user.name : ''
 
   return (
     <div className={styles.topBar}>
@@ -29,7 +30,7 @@ export function BackofficeTopBar({ search, onSearchChange }: BackofficeTopBarPro
       </div>
 
       <div className={styles.identity}>
-        <AccountBadge companyDisplayName={state.companyDisplayName} onLogout={logout} />
+        <AccountBadge companyDisplayName={displayName} onLogout={logout} />
       </div>
     </div>
   )

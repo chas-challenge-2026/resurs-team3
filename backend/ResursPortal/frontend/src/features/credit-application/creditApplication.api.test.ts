@@ -10,34 +10,107 @@ const formData: CreditApplicationData = {
   orgNumber: "  556000-1234  ",
   companyName: "  Testbolaget AB  ",
   authorizedSignatory: "  Anna Andersson  ",
+
+  financialYear: "2025",
+  industry: "HANDEL",
+
   equity: "100000",
   totalCapital: "500000",
   currentAssets: "250000",
   shortTermLiabilities: "100000",
-  totalDebt: "200000",
+  longTermLiabilities: "100000",
   operatingProfit: "-5000",
   netSales: "1000000",
+
+  operatingCashFlow: "30000",
+  investingCashFlow: "-10000",
+  noCashFlowStatement: "",
+  interestExpenses: "-5000",
+
   requestedAmount: "300000",
+  repaymentTerm: "36",
   purpose: "  Ny utrustning  ",
 };
 
 describe("toCreateApplicationRequest", () => {
-  it("maps the React form fields to the Java API contract", () => {
-    expect(toCreateApplicationRequest(formData)).toEqual({
-      orgNumber: "556000-1234",
-      companyName: "Testbolaget AB",
-      authorizedSignatory: "Anna Andersson",
-      egetKapital: 100000,
-      totaltKapital: 500000,
-      omsattningstillgangar: 250000,
-      kortfristigaSkulder: 100000,
-      totalaSkulder: 200000,
-      rorelseresultat: -5000,
-      nettoomsattning: 1000000,
-      requestedAmount: 300000,
-      purpose: "Ny utrustning",
-    });
+it("maps the React form fields to the Java API contract", () => {
+  expect(toCreateApplicationRequest(formData)).toEqual({
+    orgNumber: "556000-1234",
+    companyName: "Testbolaget AB",
+    authorizedSignatory: "Anna Andersson",
+
+    egetKapital: 100000,
+    totaltKapital: 500000,
+    omsattningstillgangar: 250000,
+    kortfristigaSkulder: 100000,
+    totalaSkulder: 200000,
+    rorelseresultat: -5000,
+    nettoomsattning: 1000000,
+
+    operativtKassaflode: 30000,
+    investeringsKassaflode: -10000,
+    ranteKostnader: 5000,
+    bransch: "HANDEL",
+
+    requestedAmount: 300000,
+    purpose: "Ny utrustning",
   });
+});
+
+it("rejects empty financial values instead of converting them to zero", () => {
+  const data: CreditApplicationData = {
+    ...formData,
+    longTermLiabilities: " ",
+  };
+
+  expect(() => toCreateApplicationRequest(data)).toThrow(
+    "Långfristiga skulder"
+  );
+});
+
+it("rejects invalid financial numbers", () => {
+  const data: CreditApplicationData = {
+    ...formData,
+    longTermLiabilities: "invalid",
+  };
+
+  expect(() => toCreateApplicationRequest(data)).toThrow(
+    "Långfristiga skulder"
+  );
+});
+
+
+it("allows manual review when no cash-flow statement exists", () => {
+  const data: CreditApplicationData = {
+    ...formData,
+    noCashFlowStatement: "true",
+    operatingCashFlow: "",
+    investingCashFlow: "",
+  };
+
+  const request = toCreateApplicationRequest(data);
+
+  expect(request.noCashFlowStatement).toBe(true);
+  expect(request).not.toHaveProperty("operativtKassaflode");
+  expect(request).not.toHaveProperty("investeringsKassaflode");
+
+  expect(request.requestedAmount).toBe(300000);
+  expect(request.ranteKostnader).toBe(5000);
+});
+
+it("rejects missing cash-flow values when a statement exists", () => {
+  const data: CreditApplicationData = {
+    ...formData,
+    noCashFlowStatement: "",
+    operatingCashFlow: "",
+    investingCashFlow: "",
+  };
+
+  expect(() => toCreateApplicationRequest(data)).toThrow(
+    "Kassaflödesuppgifter saknas"
+  );
+});
+
 
   it("converts financial form values from strings to JSON numbers", () => {
     const request = toCreateApplicationRequest(formData);
@@ -47,14 +120,14 @@ describe("toCreateApplicationRequest", () => {
     expect(typeof request.requestedAmount).toBe("number");
   });
 
-  it("does not invent values for financial fields the wizard does not collect", () => {
-    const request = toCreateApplicationRequest(formData);
+it("includes the financial fields collected by the new wizard", () => {
+  const request = toCreateApplicationRequest(formData);
 
-    expect(request).not.toHaveProperty("operativtKassaflode");
-    expect(request).not.toHaveProperty("investeringsKassaflode");
-    expect(request).not.toHaveProperty("ranteKostnader");
-    expect(request).not.toHaveProperty("bransch");
-  });
+  expect(request.operativtKassaflode).toBe(30000);
+  expect(request.investeringsKassaflode).toBe(-10000);
+  expect(request.ranteKostnader).toBe(5000);
+  expect(request.bransch).toBe("HANDEL");
+});
 });
 
 afterEach(() => {
@@ -65,6 +138,10 @@ describe("createApplication", () => {
   it("posts the application to the Java REST API and returns the response", async () => {
     const backendResponse = {
       applicationId: 42,
+      caseNumber: "RES-2026-0042",
+      companyName: "Testbolaget AB",
+      orgNumber: "556000-1234",
+      authorizedSignatory: "Anna Andersson",
       status: "UNDER_REVIEW",
       decision: "REVIEW",
       decisionReason: "Ansökan kräver manuell granskning.",

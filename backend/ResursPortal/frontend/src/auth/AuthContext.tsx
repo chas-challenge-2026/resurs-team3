@@ -33,7 +33,7 @@ const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll'] as cons
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   // Lazy initializer: runs once, before the first render, so the restored
-  // session is already in state up front — no "checking session..." flash.
+  // session is already in state up front, no "checking session..." flash.
   // Only works because restoring here is a synchronous sessionStorage read.
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
     user: loadMockSession(),
@@ -57,9 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
-  // Phase 4: mock idle-session timeout, standing in for the backend's
-  // HttpSession expiry. Logs out after SESSION_IDLE_TIMEOUT_MS of no
-  // activity; resetTimer restarts the countdown on each qualifying event.
+  // Mock idle-session timeout, standing in for the backend's
+  // HttpSession expiry. Logs the user out after SESSION_IDLE_TIMEOUT_MS of
+  // no activity; resetTimer restarts that countdown on every qualifying event.
   useEffect(() => {
     if (!state.user) return
 
