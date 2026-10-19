@@ -11,6 +11,9 @@ import se.comerit.resurs.service.ScoringResult;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import se.comerit.resurs.model.Company
 @RestController
 public class ApplicationRestController {
 
