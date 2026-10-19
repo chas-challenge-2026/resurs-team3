@@ -10,7 +10,7 @@ import se.comerit.resurs.dto.CreateApplicationResponse;
 import se.comerit.resurs.service.ScoringResult;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.validation.Valid;
+import javkarta.validation.Valid;
 @RestController
 public class ApplicationRestController {
 
