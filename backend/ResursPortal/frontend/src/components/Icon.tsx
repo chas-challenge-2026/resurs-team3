@@ -11,6 +11,8 @@ export type IconName =
   | 'home'
   | 'folder'
   | 'edit'
+  | 'mail'
+  | 'mail-open'
   | 'grid'
   | 'bell'
   | 'settings'
@@ -112,6 +114,18 @@ const PATHS: Record<IconName, ReactElement> = {
     <>
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <line x1="9" y1="3" x2="9" y2="21" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </>
+  ),
+  'mail-open': (
+    <>
+      <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z" />
+      <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10" />
     </>
   ),
 }

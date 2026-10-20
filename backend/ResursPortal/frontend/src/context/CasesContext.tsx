@@ -24,8 +24,34 @@ const initialState: CasesState = {
 
 // v2: applications and decisions saved while testing (under v1) are
 // dropped once, so Mina ansökningar starts from the seed cases again.
-const STORAGE_KEY = 'resurs-backoffice-prototype-v2'
-const OLD_STORAGE_KEYS = ['resurs-backoffice-prototype-v1']
+// v4: seed decision times come from the seeds (earlier versions stored other times).
+const STORAGE_KEY = 'resurs-backoffice-prototype-v4'
+const OLD_STORAGE_KEYS = ['resurs-backoffice-prototype-v1', 'resurs-backoffice-prototype-v2', 'resurs-backoffice-prototype-v3']
+
+const STATUSES = new Set(['PENDING_DOCS', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'])
+const str = (value: unknown) => (typeof value === 'string' ? value : '')
+const arr = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+
+/** Stored data stands in for the backend here, so it is checked like a
+ * response: a case without an id, name, status or scoring is dropped, and
+ * missing strings/lists get safe defaults instead of crashing a view. */
+function normalizeCase(raw: unknown): CreditCase | null {
+  if (!raw || typeof raw !== 'object') return null
+  const c = raw as Record<string, unknown>
+  const scoring = c.scoringResult as Record<string, unknown> | undefined
+  if (!str(c.id) || !str(c.companyName) || !STATUSES.has(str(c.status)) || !scoring || typeof scoring !== 'object') return null
+  return {
+    ...(c as unknown as CreditCase),
+    orgNumber: str(c.orgNumber),
+    signatory: str(c.signatory),
+    purpose: str(c.purpose),
+    amount: Number.isFinite(c.amount) ? (c.amount as number) : 0,
+    submittedAt: str(c.submittedAt),
+    financials: (c.financials && typeof c.financials === 'object' ? c.financials : {}) as CreditCase['financials'],
+    auditTrail: arr(c.auditTrail),
+    scoringResult: { ...(scoring as unknown as CreditCase['scoringResult']), metrics: arr<CreditCase['scoringResult']['metrics'][number]>(scoring.metrics).filter((m) => m && typeof m === 'object' && typeof m.label === 'string'), rules: arr<NonNullable<CreditCase['scoringResult']['rules']>[number]>(scoring.rules).filter((r) => r && typeof r === 'object' && typeof r.label === 'string'), decisionReason: str(scoring.decisionReason) },
+  }
+}
 
 function loadInitialState(): CasesState {
   if (typeof window === 'undefined') return initialState
@@ -38,7 +64,7 @@ function loadInitialState(): CasesState {
       return initialState
     }
     return {
-      cases: parsed.cases as CreditCase[],
+      cases: parsed.cases.map(normalizeCase).filter((c): c is CreditCase => c !== null),
       decisions: parsed.decisions as DecisionLogEntry[],
       notifications: parsed.notifications as AppNotification[],
       applicantMessages: Array.isArray(parsed.applicantMessages) ? (parsed.applicantMessages as ApplicantMessage[]) : [],
@@ -52,6 +78,7 @@ type Action =
   | { type: 'ADD_CASE'; newCase: CreditCase; notification: AppNotification; messages?: ApplicantMessage[] }
   | { type: 'MARK_NOTIFICATIONS_READ' }
   | { type: 'MARK_NOTIFICATION_READ'; id: string }
+  | { type: 'MARK_NOTIFICATION_UNREAD'; id: string }
   | { type: 'SYNC_FROM_STORAGE'; state: CasesState }
   | {
       // One case changed, plus whatever the change produced (messages to the
@@ -100,6 +127,8 @@ function reducer(state: CasesState, action: Action): CasesState {
       return action.state
     case 'MARK_NOTIFICATION_READ':
       return { ...state, notifications: state.notifications.map((n) => n.id === action.id ? { ...n, read: true } : n) }
+    case 'MARK_NOTIFICATION_UNREAD':
+      return { ...state, notifications: state.notifications.map((n) => n.id === action.id ? { ...n, read: false } : n) }
     default:
       return state
   }
@@ -139,14 +168,14 @@ export function CasesProvider({ children }: { children: React.ReactNode }) {
       decide: (id, status, comment, actor = 'Handläggare') => {
         const target = state.cases.find((c) => c.id === id)
         const text = comment.trim()
-        if (!target || !text) return
+        if (!target || !text) return false
         const open = target.status === 'UNDER_REVIEW' || target.status === 'PENDING_DOCS'
         // Overriding an automatic decision is allowed once; a person's
         // decision is final.
         const automaticallyDecided =
           (target.status === 'APPROVED' || target.status === 'REJECTED') &&
           !target.auditTrail.some((event) => event.action === 'MANUAL_DECISION')
-        if (!open && !automaticallyDecided) return
+        if (!open && !automaticallyDecided) return false
 
         const decidedAt = new Date().toISOString()
         const auditEvent = createAuditEvent(id, 'MANUAL_DECISION', actor, {
@@ -156,7 +185,7 @@ export function CasesProvider({ children }: { children: React.ReactNode }) {
           previousStatus: target.status,
         })
         const decision: DecisionLogEntry = {
-          id: `d-${Date.now()}`,
+          id: `d-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           caseId: id,
           companyName: target.companyName,
           action: status,
@@ -171,6 +200,7 @@ export function CasesProvider({ children }: { children: React.ReactNode }) {
           decision,
           messages: changed ? [createApplicantMessage(target, { type: 'DECISION_MADE', decision: status })] : [],
         })
+        return true
       },
       addDocuments: (id, added) => {
         const target = state.cases.find((c) => c.id === id)
@@ -285,6 +315,7 @@ export function CasesProvider({ children }: { children: React.ReactNode }) {
       },
       markNotificationsRead: () => dispatch({ type: 'MARK_NOTIFICATIONS_READ' }),
       markNotificationRead: (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id }),
+      markNotificationUnread: (id) => dispatch({ type: 'MARK_NOTIFICATION_UNREAD', id }),
     }),
     [state],
   )

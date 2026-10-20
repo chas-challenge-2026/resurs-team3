@@ -12,7 +12,8 @@ export interface CasesContextValue {
   notifications: AppNotification[]
   applicantMessages: ApplicantMessage[]
   /** Case worker decision; also overrides an automatic decision (once). */
-  decide: (id: string, status: Decision, comment: string, actor?: string) => void
+  /** False when the case can no longer be decided (e.g. it was decided in another tab). */
+  decide: (id: string, status: Decision, comment: string, actor?: string) => boolean
   addCase: (
     companyInfo: CompanyInfo,
     financials: FinancialMetrics,
@@ -23,6 +24,7 @@ export interface CasesContextValue {
   markMessagesRead: (ids: string[]) => void
   markNotificationsRead: () => void
   markNotificationRead: (id: string) => void
+  markNotificationUnread: (id: string) => void
 }
 
 export const CasesContext = createContext<CasesContextValue | undefined>(undefined)
