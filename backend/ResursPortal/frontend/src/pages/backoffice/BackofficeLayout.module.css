@@ -1,85 +1,57 @@
-.providerRoot {
-  overflow-x: hidden;
-  background-color: var(--color-resurs-bg);
+.appShell {
+  --bo-ink: var(--color-resurs-bg);
+  --bo-muted: var(--color-ink-muted);
+  --bo-line: var(--color-hairline);
+  --bo-page: #fff;  /* flat: content on the paper page, no card frames */
+  --bo-input: var(--color-mist);
+  --bo-dark: var(--color-resurs-panel);
+  --bo-card: var(--color-resurs-card);
+  --bo-accent: var(--color-resurs-orange);
+  /* 100% off the html/body/#root height:100% chain (index.css), not
+     100vh: see the matching comment on AppLayout.module.css's
+     .providerRoot for why vh/dvh can visibly lag a live window resize. */
+  min-height: 100%;
+  background: var(--bo-page);
+  color: var(--bo-ink);
+  font-family: var(--font-sans);
 }
 
-.inset {
-  min-width: 0;
-  background-color: var(--color-resurs-bg);
+.header { position: relative; z-index: 5; display: flex; align-items: center; gap: 1rem; min-height: 4rem; border-bottom: 1px solid var(--bo-line); background: #fff; padding: .35rem clamp(1rem, 2.8vw, 2.25rem); }
+.brand { display: flex; flex: 0 0 auto; align-items: center; border-right: 1px solid var(--bo-line); padding-right: 1rem; }
+.brandLogo { display: block; }
+.navigation { display: flex; align-self: stretch; align-items: stretch; gap: .2rem; min-width: 0; }
+.navigation button { display: inline-flex; align-items: center; gap: .35rem; border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 0 .6rem; color: var(--bo-muted); font: inherit; font-size: .875rem; white-space: nowrap; cursor: pointer; }
+.navigation button:hover { color: var(--bo-ink); }
+.navigation button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.navigation .navActive { border-bottom-color: var(--bo-ink); color: var(--bo-ink); font-weight: 650; }
+.navCount { display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; border-radius: 9999px; background: var(--color-approved-bg); padding: 0 .25rem; color: var(--color-approved-ink); font-size: .75rem; font-weight: 700; }
+.topBarContent { min-width: 0; flex: 1 1 auto; margin-left: auto; }
+.content { width: 100%; max-width: 1440px; margin: 0 auto; padding: 1rem clamp(1rem, 2.8vw, 2.25rem) 2rem; }
+/* <main> only receives focus programmatically (tab switch); no page-sized ring. */
+.content:focus { outline: none; }
+
+@media (max-width: 920px) {
+  .header { flex-wrap: wrap; gap: .5rem .8rem; }
+  .topBarContent { order: 3; flex: 1 0 100%; }
+}
+@media (max-width: 560px) {
+  .header { padding: .55rem .75rem; }
+  .brand { padding-right: .65rem; }
+  .navigation { justify-content: space-between; }
+  .navigation button { min-height: 2.75rem; padding-inline: .35rem; font-size: .75rem; }
+  .content { padding: .85rem 1rem 1.5rem; }
 }
 
-.topBarRow {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  padding-bottom: 0;
+@media (min-width: 761px) {
+  .appShell { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .header { flex: 0 0 auto; }
+  .content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 }
 
-@media (min-width: 640px) {
-  .topBarRow {
-    padding: 1.5rem;
-    padding-bottom: 0;
-  }
+/* The tab panel inside <main> takes over main's flex column, so the views
+   lay out as before. (Not display: contents, which can drop the role.) */
+.tabPanel { min-width: 0; }
+@media (min-width: 761px) {
+  .tabPanel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 }
-
-@media (min-width: 1024px) {
-  .topBarRow {
-    padding: 2rem;
-    padding-bottom: 0;
-  }
-}
-
-.trigger {
-  flex-shrink: 0;
-  color: rgb(255 255 255 / 0.7);
-}
-
-.trigger:hover {
-  background-color: rgb(255 255 255 / 0.1);
-  color: #ffffff;
-}
-
-.topBarContent {
-  min-width: 0;
-  flex: 1 1 0%;
-}
-
-.content {
-  min-width: 0;
-  flex: 1 1 0%;
-  padding: 1rem;
-}
-
-@media (min-width: 640px) {
-  .content {
-    padding: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .content {
-    padding: 2rem;
-  }
-}
-
-.placeholderHeading {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.placeholderCard {
-  margin-top: 1rem;
-  border-radius: var(--radius-md);
-  background-color: var(--color-resurs-card);
-  padding: 1.25rem;
-}
-
-.placeholderCardText {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: var(--color-resurs-muted);
-}
+.navCountHidden { visibility: hidden; }
