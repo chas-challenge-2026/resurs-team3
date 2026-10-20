@@ -1,105 +1,13 @@
-.heading {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.metricsWrap {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-@media (min-width: 1024px) {
-  .metricsWrap {
-    flex-direction: row;
-    align-items: stretch;
-    gap: 1rem;
-  }
-}
-
-.heroTile {
-  border-radius: var(--radius-lg);
-  background-color: var(--color-resurs-panel);
-  border-left: 3px solid var(--color-resurs-orange);
-  padding: 1.5rem 1.75rem;
-}
-
-@media (min-width: 1024px) {
-  .heroTile {
-    flex: 0 0 58%;
-    padding: 2rem 2.25rem;
-  }
-}
-
-.heroValue {
-  overflow-wrap: break-word;
-  font-size: 2.25rem;
-  line-height: 2.5rem;
-  font-weight: 800;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (min-width: 640px) {
-  .heroValue {
-    font-size: 3rem;
-    line-height: 3.25rem;
-  }
-}
-
-.heroLabel {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: var(--color-resurs-muted);
-}
-
-/* A short, quiet column of three compact cards beside the hero — no
-   sparkline, no accent border, just label + number. On narrow screens
-   the parent stack collapses so this column sits full-width below the
-   hero instead of beside it, still stacked. */
-.secondaryGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex: 1 1 auto;
-}
-
-@media (min-width: 640px) {
-  .secondaryGrid {
-    gap: 0.75rem;
-  }
-}
-
-.tile {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-resurs-panel);
-  padding: 0.75rem 1rem;
-}
-
-.tileValue {
-  overflow-wrap: break-word;
-  font-size: 1.125rem;
-  line-height: 1.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-.tileLabel {
-  margin-top: 0.125rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: var(--color-resurs-muted);
-}
-
-.queueWrap {
-  margin-top: 1.5rem;
-}
+.dashboardView { min-height: 0; display: flex; flex: 1 1 auto; flex-direction: column; }
+.pageHeading { margin: 0 0 1rem; color: var(--bo-ink); font-size: 1.5rem; line-height: 1.25; font-weight: 600; letter-spacing: -.03em; }
+.metricsGrid { display: grid; flex: 0 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--color-hairline); border-bottom: 1px solid var(--color-hairline); }
+.metricCard:first-child { border-left: 0; padding-left: 0; }
+.metricCard { min-width: 0; min-height: 3.5rem; display: flex; flex-direction: column; justify-content: center; gap: .1rem; padding: .5rem .85rem; border-left: 1px solid var(--color-hairline); padding-left: 1rem; }
+.metricLabel { margin: 0; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.25; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.metricValue { display: flex; align-items: baseline; gap: .3rem; margin: 0; overflow-wrap: anywhere; color: var(--bo-ink); font-size: 1.5rem; line-height: 1.2; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.metricValue small { color: var(--color-ink-muted); font-size: .75rem; font-weight: 500; }
+.queueWrap { min-height: 0; display: flex; flex: 1 1 auto; overflow: hidden; margin-top: 1rem; }
+.queueWrap > section { width: 100%; height: 100%; }
+@media (max-width: 1000px) { .metricsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .metricsGrid { gap: .5rem; } .metricCard { min-height: 3.25rem; padding: .5rem; } .metricValue { font-size: 1.25rem; } }
+.metricEmpty { margin: 0; color: var(--color-ink-muted); font-size: .875rem; line-height: 1.75rem; }

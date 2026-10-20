@@ -1,0 +1,6 @@
+.notice { max-width: 60ch; padding: 1.5rem 0; color: var(--bo-ink); }
+.notice h1 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 600; }
+.notice p { margin: .5rem 0 1rem; color: var(--color-ink-muted); font-size: .875rem; line-height: 1.5; }
+.retry { min-height: 2.75rem; border: 1px solid rgb(10 36 34 / 30%); border-radius: 9999px; background: transparent; padding: .6rem 1rem; color: var(--bo-ink); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.retry:hover { background: rgb(10 36 34 / 8%); }
+.retry:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
