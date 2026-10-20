@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import { Icon } from '../../components/Icon'
 import { AccountBadge } from '../../components/AccountBadge'
@@ -6,27 +7,32 @@ import styles from './BackofficeTopBar.module.css'
 interface BackofficeTopBarProps {
   search: string
   onSearchChange: (value: string) => void
+  children?: ReactNode
 }
 
-export function BackofficeTopBar({ search, onSearchChange }: BackofficeTopBarProps) {
+export function BackofficeTopBar({ search, onSearchChange, children }: BackofficeTopBarProps) {
   const { user, logout } = useAuth()
-  const displayName = user?.role === 'admin' ? user.name : ''
+  const displayName = user?.role === 'client' ? user.companyName : (user?.name ?? '')
 
   return (
     <div className={styles.topBar}>
+      {children}
+
       <div className={styles.searchWrap}>
-        <label htmlFor="case-search" className={styles.srOnly}>
-          Sök företag eller org.nummer
+        <label htmlFor="case-search" className={styles.searchLabel}>
+          Sök ärende
         </label>
-        <input
-          id="case-search"
-          type="search"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Sök företag eller org.nummer"
-          className={styles.searchInput}
-        />
-        <Icon name="search" className={styles.searchIcon} />
+        <div className={styles.inputWrap}>
+          <input
+            id="case-search"
+            type="search"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Sök företag, org.nr eller ID"
+            className={styles.searchInput}
+          />
+          <Icon name="search" className={styles.searchIcon} />
+        </div>
       </div>
 
       <div className={styles.identity}>
