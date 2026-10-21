@@ -21,7 +21,13 @@ function AuthedRoot() {
   return user?.role === 'admin' ? <BackofficeLayout /> : <AppLayout />
 }
 
+
 function AppRoutes() {
+  const { user } = useAuth()
+
+  const backendSessionKey =
+    user?.role === 'client' ? user.orgNumber : null
+
   return (
     <Routes>
       <Route
@@ -43,10 +49,18 @@ function AppRoutes() {
             <AuthedRoot />
           </ProtectedRoute>
         }
-      >
-        <Route path={ROUTES.overview} element={<OverviewPage />} />
+      >        
+        <Route
+          path={ROUTES.overview}
+          element={<OverviewPage backendSessionKey={backendSessionKey} />}
+        />
         <Route path={ROUTES.documents} element={<DocumentsPage />} />
-        <Route path={`${ROUTES.application}/:id`} element={<ApplicationStatusPage />} />
+        <Route
+          path={`${ROUTES.application}/:id`}
+          element={
+            <ApplicationStatusPage backendSessionKey={backendSessionKey} />
+          }
+        />
         <Route path={ROUTES.wizard} element={<WizardPage />} />
         <Route path={`${ROUTES.wizard}/:steg`} element={<WizardPage />} />
         {/* A company's home is the application; case workers get the

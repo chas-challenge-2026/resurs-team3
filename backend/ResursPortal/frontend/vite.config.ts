@@ -1,6 +1,6 @@
-import path from "node:path"
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
+import path from "node:path";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
@@ -12,6 +12,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": "http://localhost:8083",
+      "/login/company": "http://localhost:8083",
+      "/logout": "http://localhost:8083",
+      "/login/caseWorker": "http://localhost:8083",
+      "/backoffice": "http://localhost:8083",
     },
   },
-})
+});

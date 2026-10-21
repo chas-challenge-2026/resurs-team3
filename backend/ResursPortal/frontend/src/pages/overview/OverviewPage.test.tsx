@@ -5,9 +5,14 @@ import { MemoryRouter } from 'react-router-dom'
 import { OverviewPage } from './OverviewPage'
 import { CasesProvider } from '../../context/CasesContext'
 import { useAuth } from '../../auth/useAuth'
+import { useApplications } from '../../features/credit-application/useApplications'
 
 vi.mock('../../auth/useAuth', () => ({
   useAuth: vi.fn(),
+}))
+
+vi.mock('../../features/credit-application/useApplications', () => ({
+  useApplications: vi.fn(),
 }))
 
 function mockCompany(orgNumber: string, companyName: string) {
@@ -25,11 +30,11 @@ function mockCompany(orgNumber: string, companyName: string) {
   })
 }
 
-function renderOverview() {
+function renderOverview(backendSessionKey: string | null = null) {
   return render(
     <MemoryRouter>
       <CasesProvider>
-        <OverviewPage />
+       <OverviewPage backendSessionKey={backendSessionKey} />
       </CasesProvider>
     </MemoryRouter>,
   )
@@ -86,5 +91,49 @@ it('does not show another company application when only the name matches', () =>
     }),
   ).toBeInTheDocument()
 })
+
+it('shows real applications instead of prototype data', () => {
+  mockCompany('556000-1234', 'Malmö Fastigheter AB')
+
+  vi.mocked(useApplications).mockReturnValue({
+    applications: [
+      {
+        applicationId: 16,
+        caseNumber: 'RES-2026-0001',
+        requestedAmount: 250000,
+        purpose: 'Ny utrustning',
+        status: 'APPROVED',
+        decision: 'APPROVED',
+        decisionReason: 'Ansökan godkänd.',
+        createdAt: null,
+        companyName: 'Malmö Fastigheter AB',
+      },
+    ],
+    loading: false,
+    error: null,
+  })
+
+  renderOverview('test-session')
+
+  expect(useApplications).toHaveBeenCalledWith(
+    true,
+    'test-session',
+  )
+
+  expect(
+    screen.getByRole('link', {
+      name: 'Ansökan RES-2026-0001',
+    }),
+  ).toHaveAttribute('href', '/ansokan/16')
+
+  expect(
+    screen.getByText('Ny utrustning'),
+  ).toBeInTheDocument()
+
+  expect(
+    screen.queryByText('Totalt antal ansökningar'),
+  ).not.toBeInTheDocument()
+})
+
 
 })

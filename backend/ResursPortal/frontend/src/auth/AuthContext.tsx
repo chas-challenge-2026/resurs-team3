@@ -35,9 +35,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Lazy initializer: runs once, before the first render, so the restored
   // session is already in state up front, no "checking session..." flash.
   // Only works because restoring here is a synchronous sessionStorage read.
-  const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    user: loadMockSession(),
-  }))
+  const [state, dispatch] = useReducer(reducer, undefined, () => {
+  const restoredUser = loadMockSession()
+
+  if (restoredUser) {
+    clearMockSession()
+    return { user: null }
+  }
+
+  return { user: restoredUser }
+})
 
   const value = useMemo(() => {
     function login(user: AuthUser) {
@@ -65,10 +72,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let timeoutId: ReturnType<typeof setTimeout>
 
-    function handleIdleTimeout() {
-      clearMockSession()
-      dispatch({ type: 'LOGOUT' })
+    async function handleIdleTimeout() {
+  if (state.user) {
+    try {
+      await fetch('/logout', {
+        method: 'GET',
+        credentials: 'same-origin',
+        redirect: 'manual',
+      })
+    } catch {
+      // Clear the local session even if Java is unreachable.
     }
+  }
+
+  clearMockSession()
+  dispatch({ type: 'LOGOUT' })
+}
 
     function resetTimer() {
       clearTimeout(timeoutId)

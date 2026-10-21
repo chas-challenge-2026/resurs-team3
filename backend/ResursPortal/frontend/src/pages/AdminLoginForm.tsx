@@ -6,7 +6,6 @@ import { Icon } from '../components/Icon'
 import { useAuth } from '../auth/useAuth'
 import { validateAdminLogin } from '../auth/adminLogin.validation'
 import type { AdminLoginErrors, AdminLoginValues } from '../auth/adminLogin.validation'
-import { authenticateAdminMock } from '../auth/mockAdminDirectory'
 import styles from './LoginPage.module.css'
 
 const INITIAL_VALUES: AdminLoginValues = { email: 'karin@resurs.se', password: 'password123' }
@@ -47,32 +46,65 @@ export function AdminLoginForm() {
     validateField(field, values)
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+  
+async function handleSubmit(event: FormEvent) {
+  event.preventDefault()
 
-    const fieldErrors = validateAdminLogin(values)
-    setErrors(fieldErrors)
-    setTouched({ email: true, password: true })
+  const fieldErrors = validateAdminLogin(values)
+  setErrors(fieldErrors)
+  setTouched({ email: true, password: true })
 
-    if (Object.keys(fieldErrors).length > 0) {
-      return
-    }
-
-    setFormError(null)
-    setIsSubmitting(true)
-
-    const user = await authenticateAdminMock(values.email, values.password)
-
-    if (!user) {
-      // Generic on purpose — never reveal whether the email itself exists.
-      setFormError('Fel e-postadress eller lösenord.')
-      setIsSubmitting(false)
-      return
-    }
-
-    loginAsAdmin({ id: user.id, name: user.name, email: user.email })
-    // No reset of isSubmitting on success — LoginPage unmounts on navigation.
+  if (Object.keys(fieldErrors).length > 0) {
+    return
   }
+
+  setFormError(null)
+  setIsSubmitting(true)
+
+  try {
+    const response = await fetch('/login/caseWorker', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      credentials: 'same-origin',
+      redirect: 'manual',
+      body: new URLSearchParams({
+        email: values.email.trim(),
+        password: values.password,
+      }),
+    })
+
+    if (response.type !== 'opaqueredirect') {
+      throw new Error('Java login failed')
+    }
+
+    // Verify the Java session has caseworker access.
+    const verification = await fetch('/backoffice', {
+      method: 'GET',
+      credentials: 'same-origin',
+      redirect: 'manual',
+    })
+
+    if (!verification.ok || verification.type === 'opaqueredirect') {
+      throw new Error('Caseworker session verification failed')
+    }
+
+    const email = values.email.trim().toLowerCase()
+
+    loginAsAdmin({
+      id: email,
+      name: 'Handläggare',
+      email,
+    })
+  } catch {
+    setFormError(
+      'Inloggningen mot servern misslyckades. Kontrollera dina uppgifter.',
+    )
+    setIsSubmitting(false)
+  }
+}
+
 
   return (
     <form onSubmit={handleSubmit} className={styles.form} noValidate>
