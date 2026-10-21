@@ -14,6 +14,8 @@ export default defineConfig({
       "/api": "http://localhost:8083",
       "/login/company": "http://localhost:8083",
       "/logout": "http://localhost:8083",
+      "/login/caseWorker": "http://localhost:8083",
+      "/backoffice": "http://localhost:8083",
     },
   },
 });
