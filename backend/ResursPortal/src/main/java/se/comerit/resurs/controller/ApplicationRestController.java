@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.comerit.resurs.model.Company;
-
+import jakarta.servlet.http.HttpSession;
 @RestController
 public class ApplicationRestController {
 
@@ -28,16 +28,23 @@ public class ApplicationRestController {
     }
     @PostMapping("/api/applications")
     public CreateApplicationResponse createApplication(
-            @Valid @RequestBody CreateApplicationRequest request) {
+            @Valid @RequestBody CreateApplicationRequest request,
+            HttpSession session) {
 
-        if (!request.isNoCashFlowStatement()
-                && (request.getOperativtKassaflode() == null
-                || request.getInvesteringsKassaflode() == null)) {
+        if (session.getAttribute("userId") == null
+                || !"company".equals(session.getAttribute("role"))) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Båda kassaflödesvärdena krävs när företaget har en kassaflödesanalys."
+                    HttpStatus.UNAUTHORIZED, "Företaget är inte inloggat."
             );
         }
+        Long companyId = (Long) session.getAttribute("companyId");
+        if (companyId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Företagsidentitet saknas i sessionen."
+            );
+        }
+        Company company = applicationService.getCompanyById(companyId).orElseThrow(()-> new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "Företaget hittades inte"));
         ScoringResult scoringResult;
 
         if (request.isNoCashFlowStatement()) {
@@ -65,17 +72,15 @@ public class ApplicationRestController {
                     request.getBransch()
             );
         }
+
+
         String initialAuditLog = "[{\"ts\":\""
                 + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\""
-                + request.getOrgNumber()
-                + "\"}]";
+                + company.getOrgNumber()
+                +"\"}]";
 
-        Long companyId = applicationService.findOrCreateCompany(
-                request.getOrgNumber(),
-                request.getCompanyName(),
-                request.getAuthorizedSignatory()
-        );
+
 
         Long applicationId = applicationService.createApplication(
                 companyId,
@@ -88,8 +93,7 @@ public class ApplicationRestController {
                 initialAuditLog
         );
         String caseNumber = applicationService.getCaseNumber(applicationId);
-        Company company = applicationService.getCompanyById(companyId)
-                .orElseThrow(() -> new IllegalStateException("Company not found"));
+
 
         return new CreateApplicationResponse(
                 applicationId,
