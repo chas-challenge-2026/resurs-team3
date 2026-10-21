@@ -7,6 +7,7 @@ import { STATUS_LABEL } from '../../features/credit-application/statusLabels'
 import { applicationStatusPath } from '../status/applicationProgress'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { ROUTES } from '../../routes'
+import { BackendApplicationsSection } from './BackendApplicationsSection'
 
 
 const STATUS_CLASS: Record<ApplicationStatus, string> = {
@@ -51,7 +52,14 @@ function ApplicationCard({ application }: { application: CreditCase }) {
   )
 }
 
-export function OverviewPage() {
+
+  type OverviewPageProps = {
+    backendSessionKey?: string | null;
+  };
+
+  export function OverviewPage({
+    backendSessionKey = null,
+  }: OverviewPageProps) {
   useDocumentTitle('Översikt')
   const { user } = useAuth()
   const { cases, applicantMessages } = useCases()
@@ -76,8 +84,18 @@ export function OverviewPage() {
         </div>
         <Link to={ROUTES.wizard} className={styles.primaryLink}>Ny kreditansökan <span aria-hidden="true">→</span></Link>
       </div>
+        {backendSessionKey ? (
+          <BackendApplicationsSection
+            enabled={true}
+            sessionKey={backendSessionKey}
+            />
 
-      <section className={styles.metrics} aria-label="Ansökningsöversikt">
+        ) : (
+          <>
+            <section
+              className={styles.metrics}
+              aria-label="Ansökningsöversikt"
+            >
         <article className={styles.metricCard}>
           <p>Aktiva ansökningar</p>
           <strong>{activeCases.length}</strong>
@@ -130,10 +148,12 @@ export function OverviewPage() {
             <p>När du skickat in en kreditansökan visas den här med aktuell status.</p>
             <Link to={ROUTES.wizard} className={styles.secondaryLink}>Starta en ansökan</Link>
           </div>
-        )}
-      </section>
+      )}
+    </section>
+        </>
+      )}
 
-      <section className={styles.helpCard}>
+    <section className={styles.helpCard}>
         <div>
           <h2>Behöver du hjälp?</h2>
           <p>Kontakta kundservice om du har frågor om en pågående ansökan.</p>

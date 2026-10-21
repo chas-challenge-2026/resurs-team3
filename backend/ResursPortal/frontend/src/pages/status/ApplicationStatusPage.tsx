@@ -13,6 +13,7 @@ import { buildApplicationProgress, documentsPath, manualDecisionComment } from '
 import styles from './ApplicationStatusPage.module.css'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { ROUTES } from '../../routes'
+import { BackendApplicationStatusSection } from './BackendApplicationStatusSection'
 
 const STATUS_COPY: Record<ApplicationStatus, { heading: string; body: string }> = {
   UNDER_REVIEW: {
@@ -98,12 +99,34 @@ function readBackendReceipt(state: unknown, routeId: string): CreateApplicationR
  * comes from CasesContext, which syncs across tabs, so a case worker's
  * decision in the backoffice shows up here without a reload.
  */
-export function ApplicationStatusPage() {
-  const { id = '' } = useParams()
-  return <ApplicationStatusPageContent key={id} id={id} />
+
+type ApplicationStatusPageProps = {
+  backendSessionKey?: string | null;
+};
+
+export function ApplicationStatusPage({
+  backendSessionKey = null,
+}: ApplicationStatusPageProps) {
+  const { id = '' } = useParams();
+
+  return (
+    <ApplicationStatusPageContent
+      key={id}
+      id={id}
+      backendSessionKey={backendSessionKey}
+    />
+  );
 }
 
-function ApplicationStatusPageContent({ id }: { id: string }) {
+
+
+  function ApplicationStatusPageContent({
+    id,
+    backendSessionKey,
+  }: {
+    id: string;
+    backendSessionKey: string | null;
+  }) {
   const { user } = useAuth()
   const { cases, applicantMessages, markMessagesRead } = useCases()
   const navigate = useNavigate()
@@ -244,6 +267,22 @@ function ApplicationStatusPageContent({ id }: { id: string }) {
         </section>
       </div>
     )
+  }
+
+  if (backendSessionKey && /^\d+$/.test(id)) {
+    const applicationId = Number(id);
+
+    return (
+      <BackendApplicationStatusSection
+        applicationId={
+          Number.isSafeInteger(applicationId) && applicationId > 0
+            ? applicationId
+            : null
+        }
+        enabled={true}
+        sessionKey={backendSessionKey}
+      />
+    );
   }
 
   if (!creditCase) {

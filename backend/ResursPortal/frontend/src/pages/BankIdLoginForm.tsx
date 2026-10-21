@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button'
 import { Icon } from '../components/Icon'
 import { BankIdMark } from '../components/BankIdMark'
 import { useAuth } from '../auth/useAuth'
+import { getApplications } from '../features/credit-application/applicationRead.api'
 import { validateBankIdLogin } from '../auth/bankIdLogin.validation'
 import type { BankIdLoginErrors, BankIdLoginValues } from '../auth/bankIdLogin.validation'
 import { confirmBankIdMock, startBankIdMock } from '../auth/mockBankId'
@@ -102,19 +103,59 @@ export function BankIdLoginForm() {
 
     setPendingCompany(company)
   }
+  
+async function handleConfirm() {
+  if (!pendingCompany || isConfirming) return
 
-  async function handleConfirm() {
-    if (!pendingCompany) return
-    setIsConfirming(true)
+  setIsConfirming(true)
+  setFormError(null)
+
+  try {
     await confirmBankIdMock()
+
+    const response = await fetch('/login/company', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      credentials: 'same-origin',
+      redirect: 'manual',
+      body: new URLSearchParams({
+        orgNumber: pendingCompany.orgNumber,
+      }),
+    })
+
+    // Java redirects to /apply after successful login.
+    // An unsuccessful login returns the HTML login page.
+    if (response.type !== 'opaqueredirect') {
+  throw new Error('Java did not return the expected login redirect')
+    }
+
+    // Confirm the new Java session can read company applications.
+    const applications = await getApplications()
+
+    if (
+      applications.some(
+        (application) =>
+          application.companyName !== pendingCompany.companyName,
+      )
+    ) {
+      throw new Error('Java-sessionen tillhör ett annat företag.')
+    }
+
     loginAsClient({
       id: pendingCompany.orgNumber,
       orgNumber: pendingCompany.orgNumber,
       companyName: pendingCompany.companyName,
     })
-    // No reset of isConfirming — LoginPage unmounts on navigation, same as
-    // AdminLoginForm's isSubmitting.
+  } catch {
+    setFormError(
+      'Kunde inte logga in mot servern. Kontrollera att Java körs och försök igen.',
+    )
+    setIsConfirming(false)
   }
+}
+
 
   function handleCancel() {
     justCancelledRef.current = true
@@ -138,6 +179,11 @@ export function BankIdLoginForm() {
           Öppna BankID-appen på telefonen och bekräfta inloggningen för{' '}
           <span className={styles.pendingCompany}>{pendingCompany.companyName}</span>.
         </p>
+        {formError ? (
+          <p role="alert" className={loginStyles.formError}>
+            {formError}
+          </p>
+        ) : null}
         {import.meta.env.DEV ? (
           <p className={styles.devNote}>
             Ingen riktig BankID-integration finns ännu — klicka nedan för att simulera

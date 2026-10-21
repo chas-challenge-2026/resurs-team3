@@ -7,6 +7,7 @@ import { Logo } from '../Logo'
 import { joinClassNames } from '../../lib/joinClassNames'
 import styles from './AppLayout.module.css'
 import { ROUTES } from '../../routes'
+import { useState } from 'react'
 
 const SIDEBAR_SIZE = {
   '--sidebar-width': '0px',
@@ -22,6 +23,47 @@ export function AppLayout() {
   const inOverview = pathname.startsWith(`${ROUTES.application}/`)
   const { user, logout } = useAuth()
   const displayName = user?.role === 'client' ? user.companyName : (user?.name ?? '')
+
+const [logoutError, setLogoutError] = useState<string | null>(null)
+const [loggingOut, setLoggingOut] = useState(false)
+
+async function handleLogout() {
+  if (loggingOut) return
+
+  setLoggingOut(true)
+  setLogoutError(null)
+
+  try {
+    const response = await fetch('/logout', {
+      method: 'GET',
+      credentials: 'same-origin',
+      redirect: 'manual',
+    })
+
+    if (response.type !== 'opaqueredirect') {
+      throw new Error('Unexpected logout response')
+    }
+
+    // Verify that Java no longer accepts the company session.
+    const verification = await fetch('/api/applications', {
+      method: 'GET',
+      credentials: 'same-origin',
+    })
+
+    if (verification.status !== 401) {
+      throw new Error('Java session is still active')
+    }
+
+    logout()
+  } catch {
+    setLogoutError(
+      'Det gick inte att verifiera utloggningen. Försök igen.',
+    )
+  } finally {
+    setLoggingOut(false)
+  }
+}
+
 
   return (
     <SidebarProvider
@@ -40,8 +82,14 @@ export function AppLayout() {
             <NavLink to={ROUTES.wizard}>Ny kreditansökan</NavLink>
             <NavLink to={ROUTES.documents}>Mina handlingar</NavLink>
           </nav>
-          <div className={styles.account}>
-            <AccountBadge companyDisplayName={displayName} onLogout={logout} />
+          <div className={styles.account}>            
+          <AccountBadge
+            companyDisplayName={displayName}
+            onLogout={handleLogout}
+          />
+          {logoutError ? (
+            <p role="alert">{logoutError}</p>
+          ) : null}
           </div>
         </header>
         {/* SidebarInset already renders the page's <main>; this is only the
