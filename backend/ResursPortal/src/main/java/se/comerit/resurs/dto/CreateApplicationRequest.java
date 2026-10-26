@@ -11,14 +11,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public class CreateApplicationRequest {
 
-    @NotBlank(message = "Organisationsnummer krävs")
-    private String orgNumber;
 
-    @NotBlank(message = "Företagsnamn krävs")
-    private String companyName;
-
-    @NotBlank(message = "Firmatecknare krävs")
-    private String authorizedSignatory;
 
     @PositiveOrZero(message = "Eget kapital får inte vara negativt")
     private double egetKapital;
@@ -56,29 +49,7 @@ public class CreateApplicationRequest {
 
     private String bransch;
 
-    public String getOrgNumber() {
-        return orgNumber;
-    }
 
-    public void setOrgNumber(String orgNumber) {
-        this.orgNumber = orgNumber;
-    }
-
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
-    public String getAuthorizedSignatory() {
-        return authorizedSignatory;
-    }
-
-    public void setAuthorizedSignatory(String authorizedSignatory) {
-        this.authorizedSignatory = authorizedSignatory;
-    }
 
     public double getEgetKapital() {
         return egetKapital;
