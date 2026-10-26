@@ -40,6 +40,11 @@ class ApplicationRestControllerTest {
 
     @Test
     void shouldSkipScoringWhenCashFlowStatementIsMissing() {
+            HttpSession session = mock(HttpSession.class);
+            when(session.getAttribute("userId")).thenReturn(1L);
+            when(session.getAttribute("role")).thenReturn("company");
+            when(session.getAttribute("companyId")).thenReturn(1L);
+
         CreateApplicationRequest request = new CreateApplicationRequest();
         request.setNoCashFlowStatement(true);
 
@@ -47,10 +52,6 @@ class ApplicationRestControllerTest {
         request.setCompanyName("Testbolag AB");
         request.setAuthorizedSignatory("Testperson");
         request.setRequestedAmount(new BigDecimal("100000"));        request.setPurpose("Test");
-
-        when(applicationService.findOrCreateCompany(
-                "5561234567", "Testbolag AB", "Testperson"))
-                .thenReturn(1L);
 
 
         when(applicationService.createApplication(
@@ -75,7 +76,7 @@ class ApplicationRestControllerTest {
                 .thenReturn(Optional.of(company));
 
         CreateApplicationResponse response =
-                controller.createApplication(request);
+                controller.createApplication(request, session);
 
         assertEquals("UNDER_REVIEW", response.getStatus());
         verifyNoInteractions(scoringService);
@@ -89,23 +90,35 @@ class ApplicationRestControllerTest {
                 anyString(),
                 anyString(),
                 anyString());
+
     }
 
     @Test
     void shouldRejectMissingCashFlowValuesWhenStatementExists() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(session.getAttribute("role")).thenReturn("company");
+        when(session.getAttribute("companyId")).thenReturn(1L);
+
+        Company company = new Company();
+        company.setOrgNumber("5561234567");
+
+        when(applicationService.getCompanyById(1L))
+                .thenReturn(Optional.of(company));
+
         CreateApplicationRequest request = new CreateApplicationRequest();
         request.setNoCashFlowStatement(false);
+        request.setOrgNumber("5561234567");
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> controller.createApplication(request)
+                () -> controller.createApplication(request, session)
         );
 
         assertEquals(400, exception.getStatusCode().value());
 
-        verifyNoInteractions(scoringService, applicationService);
+        verifyNoInteractions(scoringService);
     }
-
 
     @Test
     void shouldGetApplicationsForLoggedInCompany() {
@@ -259,7 +272,30 @@ class ApplicationRestControllerTest {
         verifyNoInteractions(applicationService);
     }
 
+    @Test
+    void shouldNotAllowCompanyToApplyForAnotherCompany() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(session.getAttribute("role")).thenReturn("company");
+        when(session.getAttribute("companyId")).thenReturn(1L);
 
+        Company company = new Company();
+        company.setOrgNumber("5561234567");
 
+        when(applicationService.getCompanyById(1L))
+                .thenReturn(Optional.of(company));
+
+        CreateApplicationRequest request = new CreateApplicationRequest();
+        request.setOrgNumber("5569999999");
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.createApplication(request, session)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        verifyNoInteractions(scoringService);
+    }
 
 }
