@@ -35,9 +35,7 @@ const formData: CreditApplicationData = {
 describe("toCreateApplicationRequest", () => {
 it("maps the React form fields to the Java API contract", () => {
   expect(toCreateApplicationRequest(formData)).toEqual({
-    orgNumber: "556000-1234",
-    companyName: "Testbolaget AB",
-    authorizedSignatory: "Anna Andersson",
+
 
     egetKapital: 100000,
     totaltKapital: 500000,

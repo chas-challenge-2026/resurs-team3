@@ -34,7 +34,11 @@ public class ApplicationRestController {
     }
     @PostMapping("/api/applications")
     public CreateApplicationResponse createApplication(
-            @Valid @RequestBody CreateApplicationRequest request) {
+            @Valid @RequestBody CreateApplicationRequest request, HttpSession session) {
+        Long companyId = requireCompanyId(session);
+
+        Company company = applicationService.getCompanyById(companyId).orElseThrow(()
+                -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Företaget kunde inte identifieras."))
 
         if (!request.isNoCashFlowStatement()
                 && (request.getOperativtKassaflode() == null
@@ -74,14 +78,11 @@ public class ApplicationRestController {
         String initialAuditLog = "[{\"ts\":\""
                 + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\""
-                + request.getOrgNumber()
+                + company.getOrgNumber()
                 + "\"}]";
 
-        Long companyId = applicationService.findOrCreateCompany(
-                request.getOrgNumber(),
-                request.getCompanyName(),
-                request.getAuthorizedSignatory()
-        );
+
+
 
         Long applicationId = applicationService.createApplication(
                 companyId,
@@ -94,8 +95,7 @@ public class ApplicationRestController {
                 initialAuditLog
         );
         String caseNumber = applicationService.getCaseNumber(applicationId);
-        Company company = applicationService.getCompanyById(companyId)
-                .orElseThrow(() -> new IllegalStateException("Company not found"));
+
 
         return new CreateApplicationResponse(
                 applicationId,

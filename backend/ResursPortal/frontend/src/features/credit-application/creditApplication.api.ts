@@ -8,9 +8,7 @@ import { isWholeKronor } from "./amount";
  * Otherwise, noCashFlowStatement requests manual review.
  */
 export type CreateApplicationRequest = {
-  orgNumber: string;
-  companyName: string;
-  authorizedSignatory: string;
+
 
   egetKapital: number;
   totaltKapital: number;
@@ -123,9 +121,7 @@ export function toCreateApplicationRequest(
   );
 
   return {
-    orgNumber: data.orgNumber.trim(),
-    companyName: data.companyName.trim(),
-    authorizedSignatory: data.authorizedSignatory.trim(),
+
 
     egetKapital: requiredAmount(data.equity, "Eget kapital"),
     totaltKapital: requiredAmount(data.totalCapital, "Balansomslutning"),
@@ -192,6 +188,7 @@ export async function createApplication(
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "same-origin",
     body: JSON.stringify(request),
   });
 
