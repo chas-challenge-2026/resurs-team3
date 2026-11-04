@@ -1,0 +1,83 @@
+.base {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.base:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary {
+  background-color: var(--color-resurs-orange);
+  color: var(--color-resurs-on-orange);
+}
+
+.primary:hover {
+  background-color: var(--color-resurs-orange-dark);
+}
+
+.primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-resurs-panel), 0 0 0 4px var(--color-resurs-orange);
+}
+
+.secondary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgb(255 255 255 / 0.3);
+}
+
+.secondary:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+.secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-resurs-panel), 0 0 0 4px rgb(255 255 255 / 0.4);
+}
+
+/* Light (paper) surfaces: dark-teal pill primary, white pill secondary,
+   orange gap-ring focus (--color-focus) that holds 3:1 against white. */
+.paperPrimary,
+.paperSecondary {
+  border-radius: 9999px;
+}
+
+.paperPrimary {
+  background-color: var(--color-resurs-bg);
+  color: #ffffff;
+}
+
+.paperPrimary:hover {
+  background-color: var(--color-ink-deep);
+}
+
+.paperSecondary {
+  border: 1px solid rgb(10 36 34 / 0.24);
+  background-color: #ffffff;
+  color: var(--color-resurs-bg);
+}
+
+.paperSecondary:hover {
+  background-color: var(--color-mist);
+}
+
+.paperPrimary:focus,
+.paperSecondary:focus {
+  outline: none;
+}
+
+.paperPrimary:focus-visible,
+.paperSecondary:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--color-focus);
+}

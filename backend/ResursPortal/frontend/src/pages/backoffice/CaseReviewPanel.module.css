@@ -1,0 +1,173 @@
+.panel { scroll-padding-top: 7rem; min-width: 0; max-height: min(70vh, 760px); display: grid; align-content: start; gap: 1rem; overflow-y: auto; padding: 1rem; color: var(--bo-ink); }
+.header { position: sticky; top: -1rem; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin: -1rem -1rem 0; border-bottom: 1px solid var(--color-hairline); background: #fff; padding: 1rem 1rem .8rem; }
+.titleBlock { min-width: 0; }
+.header h2 { margin: 0; color: var(--bo-ink); font-size: 1.5rem; line-height: 1.3; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.companyMeta { margin: .3rem 0 0; color: var(--color-ink-muted); font-size: .875rem; line-height: 1.45; }
+.status { flex: 0 0 auto; border-radius: 9999px; background: var(--color-approved-bg); padding: .25rem .6rem; color: var(--color-approved-ink); font-size: .75rem; line-height: 1.25; font-weight: 600; }
+.statusUNDER_REVIEW, .statusPENDING_DOCS { background: var(--color-review-bg); color: var(--color-review-ink); }
+.statusAPPROVED { background: var(--color-approved-bg); color: var(--color-approved-ink); }
+.statusREJECTED { background: var(--color-rejected-bg); color: var(--color-rejected-ink); }
+.requestCard { border-top: 1px solid var(--color-hairline); padding-top: 1rem; }
+.sectionHeader { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .4rem .75rem; }
+.sectionHeader h3 { margin: 0; color: var(--bo-ink); font-size: 1rem; line-height: 1.4; font-weight: 600; letter-spacing: -.01em; }
+.sectionHeader > span { color: var(--color-ink-muted); font-size: .75rem; }
+.requestGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: .7rem 0 0; }
+.requestGrid div, .financialGrid div { min-width: 0; }
+.requestGrid dt, .financialGrid dt { color: var(--color-ink-muted); font-size: .75rem; line-height: 1.4; }
+.requestGrid dd, .financialGrid dd { margin: .18rem 0 0; color: var(--bo-ink); font-size: .875rem; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+.requestGrid .purpose { grid-column: 1 / -1; }
+.section { min-width: 0; border-top: 1px solid var(--color-hairline); padding-top: 1rem; }
+.financialGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem .8rem; margin: .7rem 0 0; }
+.scoringSection { min-width: 0; }
+.recommendation { border-radius: 9999px; padding: .25rem .55rem; font-weight: 600; }
+.recommendation.recommendationAPPROVED { background: var(--color-approved-bg); color: var(--color-approved-ink); }
+.recommendation.recommendationREJECTED { background: var(--color-rejected-bg); color: var(--color-rejected-ink); }
+.recommendation.recommendationREVIEW { background: var(--color-review-bg); color: var(--color-review-ink); }
+.reason { max-width: 60ch; overflow-wrap: anywhere; margin: .65rem 0; border-radius: var(--radius-md); background: var(--color-mist); padding: .65rem .8rem; color: var(--bo-ink); font-size: .875rem; line-height: 1.5; }
+.metricList { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.metricList li { display: grid; grid-template-columns: minmax(5.5rem, 1fr) auto auto; align-items: baseline; gap: .3rem .6rem; border-top: 1px solid var(--color-hairline); padding: .5rem 0; }
+.metricName { color: var(--bo-ink); font-size: .875rem; font-weight: 600; }
+.metricValue { color: var(--bo-ink); font-size: .875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.metricSeverity { border-radius: 9999px; padding: .16rem .45rem; font-size: .75rem; line-height: 1.2; font-weight: 600; }
+.severitygood, .severityok { background: var(--color-approved-bg); color: var(--color-approved-ink); }
+.severityflagged { background: var(--color-review-bg); color: var(--color-review-ink); }
+.severityreject { background: var(--color-rejected-bg); color: var(--color-rejected-ink); }
+.metricNote { grid-column: 1 / -1; max-width: 70ch; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.4; }
+.history { border-top: 1px solid var(--color-hairline); padding-top: .7rem; }
+.history summary { width: fit-content; line-height: 2.75rem; color: var(--color-resurs-teal-dark); font-size: .875rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.history summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.history ol { display: grid; gap: .6rem; margin: .7rem 0 0; padding-left: 1.2rem; }
+.history li { padding-left: .15rem; color: var(--bo-ink); font-size: .875rem; }
+.history li > span { display: block; margin-top: .15rem; color: var(--color-ink-muted); font-size: .75rem; }
+.history li > p { max-width: 70ch; margin: .25rem 0 0; color: var(--color-ink-muted); }
+.decisionForm { margin: 0 -1rem -1rem; border-top: 1px solid var(--color-hairline); background: #fff; padding: .8rem 1rem 1rem; }
+.commentLabel { display: block; margin: .65rem 0 .35rem; color: var(--bo-ink); font-size: .875rem; font-weight: 600; }
+.commentInput { width: 100%; min-height: 5rem; border: 1px solid transparent; border-radius: 15px; background: var(--color-mist); padding: .75rem 1rem; color: var(--bo-ink); font: inherit; font-size: .875rem; line-height: 1.5; resize: vertical; }
+.commentInput::placeholder { color: var(--color-ink-muted); opacity: 1; }
+.commentInput:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.commentInput[aria-invalid='true'] { border-color: var(--color-error-ink); }
+.help, .error { margin: .3rem 0 0; font-size: .75rem; line-height: 1.4; }
+.help { color: var(--color-ink-muted); }
+.error { color: var(--color-error-ink); }
+.actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .65rem; }
+.approveButton, .rejectButton, .cancelButton, .confirmButton { min-height: 2.75rem; border-radius: 9999px; padding: .6rem 1rem; font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.approveButton:disabled, .rejectButton:disabled, .cancelButton:disabled, .confirmButton:disabled { cursor: not-allowed; opacity: .5; }
+
+/* The two decisions carry equal weight: outlined, each in its status ink,
+   so the button styling never leans the case worker one way. Orange is not
+   a CTA on paper (DESIGN.md, Sparing Orange). */
+.approveButton { border: 1px solid rgb(23 107 80 / 35%); background: #fff; color: var(--color-approved-ink); }
+.approveButton:hover { background: var(--color-approved-bg); }
+.approveButton:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+/* The dialog's confirm is the one filled button: Forest Night on paper. */
+.confirmButton { border: 1px solid var(--color-resurs-bg); background: var(--color-resurs-bg); color: #fff; }
+.confirmButton:hover { background: var(--color-resurs-panel); border-color: var(--color-resurs-panel); }
+.confirmButton:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-focus); }
+
+/* Tillbaka — mirrors BankIdLoginForm's secondary Button ("Avbryt"): transparent fill, ink border/text in place of the login form's white-on-dark version, low-opacity ink wash on hover. */
+.cancelButton { border: 1px solid rgb(10 36 34 / 30%); background: transparent; color: var(--bo-ink); }
+.cancelButton:hover { background: var(--color-hairline); }
+.cancelButton:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(10 36 34 / 30%); }
+
+.rejectButton { border: 1px solid rgb(165 40 34 / 28%); background: #fff; color: var(--color-rejected-ink); }
+.rejectButton:hover { background: var(--color-rejected-bg); }
+.rejectButton:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+/* The dialog is portaled to <body>, outside .appShell, so the --bo-* tokens
+   must be redefined here or the text falls back to the base dialog's white. */
+.confirmDialog { --bo-ink: var(--color-resurs-bg); --bo-accent: var(--color-resurs-orange); border-color: var(--color-hairline) !important; border-radius: 24px !important; background: #fff !important; color: var(--bo-ink) !important; }
+.confirmHeader { text-align: left !important; }
+.confirmTitle { color: var(--bo-ink) !important; font-size: 1.25rem !important; line-height: 1.3 !important; letter-spacing: -.02em; }
+.confirmDescription { color: var(--color-ink-muted) !important; }
+.confirmSummary { display: grid; gap: .55rem; margin: 0; }
+.confirmSummary > div { display: flex; justify-content: space-between; gap: 1rem; font-size: .875rem; }
+.confirmSummary dt { color: var(--color-ink-muted); }
+.confirmSummary dd { margin: 0; color: var(--bo-ink); text-align: right; font-weight: 600; }
+.confirmSummary .confirmComment { flex-direction: column; gap: .3rem; align-items: stretch; border-top: 1px solid var(--color-hairline); padding-top: .6rem; }
+.confirmComment dd { max-height: 10rem; overflow-y: auto; text-align: left; font-weight: 400; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.confirmFooter { gap: .65rem !important; }
+
+@media (max-width: 680px) {
+  .panel { max-height: none; gap: .85rem; padding: .85rem; }
+  .header { top: -.85rem; flex-direction: column; margin: -.85rem -.85rem 0; padding: .85rem .85rem .7rem; }
+  .requestGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .financialGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .decisionForm { margin: 0 -.85rem -.85rem; padding: .7rem .85rem .85rem; }
+}
+@media (max-width: 420px) {
+  .requestGrid, .financialGrid { grid-template-columns: 1fr; }
+  .requestGrid .purpose { grid-column: auto; }
+  .actions { flex-direction: column; }
+  .approveButton, .rejectButton { width: 100%; }
+}
+@media (min-width: 761px) {
+  .panel { height: 100%; min-height: 0; max-height: none; container: casepanel / size; scroll-padding-bottom: 15rem; }
+}
+/* The decision stays in reach: comment and buttons pinned to the bottom of
+   the case panel while the evidence scrolls above them — only when the
+   panel is tall enough to show some evidence too (not on tiny windows). */
+@container casepanel (min-height: 400px) {
+  .decisionForm { position: sticky; bottom: -1rem; z-index: 2; padding-top: .6rem; padding-bottom: .75rem; box-shadow: 0 -12px 16px -14px rgb(10 36 34 / 30%); }
+  .decisionForm .commentLabel { margin: .5rem 0 .25rem; }
+  .decisionForm .commentInput { min-height: 3.25rem; padding-block: .55rem; }
+  .decisionForm .actions { margin-top: .5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmDialog {
+    transition: none !important;
+  }
+}
+
+.documentList { display: grid; gap: .35rem; margin: .6rem 0 0; padding: 0; list-style: none; font-size: .875rem; }
+.documentList li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem .75rem; }
+.documentList span { color: var(--color-ink-muted); font-size: .75rem; }
+
+.rulesHeading { margin: .85rem 0 .35rem; color: var(--bo-ink); font-size: .875rem; font-weight: 600; }
+
+
+.caseHeading:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; border-radius: var(--radius-md); }
+.decisionEvidence { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .9rem; margin-top: .5rem; color: var(--bo-ink); font-size: .875rem; line-height: 1.45; }
+.decisionEvidence > p { margin: 0; }
+.decisionEvidence ul { display: flex; flex-wrap: wrap; gap: .35rem .9rem; margin: 0; padding: 0; list-style: none; }
+.decisionEvidence li { display: inline-flex; align-items: baseline; gap: .4rem; }
+
+.techLog { margin: -.25rem 0 .65rem; }
+.techLog summary { width: fit-content; line-height: 2.75rem; color: var(--color-ink-muted); font-size: .75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.techLog summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.techLog p { max-width: 56ch; margin: 0; overflow-wrap: anywhere; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.5; }
+.reasonLead { margin: 0 0 .3rem; font-weight: 600; }
+.reasonList { margin: 0; padding-left: 1.1rem; list-style: disc; }
+.reasonList li + li { margin-top: .2rem; }
+.moreFlags { margin-top: .3rem; }
+.moreFlags summary { width: fit-content; line-height: 2.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.moreFlags summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.helpRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; }
+.counter { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.severityna { background: var(--color-mist); color: var(--color-ink-muted); }
+/* Short laptop screens: the pinned form drops its repeated evidence (it is
+   just above) and keeps the comment field to one line until it is used. */
+@media (min-width: 761px) and (max-height: 820px) {
+  .decisionForm .decisionEvidence { display: none; }
+  /* Untouched form: one row, comment field beside the buttons. Grows as soon
+     as the field is used (or shows an error). */
+  .decisionForm:has(.commentInput:placeholder-shown:not(:focus):not([aria-invalid='true'])) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: .75rem; }
+  .decisionForm:has(.commentInput:placeholder-shown:not(:focus):not([aria-invalid='true'])) > :is(.sectionHeader, .commentLabel, .help) { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .decisionForm:has(.commentInput:placeholder-shown:not(:focus):not([aria-invalid='true'])) .actions { margin-top: 0; flex-wrap: nowrap; }
+  /* Slimmer sticky case header. */
+  .header { padding-top: .6rem; padding-bottom: .5rem; }
+  .header h2 { font-size: 1.25rem; }
+  .decisionForm .commentInput { min-height: 2.6rem; height: 2.6rem; }
+  .decisionForm .commentInput:focus, .decisionForm .commentInput:not(:placeholder-shown) { height: 5rem; }
+}
+.companyMeta span { white-space: nowrap; }
+.moreCount { color: var(--color-ink-muted); }
+
+.decisionSummary { border-bottom: 1px solid var(--color-hairline); padding-bottom: 1rem; }
+.decisionSummary h3 { margin: 0; color: var(--bo-ink); font-size: 1rem; line-height: 1.4; font-weight: 600; }
+.decisionMeta { margin: .2rem 0 0; color: var(--color-ink-muted); font-size: .875rem; line-height: 1.45; }
+.decisionComment { max-width: 70ch; margin: .5rem 0 0; border-radius: var(--radius-md); background: var(--color-mist); padding: .6rem .8rem; color: var(--bo-ink); font-size: .875rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.againstBlock { border-radius: var(--radius-md); background: var(--color-rejected-bg); padding: .7rem .85rem; color: var(--color-rejected-ink); font-size: .875rem; line-height: 1.45; }
+.againstBlock p { margin: 0; }
+.againstBlock ul { margin: .35rem 0 0; padding-left: 1.1rem; list-style: disc; }
+.recoGroup { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .6rem; }
+.scoreNote { color: var(--color-ink-muted); font-size: .75rem; }

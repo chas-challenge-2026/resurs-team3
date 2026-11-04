@@ -1,0 +1,47 @@
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+ul,
+ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-resurs-bg);
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-sans);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7a78;
+}
+
+/* With the page scrolling, focus and in-page jumps stop short of the
+   wizard's sticky action bar instead of landing underneath it. */
+html { scroll-padding-top: .75rem; scroll-padding-bottom: 7rem; }
