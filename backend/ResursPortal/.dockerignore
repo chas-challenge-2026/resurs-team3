@@ -1,0 +1,11 @@
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/.env*
+frontend/*.local
+target
+.git
+.idea
+**/.DS_Store
+**/._*
+**/*.log

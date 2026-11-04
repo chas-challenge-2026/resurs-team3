@@ -1,0 +1,33 @@
+.wrap { width: 100%; height: 100%; min-width: 0; min-height: 0; color: var(--bo-ink); }
+.queueGrid { display: grid; width: 100%; height: 100%; min-height: 0; grid-template-columns: minmax(275px, .84fr) minmax(0, 1.2fr); align-items: stretch; gap: 1rem; }
+.queuePane { min-width: 0; display: flex; flex-direction: column; overflow: hidden; color: var(--bo-ink); border-right: 1px solid var(--color-hairline); }
+.queuePaneActive { height: 100%; min-height: 0; }
+.headerRow { display: flex; align-items: center; justify-content: space-between; gap: .6rem; border-bottom: 1px solid var(--color-hairline); background: #fff; padding: 1rem 1rem .8rem; }
+.heading { margin: 0; color: var(--bo-ink); font-size: 1rem; line-height: 1.35; font-weight: 600; letter-spacing: -.02em; }
+.subheading { margin: .2rem 0 0; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.4; }
+.countPill { display: inline-flex; min-height: 1.55rem; align-items: center; justify-content: center; border-radius: 9999px; background: var(--color-mist); padding: 0 .55rem; color: var(--bo-ink); font-size: .75rem; font-weight: 600; white-space: nowrap; }
+.liveMessage { margin: .65rem .75rem 0; border-radius: var(--radius-md); background: var(--color-approved-bg); padding: .6rem .75rem; color: var(--color-approved-ink); font-size: .875rem; line-height: 1.45; }
+.emptyState { margin: 0; padding: 1rem; color: var(--color-ink-muted); font-size: 1rem; line-height: 1.5; }
+.caseList { flex: 1 1 auto; min-height: 0; display: grid; align-content: start; gap: 0; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.caseItem { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: .25rem .5rem; border-left: 3px solid transparent; background: #fff; padding: .7rem; color: var(--bo-ink); text-align: left; font: inherit; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; border-bottom: 1px solid var(--color-hairline); border-left: 3px solid transparent; border-radius: 0; }
+.caseItem:hover { background: var(--color-mist); }
+.caseItem:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; } /* inside: the scrolling list would clip an outer ring */
+.caseItemSelected { border-left-color: var(--bo-dark); background: #f2f7f5; }
+.caseTitle { min-width: 0; overflow-wrap: anywhere; color: var(--bo-ink); font-size: .875rem; line-height: 1.35; font-weight: 600; }
+.caseAmount { text-align: right; color: var(--bo-ink); font-size: .875rem; line-height: 1.35; font-weight: 600; white-space: nowrap; }
+.caseMeta { grid-column: 1 / -1; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.4; }
+.casePurpose { min-width: 0; max-width: 11rem; align-self: center; overflow: hidden; color: var(--color-ink-muted); font-size: .75rem; line-height: 1.35; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.casePriority { justify-self: start; max-width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; border-radius: var(--radius-md); background: #e7f0ee; padding: .18rem .5rem; color: var(--bo-dark); font-size: .75rem; line-height: 1.25; font-weight: 600; }
+.casePriorityGood { background: var(--color-approved-bg); color: var(--color-approved-ink); }
+.casePriorityWarn { background: var(--color-review-bg); color: var(--color-review-ink); }
+.casePriorityAlert { background: var(--color-rejected-bg); color: var(--color-rejected-ink); }
+
+@media (max-width: 950px) { .queueGrid { grid-template-columns: minmax(235px, .75fr) minmax(0, 1.25fr); } }
+@media (max-width: 760px) { .queueGrid { grid-template-columns: 1fr; } .queuePane { border-right: 0; border-bottom: 1px solid var(--color-hairline); } .queuePaneActive { height: auto; } .caseList { min-height: 0; } }
+.queuePaneEmpty { border-right: 0; }
+.emptyAction { margin: 0; padding: 0 1rem 1rem; }
+.emptyAction button { min-height: 2.75rem; border: 1px solid rgb(10 36 34 / 30%); border-radius: 9999px; background: transparent; padding: .5rem 1rem; color: var(--bo-ink); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.emptyAction button:hover { background: rgb(10 36 34 / 8%); }
+.emptyAction button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.liveMessageNeutral { background: var(--color-mist); color: var(--bo-ink); }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

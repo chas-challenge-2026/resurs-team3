@@ -14,6 +14,7 @@ CREATE TABLE case_workers (
 
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
+    case_number VARCHAR(50) UNIQUE,
     company_id INT REFERENCES companies(id),
     requested_amount DECIMAL(15,2),
     purpose TEXT,
